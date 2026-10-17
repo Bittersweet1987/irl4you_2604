@@ -167,6 +167,8 @@ if now; then
   # Dienste, die schon laufen, startet der Update-Helfer laut Manifest ("restart") neu; hier nur, was noch nicht läuft
   systemctl start pipbox-dji.service pipbox-hdmi.service pipbox-health.service pipbox.service
   systemctl start pipbox-modem-apply.timer --no-block || true
+  # Treiber-Helfer neu prüfen lassen, sonst zeigt die Oberfläche bis zum nächsten Einstecken/Timer den alten Zustand
+  systemctl start pipbox-btdriver.service pipbox-wlandriver.service --no-block || true
 else
   # im chroot nur einschalten (Verknüpfungen anlegen), nichts starten
   for u in $UNITS; do systemctl enable "$u" 2>/dev/null || echo "Hinweis: $u nicht eingeschaltet"; done
