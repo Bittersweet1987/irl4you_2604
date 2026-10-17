@@ -483,6 +483,20 @@ class TestInstallation(unittest.TestCase):
         rem = load_script("pipbox-remote.py", "pipbox_remote_t")
         self.assertIn("resolute", rem.CODENAMES)
 
+    def test_dateigroesse_max_500_zeilen(self):
+        """Regel von Marco (17.10.2026): kein Spaghetti-Code, möglichst höchstens 500 Zeilen je Datei. Das Paket webui/ hält sie ein (server.py ist nur der Einstieg)."""
+        zu_gross = []
+        for d in ("webui",):
+            for f in sorted(os.listdir(os.path.join(IRL, d))):
+                if f.endswith(".py"):
+                    n = len(open(os.path.join(IRL, d, f), encoding="utf-8").read().splitlines())
+                    if n > 500:
+                        zu_gross.append("%s/%s: %d Zeilen" % (d, f, n))
+        self.assertEqual(zu_gross, [])
+        self.assertLess(len(open(os.path.join(IRL, "server.py"), encoding="utf-8").read().splitlines()), 40)
+        for f in ("pipbox_modem.py", "pipbox-rtmpstat.py", "pipbox-netnames.py", "pipbox-modem.py"):
+            self.assertLessEqual(len(open(os.path.join(IRL, f), encoding="utf-8").read().splitlines()), 500, f)
+
     def test_python_shebang_lf(self):
         """Ausführbare Python-Dateien mit CRLF starten unter Linux nicht (/usr/bin/env: 'python3\\r')."""
         for f in os.listdir(IRL):
@@ -498,6 +512,8 @@ class TestSendekette(unittest.TestCase):
     def setUp(self):
         self.ps = irl("pipbox_send")
         self.server = irl("server")
+        self.sampler = irl("webui.sampler")
+        self.netstate = irl("webui.netstate")
 
     def sender(self, spread="best", live=False):
         sv = {"name": "Test", "host": "srtla.example.net", "port": 5000, "streamid": "abc"}
@@ -541,37 +557,37 @@ class TestSendekette(unittest.TestCase):
 
     def test_statistik_fuer_die_oberflaeche(self):
         d = tempfile.mkdtemp()
-        old = self.server.ENC_STATS_FILE
+        old = self.sampler.ENC_STATS_FILE
         try:
-            self.server.ENC_STATS_FILE = os.path.join(d, "encoder-stats.json")
-            with open(self.server.ENC_STATS_FILE, "w") as f:
+            self.sampler.ENC_STATS_FILE = os.path.join(d, "encoder-stats.json")
+            with open(self.sampler.ENC_STATS_FILE, "w") as f:
                 json.dump({"v": 1, "t": 1, "fps": 29.9, "rate": {"kbps": 6500, "min": 500, "max": 12000, "state": "ruhig"},
                            "srt": {"connected": True, "rtt_ms": 48, "send_kbps": 6610, "buf_pkts": 12, "buf_ms": 120,
                                    "sent": 10000, "lost": 50, "resent": 60, "dropped": 0}}, f)
-            st = self.server.send_stats()
+            st = self.sampler.send_stats()
             self.assertEqual((st["fps"], st["bitrate_kbps"], st["rtt_ms"], st["send_mbps"]), (29.9, 6500, 48, 6.61))
             self.assertEqual((st["snd_buf_ms"], st["retrans_total"], st["loss_total"], st["sent_total"]), (120, 60, 50, 10000))
             self.assertEqual(st["loss_pct"], 0.5)
         finally:
-            self.server.ENC_STATS_FILE = old
+            self.sampler.ENC_STATS_FILE = old
             shutil.rmtree(d)
 
     def test_leitungszustand(self):
         d = tempfile.mkdtemp()
-        old, old_ips = self.server.LINKS_FILE, self.server.iface_ips
+        old, old_ips = self.netstate.LINKS_FILE, self.netstate.iface_ips
         try:
-            self.server.LINKS_FILE = os.path.join(d, "srtla.json")
-            with open(self.server.LINKS_FILE, "w") as f:
+            self.netstate.LINKS_FILE = os.path.join(d, "srtla.json")
+            with open(self.netstate.LINKS_FILE, "w") as f:
                 json.dump({"ev": "stats", "links": [{"ip": "10.0.0.2", "dev": "eth0", "state": "used", "rtt_ms": 38.5},
                                                     {"ip": "10.0.1.2", "dev": "wwan0", "state": "reserve", "rtt_ms": None},
                                                     {"ip": "10.0.2.2", "dev": "wlan0", "state": "down", "rtt_ms": None}]}, f)
-            self.server.iface_ips = lambda: [{"iface": "eth0", "ip": "10.0.0.2"}, {"iface": "wwan0", "ip": "10.0.1.2"}, {"iface": "wlan0", "ip": "10.0.2.2"}]
-            st = self.server.uplink_states(["eth0", "wwan0", "wlan0"])
+            self.netstate.iface_ips = lambda: [{"iface": "eth0", "ip": "10.0.0.2"}, {"iface": "wwan0", "ip": "10.0.1.2"}, {"iface": "wlan0", "ip": "10.0.2.2"}]
+            st = self.netstate.uplink_states(["eth0", "wwan0", "wlan0"])
             self.assertEqual(st["eth0"], {"state": "an", "srtt": 38})
             self.assertEqual(st["wwan0"], {"state": "reserve", "srtt": None})
             self.assertEqual(st["wlan0"]["state"], "aus")
         finally:
-            self.server.LINKS_FILE, self.server.iface_ips = old, old_ips
+            self.netstate.LINKS_FILE, self.netstate.iface_ips = old, old_ips
             shutil.rmtree(d)
 
     def test_software_update_ueber_helfer(self):
