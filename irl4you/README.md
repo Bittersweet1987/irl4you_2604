@@ -1,6 +1,6 @@
 # irl4you/
 
-Hier liegt der Programmstand von IRL4YOU, der als Release-Paket ausgeliefert wird (alles, was heute unter `/opt/pipbox` liegt).
+Hier liegt der Programmstand von IRL4YOU, der auf die Box ausgeliefert wird (jeder Commit auf main ist ein Stand) (alles, was heute unter `/opt/pipbox` liegt).
 Der volle Stand aus `Belabox-2604\irl4you\` kommt hierher, sobald die Umstellung auf 26.04 so weit ist.
 
 Heute enthalten (Basis für das Testsystem):

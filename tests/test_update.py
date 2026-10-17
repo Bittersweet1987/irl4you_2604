@@ -1,7 +1,9 @@
-"""Tests für den Update-Helfer. Ein kleiner Server spielt die GitHub-API, systemctl ist ein Platzhalter-Skript.
+"""Tests für den Update-Helfer. Ein kleiner Server spielt die GitHub-API (Commits, Prüfungen, Git-Baum, Tarball),
+systemctl ist ein Platzhalter-Skript.
 
 Aufruf: python3 -m unittest discover -s tests -v
 """
+import datetime
 import hashlib
 import http.server
 import io
@@ -12,7 +14,9 @@ import sys
 import tarfile
 import tempfile
 import threading
+import time
 import unittest
+import urllib.parse
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(HERE)
@@ -46,42 +50,35 @@ exit 4
 '''
 
 
-def make_pkg(version, hook=HOOK_OK, manifest=None, extra=None, file_version=None):
-    """Baut ein Paket im Speicher. extra: Liste von TarInfo-Fabriken für Angriffs-Tests."""
-    buf = io.BytesIO()
-    m = {"name": "irl4you", "version": version, "min_updater": 1, "restart": ["pipbox.service"],
+def blob_sha(data):
+    return hashlib.sha1(b"blob %d\0" % len(data) + data).hexdigest()
+
+
+def repo_files(version="2.0.0", hook=HOOK_OK, manifest=None, irl=None):
+    """Dateien eines Commits: Pfad -> Text/Bytes oder ("link", Ziel)."""
+    m = {"name": "irl4you", "version": "@VERSION@", "min_updater": 1, "restart": ["pipbox.service"],
          "health_units": ["pipbox.service"], "reboot": False}
-    if manifest:
-        m.update(manifest)
-    files = {"VERSION": (file_version or version) + "\n", "manifest.json": json.dumps(m),
-             "hooks/install": hook, "server.py": "print('hallo %s')\n" % version}
-    with tarfile.open(fileobj=buf, mode="w:gz") as tar:
-        for name, text in files.items():
-            data = text.encode()
-            ti = tarfile.TarInfo("./" + name)
-            ti.size = len(data)
-            ti.mode = 0o755 if name.startswith("hooks/") else 0o644
-            tar.addfile(ti, io.BytesIO(data))
-        ti = tarfile.TarInfo("./web/static")
-        ti.type = tarfile.SYMTYPE
-        ti.linkname = "../server.py"
-        tar.addfile(ti)
-        for f in extra or []:
-            ti, data = f()
-            tar.addfile(ti, io.BytesIO(data) if data is not None else None)
-    return buf.getvalue()
+    m.update(manifest or {})
+    files = {"VERSION": version + "\n", "irl4you/server.py": "print('hallo %s')\n" % version,
+             "irl4you/web/static": ("link", "../server.py"),
+             "release/hooks/install": hook, "release/hooks/health": "#!/bin/sh\nexit 0\n",
+             "release/manifest.json": json.dumps(m), "updater/irl4you_update.py": "# platzhalter\n",
+             "updater/update.conf.example": "[update]\n"}
+    files.update(irl or {})
+    return {k: v for k, v in files.items() if v is not None}
+
+
+def as_bytes(v):
+    return v if isinstance(v, bytes) else v.encode()
 
 
 class FakeGitHub:
-    """Liefert /repos/<repo>/releases und /repos/<repo>/releases/assets/<id>."""
-
     def __init__(self, repo="Bittersweet1987/irl4you_2604"):
         self.repo = repo
-        self.releases = []
-        self.assets = {}
-        self.redirect_assets = False
+        self.commits = []                       # neuester zuerst
+        self.redirect = False
         self.requests = []
-        self._next = 1
+        self._n = 0
         fake = self
 
         class H(http.server.BaseHTTPRequestHandler):
@@ -89,24 +86,40 @@ class FakeGitHub:
                 pass
 
             def do_GET(self):
-                fake.requests.append((self.headers.get("Host"), self.path, self.headers.get("Authorization"),
-                                      self.headers.get("Accept")))
-                base = "/repos/%s/releases" % fake.repo
-                if self.path.startswith(base + "?"):
-                    return self._send(200, json.dumps(fake.releases).encode(), "application/json")
-                if self.path.startswith(base + "/assets/"):
-                    aid = int(self.path.rsplit("/", 1)[1])
-                    if fake.redirect_assets:
+                u = urllib.parse.urlsplit(self.path)
+                q = urllib.parse.parse_qs(u.query)
+                fake.requests.append((self.headers.get("Host"), u.path, self.headers.get("Authorization")))
+                base = "/repos/%s/" % fake.repo
+                p = u.path
+                if p == base + "commits":
+                    return self.js([fake.api(c) for c in fake.commits][:int(q.get("per_page", ["30"])[0])])
+                if p.startswith(base + "commits/") and p.endswith("/check-runs"):
+                    c = fake.find(p.split("/")[-2])
+                    return self.js({"check_runs": fake.runs(c)}) if c else self.js({}, 404)
+                if p.startswith(base + "commits/"):
+                    c = fake.find(p.rsplit("/", 1)[1])
+                    return self.js(fake.api(c)) if c else self.js({}, 404)
+                if p.startswith(base + "git/trees/"):
+                    c = fake.find(p.rsplit("/", 1)[1])
+                    return self.js(fake.tree(c)) if c else self.js({}, 404)
+                if p.startswith(base + "tarball/"):
+                    c = fake.find(p.rsplit("/", 1)[1])
+                    if not c:
+                        return self.js({}, 404)
+                    if fake.redirect:
                         self.send_response(302)
-                        self.send_header("Location", "http://localhost:%d/blob/%d" % (fake.port, aid))
+                        self.send_header("Location", "http://localhost:%d/blob/%s" % (fake.port, c["sha"]))
                         self.end_headers()
                         return
-                    return self._send(200, fake.assets[aid], "application/octet-stream")
-                if self.path.startswith("/blob/"):
-                    return self._send(200, fake.assets[int(self.path.rsplit("/", 1)[1])], "application/octet-stream")
-                self._send(404, b"{}", "application/json")
+                    return self.send(200, fake.tarball(c), "application/gzip")
+                if p.startswith("/blob/"):
+                    return self.send(200, fake.tarball(fake.find(p.rsplit("/", 1)[1])), "application/gzip")
+                self.js({}, 404)
 
-            def _send(self, code, data, ctype):
+            def js(self, obj, code=200):
+                self.send(code, json.dumps(obj).encode(), "application/json")
+
+            def send(self, code, data, ctype):
                 self.send_response(code)
                 self.send_header("Content-Type", ctype)
                 self.send_header("Content-Length", str(len(data)))
@@ -121,23 +134,64 @@ class FakeGitHub:
         self.httpd.shutdown()
         self.httpd.server_close()
 
-    def _asset(self, name, data):
-        aid = self._next
-        self._next += 1
-        self.assets[aid] = data
-        return {"id": aid, "name": name, "size": len(data)}
+    def add(self, version="2.0.0", message=None, ci="success", age=3600, files=None, tamper=None, extra=None, **kw):
+        """Neuer Commit an der Spitze. tamper: Pfad -> Bytes (nur im Tarball) oder None (fehlt im Tarball)."""
+        self._n += 1
+        files = files if files is not None else repo_files(version, **kw)
+        sha = hashlib.sha1(("%d%s" % (self._n, sorted(files))).encode()).hexdigest()
+        date = datetime.datetime.fromtimestamp(time.time() - age, datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        c = {"sha": sha, "message": message or "Commit %d" % self._n, "date": date, "files": files, "ci": ci,
+             "tamper": tamper or {}, "extra": extra or []}
+        self.commits.insert(0, c)
+        return c
 
-    def add(self, version, pkg=None, prerelease=False, draft=False, bad_sum=False, missing_sum=False, notes=""):
-        pkg = make_pkg(version) if pkg is None else pkg
-        name = "irl4you-%s.tar.gz" % version
-        digest = hashlib.sha256(pkg).hexdigest()
-        if bad_sum:
-            digest = "0" * 64
-        assets = [self._asset(name, pkg)]
-        if not missing_sum:
-            assets.append(self._asset(name + ".sha256", ("%s  %s\n" % (digest, name)).encode()))
-        self.releases.insert(0, {"tag_name": "v" + version, "draft": draft, "prerelease": prerelease, "body": notes,
-                                 "published_at": "2026-10-17T12:00:00Z", "assets": assets})
+    def find(self, ref):
+        for c in self.commits:
+            if c["sha"].startswith(ref):
+                return c
+        return None
+
+    @staticmethod
+    def api(c):
+        return {"sha": c["sha"], "commit": {"message": c["message"], "committer": {"date": c["date"]}}}
+
+    @staticmethod
+    def runs(c):
+        return {"success": [{"status": "completed", "conclusion": "success"}],
+                "failure": [{"status": "completed", "conclusion": "failure"}],
+                "pending": [{"status": "in_progress", "conclusion": None}], "none": []}[c["ci"]]
+
+    @staticmethod
+    def tree(c):
+        out = []
+        for path, v in sorted(c["files"].items()):
+            if isinstance(v, tuple):
+                out.append({"path": path, "mode": "120000", "type": "blob", "sha": blob_sha(v[1].encode())})
+            else:
+                out.append({"path": path, "mode": "100644", "type": "blob", "sha": blob_sha(as_bytes(v))})
+        return {"sha": c["sha"], "tree": out, "truncated": False}
+
+    @staticmethod
+    def tarball(c):
+        buf = io.BytesIO()
+        top = "o-r-%s/" % c["sha"][:7]
+        with tarfile.open(fileobj=buf, mode="w:gz", format=tarfile.PAX_FORMAT, pax_headers={"comment": c["sha"]}) as tar:
+            for path, v in c["files"].items():
+                if path in c["tamper"] and c["tamper"][path] is None:
+                    continue
+                ti = tarfile.TarInfo(top + path)
+                if isinstance(v, tuple):
+                    ti.type, ti.linkname = tarfile.SYMTYPE, v[1]
+                    tar.addfile(ti)
+                    continue
+                data = c["tamper"].get(path, as_bytes(v))
+                ti.size = len(data)
+                ti.mode = 0o755 if path.startswith("release/hooks/") else 0o644
+                tar.addfile(ti, io.BytesIO(data))
+            for f in c["extra"]:
+                ti, data = f(top)
+                tar.addfile(ti, io.BytesIO(data) if data is not None else None)
+        return buf.getvalue()
 
 
 class Base(unittest.TestCase):
@@ -164,8 +218,7 @@ class Base(unittest.TestCase):
         self.u = self.make()
 
     def make(self, **kw):
-        cfg = U.Config(path=None, overrides=dict(self.overrides, **kw))
-        return U.Updater(cfg, sleep=lambda s: None)
+        return U.Updater(U.Config(path=None, overrides=dict(self.overrides, **kw)), sleep=lambda s: None)
 
     def set_units(self, active):
         with open(os.path.join(os.path.dirname(self.sysctl), "systemctl.json"), "w") as f:
@@ -188,20 +241,11 @@ class Base(unittest.TestCase):
     def status(self):
         return self.u.load_status()
 
-    def releases_on_disk(self):
+    def on_disk(self):
         return sorted(os.listdir(os.path.join(self.tmp, "opt", "irl4you", "releases")))
 
-
-class TestVersions(unittest.TestCase):
-    def test_order(self):
-        vs = ["1.0.71", "2.0.0-rc.1", "2.0.0", "2.0.0-beta.2", "2.0.0-beta.10", "10.0.0", "2.0.1"]
-        self.assertEqual(sorted(vs, key=U.vkey),
-                         ["1.0.71", "2.0.0-beta.2", "2.0.0-beta.10", "2.0.0-rc.1", "2.0.0", "2.0.1", "10.0.0"])
-
-    def test_invalid(self):
-        for v in ("2.0", "v2.0.0", "2.0.0;rm", "../1.0.0", "", None):
-            with self.assertRaises(U.Refuse):
-                U.vkey(v)
+    def rid(self, c):
+        return c["sha"][:12]
 
 
 class TestConfig(unittest.TestCase):
@@ -209,277 +253,321 @@ class TestConfig(unittest.TestCase):
         with self.assertRaises(U.Refuse):
             U.Config(path=None, overrides={"api": "http://example.org"})
 
-    def test_bad_repo(self):
-        with self.assertRaises(U.Refuse):
-            U.Config(path=None, overrides={"repo": "a/b/../c"})
+    def test_bad_repo_and_branch(self):
+        for k, v in (("repo", "a/b/../c"), ("branch", "../x"), ("branch", "a b")):
+            with self.assertRaises(U.Refuse):
+                U.Config(path=None, overrides={k: v})
 
     def test_file(self):
         with tempfile.NamedTemporaryFile("w", suffix=".conf", delete=False) as f:
-            f.write("[update]\nrepo = foo/bar\nchannel = beta\nauto_install = true\n")
+            f.write("[update]\nrepo = foo/bar\nbranch = dev\nauto_install = true\nrequire_ci = false\n")
         self.addCleanup(os.remove, f.name)
         c = U.Config(path=f.name)
-        self.assertEqual((c.repo, c.channel, c.auto_install), ("foo/bar", "beta", True))
+        self.assertEqual((c.repo, c.branch, c.auto_install, c.require_ci), ("foo/bar", "dev", True, False))
         self.assertEqual(c.extra_link, "/opt/pipbox")
 
 
 class TestCheck(Base):
-    def test_latest_stable(self):
-        self.gh.add("2.0.0")
-        self.gh.add("2.0.1", notes="Neu: Updates")
-        self.gh.add("2.1.0-beta.1", prerelease=True)
-        self.gh.add("2.2.0", draft=True)
-        self.gh.add("2.3.0", missing_sum=True)
+    def test_notes_between_installed_and_tip(self):
+        c1 = self.gh.add(message="Erster Stand")
+        self.u.install()
+        c2 = self.gh.add("2.0.1", message="Zweiter Stand\n\nMit Einzelheiten")
+        c3 = self.gh.add("2.0.2", message="Dritter Stand")
         latest, avail = self.u.check()
-        self.assertEqual((latest, avail), ("2.0.1", True))
+        self.assertEqual((latest, avail), (c3["sha"], True))
         s = self.status()
         self.assertEqual(s["state"], "idle")
-        self.assertEqual(s["notes"], "Neu: Updates")
-        self.assertEqual([r["version"] for r in s["releases"]], ["2.0.1", "2.0.0"])
-        self.assertEqual([r["notes"] for r in s["releases"]], ["Neu: Updates", ""])
-
-    def test_beta_channel(self):
-        self.gh.add("2.0.0")
-        self.gh.add("2.1.0-beta.1", prerelease=True)
-        self.assertEqual(self.make(channel="beta").check(), ("2.1.0-beta.1", True))
+        self.assertEqual(s["notes"], "- Dritter Stand\n- Zweiter Stand")
+        self.assertEqual(s["latest"], c3["sha"][:7])
+        self.assertEqual([r["version"] for r in s["releases"]], [c["sha"][:7] for c in (c3, c2, c1)])
+        self.assertIn("Mit Einzelheiten", s["releases"][1]["notes"])
 
     def test_up_to_date(self):
-        self.gh.add("2.0.0")
+        self.gh.add()
         self.u.install()
-        self.assertEqual(self.u.check(), ("2.0.0", False))
+        self.assertEqual(self.u.check()[1], False)
         self.assertEqual(self.status()["message"], "IRL4YOU ist aktuell.")
 
-    def test_empty_repo(self):
-        self.assertEqual(self.u.check(), (None, False))
+    def test_ci_gate(self):
+        self.gh.add(ci="pending")
+        self.assertEqual(self.u.check()[1], False)
+        self.assertIn("geprüft", self.status()["message"])
+        self.gh.commits[0]["ci"] = "failure"
+        self.assertEqual(self.u.check()[1], False)
+        self.assertIn("fehlgeschlagen", self.status()["message"])
+        self.assertEqual(self.make(require_ci="false").check()[1], True)
+
+    def test_no_ci_configured(self):
+        self.gh.add(ci="none", age=3600)
+        self.assertEqual(self.u.check()[1], True)
+        self.gh.add(ci="none", age=5)
+        self.assertEqual(self.u.check()[1], False)
+
+    def test_empty_branch(self):
+        self.assertEqual(self.u.run("check"), 2)
 
 
 class TestInstall(Base):
     def test_first_install(self):
-        self.gh.add("2.0.0")
+        c = self.gh.add()
         self.assertTrue(self.u.install())
-        root = self.overrides["root"]
-        self.assertEqual(os.readlink(os.path.join(root, "current")), os.path.join(root, "releases", "2.0.0"))
+        root, rid = self.overrides["root"], self.rid(c)
+        self.assertEqual(os.readlink(os.path.join(root, "current")), os.path.join(root, "releases", rid))
         self.assertEqual(os.readlink(self.overrides["extra_link"]), os.path.join(root, "current"))
         with open(os.path.join(self.overrides["extra_link"], "server.py")) as f:
             self.assertIn("2.0.0", f.read())
-        self.assertTrue(os.path.islink(os.path.join(root, "current", "web", "static")))
+        cur = os.path.join(root, "current")
+        self.assertTrue(os.path.islink(os.path.join(cur, "web", "static")))
+        self.assertTrue(os.access(os.path.join(cur, "hooks", "install"), os.X_OK))
+        self.assertTrue(os.path.isfile(os.path.join(cur, "updater", "irl4you_update.py")))
+        with open(os.path.join(cur, "manifest.json")) as f:
+            m = json.load(f)
+        self.assertEqual((m["version"], m["commit"]), ("2.0.0", c["sha"]))
         self.assertEqual(self.hooks(), ["install 2.0.0 prev="])
         self.assertIn("restart pipbox.service", self.calls())
         s = self.status()
-        self.assertEqual((s["state"], s["version"], s["progress"]), ("done", "2.0.0", 100))
-        self.assertEqual(self.releases_on_disk(), ["2.0.0"])       # keine Reste vom Laden
+        self.assertEqual((s["state"], s["progress"], s["version"]), ("done", 100, "2.0.0 (%s)" % c["sha"][:7]))
+        self.assertEqual(self.on_disk(), [rid])
 
     def test_update_and_prune(self):
+        cs = []
         for v in ("2.0.0", "2.0.1", "2.0.2", "2.0.3"):
-            self.gh.add(v)
+            cs.append(self.gh.add(v))
             self.assertTrue(self.u.install(), v)
-        self.assertEqual(self.u.active_version(), "2.0.3")
-        self.assertEqual(self.u.previous_version(), "2.0.2")
-        self.assertEqual(self.releases_on_disk(), ["2.0.1", "2.0.2", "2.0.3"])
-        self.assertEqual(self.hooks()[-1], "install 2.0.3 prev=2.0.2")
+        self.assertEqual(self.u.active_id(), self.rid(cs[3]))
+        self.assertEqual(self.u.previous_id(), self.rid(cs[2]))
+        self.assertEqual(self.on_disk(), sorted(self.rid(c) for c in cs[1:]))
+        self.assertEqual(self.hooks()[-1], "install 2.0.3 prev=%s" % self.rid(cs[2]))
 
     def test_not_newer(self):
-        self.gh.add("2.0.0")
+        self.gh.add()
         self.u.install()
         self.assertEqual(self.u.run("install"), 2)
-        self.assertEqual(self.status()["state"], "refused")
         self.assertIn("Keine neuere Version", self.status()["message"])
 
-    def test_checksum_mismatch(self):
-        self.gh.add("2.0.0")
-        self.u.install()
-        self.gh.add("2.0.1", bad_sum=True)
+    def test_ci_pending_blocks_but_explicit_sha_does_not(self):
+        c = self.gh.add(ci="pending")
         self.assertEqual(self.u.run("install"), 2)
-        self.assertIn("Prüfsumme", self.status()["message"])
-        self.assertEqual(self.u.active_version(), "2.0.0")
-        self.assertEqual(self.releases_on_disk(), ["2.0.0"])
+        self.assertIn("geprüft", self.status()["message"])
+        self.assertTrue(self.u.install(c["sha"]))
+
+    def test_tampered_file(self):
+        c0 = self.gh.add()
+        self.u.install()
+        self.gh.add("2.0.1", tamper={"irl4you/server.py": b"print('boese')\n"})
+        self.assertEqual(self.u.run("install"), 2)
+        self.assertIn("stimmt nicht mit dem Commit überein", self.status()["message"])
+        self.assertEqual(self.u.active_id(), self.rid(c0))
+        self.assertEqual(self.on_disk(), [self.rid(c0)])
+
+    def test_extra_file(self):
+        def f(top):
+            ti = tarfile.TarInfo(top + "irl4you/zusatz.py")
+            ti.size = 1
+            return ti, b"x"
+        self.gh.add(extra=[f])
+        self.assertEqual(self.u.run("install"), 2)
+        self.assertIn("gehört nicht zum Commit", self.status()["message"])
+
+    def test_missing_file(self):
+        self.gh.add(tamper={"irl4you/server.py": None})
+        self.assertEqual(self.u.run("install"), 2)
+        self.assertIn("fehlen", self.status()["message"])
 
     def test_hook_fails_rolls_back(self):
-        self.gh.add("2.0.0")
+        c0 = self.gh.add()
         self.u.install()
-        self.gh.add("2.0.1", pkg=make_pkg("2.0.1", hook=HOOK_FAIL))
+        c1 = self.gh.add("2.0.1", hook=HOOK_FAIL)
         self.assertFalse(self.u.install())
-        self.assertEqual(self.u.active_version(), "2.0.0")
-        self.assertEqual(self.hooks()[-2:], ["install 2.0.1 prev=2.0.0", "rollback 2.0.0 prev=2.0.1"])
+        self.assertEqual(self.u.active_id(), self.rid(c0))
+        self.assertEqual(self.hooks()[-2:], ["install 2.0.1 prev=%s" % self.rid(c0), "rollback 2.0.0 prev=%s" % self.rid(c1)])
         self.assertEqual(self.status()["state"], "failed")
-        self.assertEqual(self.releases_on_disk(), ["2.0.0"])
+        self.assertEqual(self.on_disk(), [self.rid(c0)])
         with open(self.overrides["log_file"]) as f:
             self.assertIn("kaputt", f.read())
 
     def test_service_down_rolls_back(self):
-        self.gh.add("2.0.0")
+        c0 = self.gh.add()
         self.u.install()
         self.gh.add("2.0.1")
-        self.set_units([])                                         # pipbox.service startet nicht
+        self.set_units([])
         self.assertFalse(self.u.install())
-        self.assertEqual(self.u.active_version(), "2.0.0")
-        self.assertEqual(self.hooks()[-1], "rollback 2.0.0 prev=2.0.1")
+        self.assertEqual(self.u.active_id(), self.rid(c0))
+        self.assertTrue(self.hooks()[-1].startswith("rollback 2.0.0"))
 
     def test_not_while_sending(self):
-        self.gh.add("2.0.0")
+        self.gh.add()
         self.set_units(["pipbox.service", "pipbox-send.service"])
         self.assertEqual(self.u.run("install"), 2)
         self.assertIn("gesendet", self.status()["message"])
-        self.assertIsNone(self.u.active_version())
+        self.assertIsNone(self.u.active_id())
 
-    def test_manifest_version_mismatch(self):
-        self.gh.add("2.0.1", pkg=make_pkg("2.0.0"))
-        self.assertEqual(self.u.run("install"), 2)
-        self.assertIn("erwartet 2.0.1", self.status()["message"])
+    def test_manifest_problems(self):
+        for man, text in (({"min_updater": 99}, "neueren Update-Helfer"),
+                          ({"restart": ["pipbox.service; reboot"]}, "restart"),
+                          ({"name": "anders"}, "kein IRL4YOU-Paket")):
+            self.gh.add(manifest=man)
+            self.assertEqual(self.u.run("install"), 2, man)
+            self.assertIn(text, self.status()["message"])
 
-    def test_version_file_mismatch(self):
-        self.gh.add("2.0.1", pkg=make_pkg("2.0.1", file_version="2.0.9"))
+    def test_missing_irl4you_dir(self):
+        files = repo_files()
+        files.pop("irl4you/server.py")
+        files.pop("irl4you/web/static")
+        self.gh.add(files=files)
         self.assertEqual(self.u.run("install"), 2)
-        self.assertIn("VERSION", self.status()["message"])
-
-    def test_newer_updater_required(self):
-        self.gh.add("2.0.1", pkg=make_pkg("2.0.1", manifest={"min_updater": 99}))
-        self.assertEqual(self.u.run("install"), 2)
-        self.assertIn("neueren Update-Helfer", self.status()["message"])
-
-    def test_bad_unit_name(self):
-        self.gh.add("2.0.1", pkg=make_pkg("2.0.1", manifest={"restart": ["pipbox.service; reboot"]}))
-        self.assertEqual(self.u.run("install"), 2)
+        self.assertIn("irl4you/", self.status()["message"])
 
     def test_size_limit(self):
-        self.gh.add("2.0.0")
+        self.gh.add()
         u = self.make(max_download_mb="0")
         self.assertEqual(u.run("install"), 2)
         self.assertIn("größer als erlaubt", u.load_status()["message"])
 
     def test_extra_link_real_dir(self):
         os.makedirs(self.overrides["extra_link"])
-        self.gh.add("2.0.0")
+        self.gh.add()
         self.assertFalse(self.u.install())
         self.assertEqual(self.status()["state"], "failed")
         self.assertTrue(os.path.isdir(self.overrides["extra_link"]) and not os.path.islink(self.overrides["extra_link"]))
 
     def test_reboot_flag(self):
-        self.gh.add("2.0.0", pkg=make_pkg("2.0.0", manifest={"reboot": True}))
+        self.gh.add(manifest={"reboot": True})
         self.u.install()
         self.assertTrue(self.status()["reboot_required"])
 
+    def test_debs(self):
+        self.gh.add(irl={"irl4you/debs/irl4you-wifi-8821cu_1.0_arm64.deb": b"deb"})
+        self.assertTrue(self.u.install())
+        self.assertTrue(os.path.isfile(os.path.join(self.overrides["root"], "current", "debs", "irl4you-wifi-8821cu_1.0_arm64.deb")))
 
-class TestUnsafePackages(Base):
+    def test_only_debs_in_debs(self):
+        self.gh.add(irl={"irl4you/debs/evil.sh": b"#!/bin/sh"})
+        self.assertEqual(self.u.run("install"), 2)
+        self.assertIn("nur .deb", self.status()["message"])
+
+
+class TestUnsafeArchives(Base):
     def attempt(self, factory):
-        self.gh.add("2.0.0", pkg=make_pkg("2.0.0", extra=[factory]))
+        self.gh.add(extra=[factory])
         self.assertEqual(self.u.run("install"), 2, self.status())
-        self.assertIsNone(self.u.active_version())
+        self.assertIsNone(self.u.active_id())
         self.assertFalse(os.path.exists(os.path.join(self.tmp, "evil")))
 
     def test_path_traversal(self):
-        def f():
+        def f(top):
             ti = tarfile.TarInfo("../../../../evil")
             ti.size = 1
             return ti, b"x"
         self.attempt(f)
 
     def test_absolute_path(self):
-        def f():
+        def f(top):
             ti = tarfile.TarInfo(os.path.join(self.tmp, "evil"))
             ti.size = 1
             return ti, b"x"
         self.attempt(f)
 
     def test_symlink_out(self):
-        def f():
-            ti = tarfile.TarInfo("./etc")
-            ti.type = tarfile.SYMTYPE
-            ti.linkname = "/etc"
+        def f(top):
+            ti = tarfile.TarInfo(top + "etc")
+            ti.type, ti.linkname = tarfile.SYMTYPE, "/etc"
             return ti, None
         self.attempt(f)
 
     def test_symlink_relative_out(self):
-        def f():
-            ti = tarfile.TarInfo("./a/b")
-            ti.type = tarfile.SYMTYPE
-            ti.linkname = "../../../evil"
+        def f(top):
+            ti = tarfile.TarInfo(top + "a/b")
+            ti.type, ti.linkname = tarfile.SYMTYPE, "../../../evil"
             return ti, None
         self.attempt(f)
 
     def test_device(self):
-        def f():
-            ti = tarfile.TarInfo("./dev")
+        def f(top):
+            ti = tarfile.TarInfo(top + "dev")
             ti.type = tarfile.CHRTYPE
             return ti, None
         self.attempt(f)
 
     def test_hardlink(self):
-        def f():
-            ti = tarfile.TarInfo("./hl")
-            ti.type = tarfile.LNKTYPE
-            ti.linkname = "server.py"
+        def f(top):
+            ti = tarfile.TarInfo(top + "hl")
+            ti.type, ti.linkname = tarfile.LNKTYPE, "VERSION"
             return ti, None
         self.attempt(f)
 
-
-class TestDebs(Base):
-    def deb(self, name="irl4you-encoder_1.0_arm64.deb"):
-        def f():
-            ti = tarfile.TarInfo("./debs/" + name)
-            ti.size = 3
-            return ti, b"deb"
-        return f
-
-    def test_debs_allowed(self):
-        self.gh.add("2.0.0", pkg=make_pkg("2.0.0", extra=[self.deb()]))
-        self.assertTrue(self.u.install())
-        self.assertTrue(os.path.isfile(os.path.join(self.overrides["root"], "current", "debs", "irl4you-encoder_1.0_arm64.deb")))
-
-    def test_other_files_in_debs_refused(self):
-        self.gh.add("2.0.0", pkg=make_pkg("2.0.0", extra=[self.deb("evil.sh")]))
-        self.assertEqual(self.u.run("install"), 2)
-        self.assertIn("nur .deb", self.status()["message"])
+    def test_two_top_dirs(self):
+        def f(top):
+            ti = tarfile.TarInfo("zweiter-ordner/x")
+            ti.size = 1
+            return ti, b"x"
+        self.attempt(f)
 
 
 class TestRollbackSwitch(Base):
     def setUp(self):
         super().setUp()
+        self.cs = []
         for v in ("2.0.0", "2.0.1"):
-            self.gh.add(v)
+            self.cs.append(self.gh.add(v))
             self.u.install()
 
-    def test_rollback(self):
+    def test_rollback_and_forward(self):
         self.assertEqual(self.u.run("rollback"), 0)
-        self.assertEqual(self.u.active_version(), "2.0.0")
-        self.assertEqual(self.u.previous_version(), "2.0.1")
-        self.assertEqual(self.hooks()[-1], "switch 2.0.0 prev=2.0.1")
-        self.assertEqual(self.u.run("rollback"), 0)                # und wieder vor
-        self.assertEqual(self.u.active_version(), "2.0.1")
+        self.assertEqual(self.u.active_id(), self.rid(self.cs[0]))
+        self.assertEqual(self.u.previous_id(), self.rid(self.cs[1]))
+        self.assertEqual(self.hooks()[-1], "switch 2.0.0 prev=%s" % self.rid(self.cs[1]))
+        self.assertEqual(self.u.run("rollback"), 0)
+        self.assertEqual(self.u.active_id(), self.rid(self.cs[1]))
+
+    def test_switch_local_by_short_and_full_sha(self):
+        self.assertEqual(self.u.run("switch", self.cs[0]["sha"][:7]), 0)
+        self.assertEqual(self.u.active_id(), self.rid(self.cs[0]))
+        self.assertEqual(self.u.run("switch", self.cs[1]["sha"]), 0)
+        self.assertEqual(self.u.active_id(), self.rid(self.cs[1]))
 
     def test_switch_remote_older(self):
-        self.gh.add("2.0.2")
-        self.u.install()
-        self.u.prune()
-        subprocess.run(["rm", "-rf", os.path.join(self.overrides["root"], "releases", "2.0.0")])
-        self.assertEqual(self.u.run("switch", "2.0.0"), 0, self.status())
-        self.assertEqual(self.u.active_version(), "2.0.0")
+        for v in ("2.0.2", "2.0.3"):
+            self.cs.append(self.gh.add(v))
+            self.u.install()
+        self.assertNotIn(self.rid(self.cs[0]), self.on_disk())
+        self.assertEqual(self.u.run("switch", self.cs[0]["sha"]), 0, self.status())
+        self.assertEqual(self.u.active_id(), self.rid(self.cs[0]))
 
     def test_switch_unknown(self):
-        self.assertEqual(self.u.run("switch", "9.9.9"), 2)
-        self.assertIn("gibt es im Repository nicht", self.status()["message"])
+        self.assertEqual(self.u.run("switch", "9" * 40), 2)
+        self.assertIn("nicht gefunden", self.status()["message"])
+
+    def test_switch_current_refused(self):
+        self.assertEqual(self.u.run("switch", self.cs[1]["sha"][:10]), 2)
 
     def test_rollback_without_previous(self):
-        subprocess.run(["rm", "-f", os.path.join(self.overrides["state_dir"], "previous")])
+        os.remove(os.path.join(self.overrides["state_dir"], "previous"))
         self.assertEqual(self.u.run("rollback"), 2)
 
 
 class TestAuto(Base):
     def test_only_reports_by_default(self):
-        self.gh.add("2.0.0")
+        self.gh.add()
         self.u.auto()
-        self.assertIsNone(self.u.active_version())
+        self.assertIsNone(self.u.active_id())
         self.assertTrue(self.status()["available"])
 
     def test_installs_when_allowed(self):
-        self.gh.add("2.0.0")
+        c = self.gh.add()
         self.make(auto_install="true").auto()
-        self.assertEqual(self.u.active_version(), "2.0.0")
+        self.assertEqual(self.u.active_id(), self.rid(c))
+
+    def test_waits_for_ci(self):
+        self.gh.add(ci="pending")
+        self.make(auto_install="true").auto()
+        self.assertIsNone(self.u.active_id())
 
     def test_waits_while_sending(self):
-        self.gh.add("2.0.0")
+        self.gh.add()
         self.set_units(["pipbox.service", "pipbox-send.service"])
         self.make(auto_install="true").auto()
-        self.assertIsNone(self.u.active_version())
+        self.assertIsNone(self.u.active_id())
 
 
 class TestRequest(Base):
@@ -494,11 +582,12 @@ class TestRequest(Base):
     def test_valid(self):
         self.assertEqual(self.req("install\n"), ("install", ""))
         self.assertEqual(self.req("check"), ("check", ""))
-        self.assertEqual(self.req("switch\n2.0.1\n"), ("switch", "2.0.1"))
+        self.assertEqual(self.req("switch\nabcdef1\n"), ("switch", "abcdef1"))
         self.assertEqual(self.req("rollback\n"), ("rollback", ""))
 
     def test_invalid(self):
-        for t in ("reboot", "install\n2.0.1", "switch", "switch\n2.0", "switch\n2.0.1\nextra", "check; rm -rf /", ""):
+        for t in ("reboot", "install\nabcdef1", "switch", "switch\n2.0.1", "switch\nabc", "switch\nabcdef1\nextra",
+                  "switch\n../../x", "check; rm -rf /", ""):
             self.assertEqual(self.req(t), (None, None), t)
 
     def test_symlink_ignored(self):
@@ -520,83 +609,58 @@ class TestToken(Base):
         return p
 
     def test_token_sent_to_api_not_to_redirect(self):
-        self.gh.add("2.0.0")
-        self.gh.redirect_assets = True
-        u = self.make(token_file=self.token_file())
-        self.assertTrue(u.install())
+        self.gh.add()
+        self.gh.redirect = True
+        self.assertTrue(self.make(token_file=self.token_file()).install())
         api = [r for r in self.gh.requests if not r[1].startswith("/blob/")]
         blob = [r for r in self.gh.requests if r[1].startswith("/blob/")]
         self.assertTrue(api and blob)
         self.assertTrue(all(r[2] == "Bearer geheim123" for r in api))
-        self.assertTrue(all(r[2] is None for r in blob))
-        self.assertTrue(all(r[0].startswith("localhost") for r in blob))
+        self.assertTrue(all(r[2] is None and r[0].startswith("localhost") for r in blob))
         with open(self.overrides["log_file"]) as f:
             self.assertNotIn("geheim123", f.read())
 
     def test_token_file_must_be_private(self):
-        self.gh.add("2.0.0")
+        self.gh.add()
         u = self.make(token_file=self.token_file(0o644))
         self.assertEqual(u.run("check"), 2)
         self.assertIn("chmod 600", u.load_status()["message"])
 
     def test_missing_token_file_is_public_mode(self):
-        self.gh.add("2.0.0")
-        u = self.make(token_file=os.path.join(self.tmp, "fehlt"))
-        self.assertEqual(u.check(), ("2.0.0", True))
+        self.gh.add()
+        self.assertEqual(self.make(token_file=os.path.join(self.tmp, "fehlt")).check()[1], True)
         self.assertTrue(all(r[2] is None for r in self.gh.requests))
 
 
-class TestShippedScripts(unittest.TestCase):
-    def test_syntax_and_layout(self):
+class TestShippedFiles(unittest.TestCase):
+    def test_scripts_parse(self):
         for p in ("irl4you/install/system-install.sh", "irl4you/install/system-base-fixes.sh", "irl4you/install/zz-irl4you-boot",
                   "release/hooks/install", "release/hooks/health"):
             subprocess.run(["sh", "-n", os.path.join(REPO, p)], check=True)
+
+    def test_system_install_calls_base_fixes_and_debs(self):
         with open(os.path.join(REPO, "irl4you/install/system-install.sh")) as f:
             text = f.read()
         self.assertIn("system-base-fixes.sh", text)
         self.assertIn("debs/*.deb", text)
 
-    def test_version_has_changelog(self):
-        with open(os.path.join(REPO, "VERSION")) as f:
-            v = f.read().strip()
-        U.vkey(v)
-        out = subprocess.run([sys.executable, os.path.join(REPO, "tools", "release-notes.py"), v, os.path.join(REPO, "CHANGELOG.md")],
-                             capture_output=True, text=True, check=True).stdout
-        self.assertNotEqual(out.strip(), "IRL4YOU %s" % v)
-
-
-class TestBuildScript(Base):
-    def test_build_release_is_installable(self):
-        src = os.path.join(self.tmp, "src")
-        os.makedirs(os.path.join(src, "install"))
-        with open(os.path.join(src, "server.py"), "w") as f:
-            f.write("print('x')\n")
-        out = os.path.join(self.tmp, "dist")
-        subprocess.run([os.path.join(REPO, "tools", "build-release.sh"), src, out], check=True, capture_output=True,
-                       env=dict(os.environ, SOURCE_DATE_EPOCH="1700000000"))
-        with open(os.path.join(REPO, "VERSION")) as f:
-            v = f.read().strip()
-        pkg = os.path.join(out, "irl4you-%s.tar.gz" % v)
-        with open(pkg, "rb") as f:
-            data = f.read()
-        with open(pkg + ".sha256") as f:
-            self.assertEqual(f.read().split()[0], hashlib.sha256(data).hexdigest())
-        tree = os.path.join(self.tmp, "tree")
-        U.Updater.safe_extract(pkg, tree)
-        m = U.Updater.read_manifest(tree, v)
+    def test_repo_assembles_to_valid_package(self):
+        d = tempfile.mkdtemp()
+        self.addCleanup(subprocess.run, ["rm", "-rf", d])
+        dest = os.path.join(d, "pkg")
+        sha = "a" * 40
+        version = U.Updater.assemble(REPO, dest, sha)
+        m = U.Updater.read_manifest(dest, sha)
+        self.assertEqual(m["version"], version)
         self.assertEqual(m["restart"], ["pipbox.service"])
         for p in ("hooks/install", "hooks/health", "updater/irl4you_update.py", "updater/systemd/irl4you-update.path",
-                  "server.py"):
-            self.assertTrue(os.path.isfile(os.path.join(tree, p)), p)
-        self.assertTrue(os.access(os.path.join(tree, "hooks/install"), os.X_OK))
-        for h in ("install", "health"):
-            subprocess.run(["sh", "-n", os.path.join(tree, "hooks", h)], check=True)
-        # reproduzierbar
-        out2 = os.path.join(self.tmp, "dist2")
-        subprocess.run([os.path.join(REPO, "tools", "build-release.sh"), src, out2], check=True, capture_output=True,
-                       env=dict(os.environ, SOURCE_DATE_EPOCH="1700000000"))
-        with open(os.path.join(out2, "irl4you-%s.tar.gz" % v), "rb") as f:
-            self.assertEqual(f.read(), data)
+                  "install/system-install.sh", "install/zz-irl4you-boot", "VERSION"):
+            self.assertTrue(os.path.isfile(os.path.join(dest, p)), p)
+        self.assertTrue(os.access(os.path.join(dest, "hooks/install"), os.X_OK))
+
+    def test_default_config_example_loads(self):
+        c = U.Config(path=os.path.join(REPO, "updater", "update.conf.example"))
+        self.assertEqual((c.repo, c.branch, c.require_ci, c.auto_install), ("Bittersweet1987/irl4you_2604", "main", True, False))
 
 
 if __name__ == "__main__":
