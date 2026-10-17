@@ -14,7 +14,10 @@ PrivateTmp=yes
 PrivateDevices=yes
 ProtectKernelTunables=yes
 ProtectControlGroups=yes
-RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+# AF_NETLINK: SRS liest die Netzwerkkarten (getifaddrs) fuer seine Statistik, sonst startet es nicht ("stats.network=0")
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_NETLINK
+# Ordner fuer die PID-Datei (ProtectSystem=strict: ./objs/srs.pid waere nicht beschreibbar)
+RuntimeDirectory=irl4you-srs
 LimitNOFILE=8192
 
 [Install]
