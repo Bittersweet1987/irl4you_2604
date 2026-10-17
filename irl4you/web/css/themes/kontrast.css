@@ -1,0 +1,44 @@
+/* Theme "kontrast": Hoher Kontrast. Nur Token-Werte, keine Regeln. Aus dem bisherigen Design übernommen. */
+:root[data-design="kontrast"][data-theme="dark"],
+:root[data-design="kontrast"]:not([data-theme]){
+  --c-bg:#000000;
+  --c-card:#0b0b0b;
+  --c-text:#ffffff;
+  --c-muted:#e6e6e6;
+  --c-line:#ffffff;
+  --c-ctl:#ffffff;
+  --c-accent:#ffe600;
+  --c-bar:#ffe600;
+  --c-blue:#7cc0ff;
+  --c-ok:#3dff8a;
+  --c-warn:#ffb300;
+  --c-crit:#ff6b5e;
+  --c-on-bar:#000000;
+  --c-on-warn:#000000;
+  --c-on-ok:#000000;
+  --c-on-crit:#000000;
+  --c-shade:rgba(255,255,255,.18);
+  --c-focus:#00e5ff;
+  --r-card:8px;--r-ctl:8px;color-scheme:dark;
+}
+:root[data-design="kontrast"][data-theme="light"]{
+  --c-bg:#ffffff;
+  --c-card:#ffffff;
+  --c-text:#000000;
+  --c-muted:#1a1a1a;
+  --c-line:#000000;
+  --c-ctl:#000000;
+  --c-accent:#0033cc;
+  --c-bar:#0033cc;
+  --c-blue:#0033cc;
+  --c-ok:#005a26;
+  --c-warn:#7a4200;
+  --c-crit:#a60014;
+  --c-on-bar:#ffffff;
+  --c-on-warn:#ffffff;
+  --c-on-ok:#ffffff;
+  --c-on-crit:#ffffff;
+  --c-shade:rgba(0,0,0,.25);
+  --c-focus:#d95f00;
+  --r-card:8px;--r-ctl:8px;color-scheme:light;
+}

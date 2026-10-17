@@ -1,0 +1,17 @@
+/* Ebene 1: Design-Tokens. Nur Variablen, keine Regeln. Standardwerte = bisherige Standardfarben (dunkel).
+   Themes in themes/*.css überschreiben nur diese Werte. */
+:root{
+  /* Farben */
+  --c-bg:#0f172a;--c-card:#1e293b;--c-text:#f8fafc;--c-muted:#a8b4c7;--c-line:#50647f;--c-ctl:#50647f;
+  --c-accent:#06b6d4;--c-bar:#06b6d4;--c-blue:#3b82f6;--c-ok:#22c55e;--c-warn:#f59e0b;--c-crit:#ef4444;
+  --c-on-bar:#0f172a;--c-on-warn:#0f172a;--c-on-ok:#06210f;--c-on-crit:#ffffff;
+  --c-shade:rgba(2,6,23,.45);--c-focus:#ffd24a;
+  /* Schrift */
+  --f-family:-apple-system,system-ui,sans-serif;
+  --f-body:15px;--f-small:13px;--f-tiny:12px;--f-h1:17px;--f-h2:12px;--f-h3:12px;
+  --f-weight-strong:600;--f-caps:uppercase;--f-track:.08em;
+  /* Abstände und Form */
+  --s-1:4px;--s-2:8px;--s-3:12px;--s-4:16px;
+  --r-card:14px;--r-ctl:8px;--r-pill:99px;--bw:1px;--shadow:none;--ctl-h:36px;
+  color-scheme:dark;
+}

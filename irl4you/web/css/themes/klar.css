@@ -1,0 +1,44 @@
+/* Theme "klar": Weich und hell, große Rundungen. Nur Token-Werte, keine Regeln. Aus dem bisherigen Design übernommen. */
+:root[data-design="klar"][data-theme="dark"]{
+  --c-bg:#0e1420;
+  --c-card:#171f2e;
+  --c-text:#eef2fa;
+  --c-muted:#aab5c9;
+  --c-line:#2b364b;
+  --c-ctl:#6a7992;
+  --c-accent:#7aa2ff;
+  --c-bar:#7aa2ff;
+  --c-blue:#7aa2ff;
+  --c-ok:#4cd07d;
+  --c-warn:#f5b04c;
+  --c-crit:#ff7b72;
+  --c-on-bar:#0b1220;
+  --c-on-warn:#1a1203;
+  --c-on-ok:#06210f;
+  --c-on-crit:#2a0a08;
+  --c-shade:rgba(0,0,0,.35);
+  --c-focus:#9db9ff;
+  --r-card:18px;--r-ctl:10px;color-scheme:dark;
+}
+:root[data-design="klar"][data-theme="light"],
+:root[data-design="klar"]:not([data-theme]){
+  --c-bg:#f4f6fb;
+  --c-card:#ffffff;
+  --c-text:#172033;
+  --c-muted:#566177;
+  --c-line:#dde3ee;
+  --c-ctl:#7a849a;
+  --c-accent:#2457d6;
+  --c-bar:#2457d6;
+  --c-blue:#2457d6;
+  --c-ok:#12803d;
+  --c-warn:#b45309;
+  --c-crit:#c62828;
+  --c-on-bar:#ffffff;
+  --c-on-warn:#ffffff;
+  --c-on-ok:#ffffff;
+  --c-on-crit:#ffffff;
+  --c-shade:rgba(23,32,51,.10);
+  --c-focus:#2457d6;
+  --r-card:18px;--r-ctl:10px;color-scheme:light;
+}
