@@ -1,11 +1,9 @@
 # Änderungen
 
-## 2.0.0-rc.5
-- Oberfläche aufgeteilt: server.py (7300 Zeilen) ist nur noch der Einstieg, die Teile liegen im Paket webui/ (jede Datei höchstens 500 Zeilen). Keine Funktionsänderung.
-
 Versionsschema: 0.x.y, angezeigt als v0.x.y. Erste Stelle gibt Marco vor (0 = Alpha), zweite Stelle steigt bei großen/neuen Funktionen, dritte bei Fehlerbehebungen. Die Box folgt weiterhin den Commits von main; die Nummer ist nur der Anzeigename.
 
 ## 0.1.0
+- Oberfläche aufgeteilt: server.py (7300 Zeilen) ist nur noch der Einstieg, die Teile liegen im Paket webui/ (jede Datei höchstens 500 Zeilen). Keine Funktionsänderung.
 - Neues Versionsschema (vorher 2.0.0-rc.x). Sonst unverändert gegenüber 2.0.0-rc.4.
 
 ## 2.0.0-rc.4
