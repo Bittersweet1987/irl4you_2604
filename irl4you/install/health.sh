@@ -19,4 +19,8 @@ done
 
 # Netz: Gab es vor dem Update eine Standardroute, muss sie jetzt wieder da sein (sonst Rollback, damit die Box nicht abgeschnitten bleibt)
 sh "$(dirname "$0")/net-check.sh" || exit 1
+# Tailscale ist nur ein Hinweis, nie ein Grund zum Zurückrollen (Anmeldung und Tailscale-Server liegen nicht in unserer Hand)
+if command -v tailscale >/dev/null 2>&1 && systemctl is-enabled --quiet tailscaled.service 2>/dev/null; then
+  systemctl is-active --quiet tailscaled.service || echo "Hinweis: tailscaled läuft nicht" >&2
+fi
 exit 0

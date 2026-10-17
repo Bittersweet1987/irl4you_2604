@@ -1,46 +1,32 @@
 #!/usr/bin/env python3
+"""IRL4YOU BOX: schaltet WLAN-Sticks mit AIC8800-Chip in den WLAN-Modus und prüft, dass eine WLAN-Schnittstelle entsteht.
+
+Die Treiber kommen als Pakete (irl4you-wifi-rtw88 für Realtek-Sticks, irl4you-wifi-aic8800 für AIC-Sticks) fertig für den Kernel der Box;
+hier wird nichts mehr gebaut oder geladen. Realtek-Sticks laufen ohne Zutun. AIC-Sticks melden sich zuerst als USB-Laufwerk
+(a69c:5721 ... 572f, Pandora-Klon 1111:1111) und müssen einmal umgeschaltet werden. Der Zustand steht in /run/pipbox-wlandriver/status.json.
+"""
 import fcntl
-import hashlib
-import io
 import json
 import os
-import re
-import shutil
 import subprocess
 import sys
-import tarfile
-import tempfile
 import time
-import urllib.request
 
-REPO = "shenmintao/aic8800d80"
-COMMIT = "1d1b8fff4627857484758d7b8a5f24ac929b933e"
-URL = f"https://codeload.github.com/{REPO}/tar.gz/{COMMIT}"
-NEEDED = ("drivers/aic8800/aic_load_fw", "drivers/aic8800/aic8800_fdrv", "drivers/aic8800/Makefile", "drivers/aic8800/Kconfig", "fw/aic8800D80")
-TREE_SHA256 = "74ddb70e55e4e1fa113e0b516a9b129cda3141a324afd4eafe1f2f73d8c2d221"
-MAX_DOWNLOAD = 30 * 1024 * 1024
-MAX_UNPACKED = 40 * 1024 * 1024
-SRC_KERNEL = "5.10.160"
-LIB_MODULES = "/lib/modules"
-FW_DIR = "/lib/firmware/aic8800_fw/USB/aic8800D80"
-MODPROBE_CONF = "/etc/modprobe.d/pipbox-aic8800.conf"
 RUN = "/run/pipbox-wlandriver"
 STATUS = f"{RUN}/status.json"
 LOCK = "/run/pipbox-wlandriver.lock"
-PERSIST = "/var/lib/pipbox-wlandriver"
 SYSFS_USB = "/sys/bus/usb/devices"
 SYSFS_NET = "/sys/class/net"
-BUILD_TIMEOUT = 900
-TMPROOT = "/var/tmp"
-VENDOR = "a69c"
-MSC_ID = "a69c:5723"
-LOADER_ID = "a69c:8d80"
-WORKING_ID = "a69c:8d81"
-CANDIDATES = {MSC_ID: "UGREEN AX900 WLAN-Stick (AIC8800D80)", LOADER_ID: "UGREEN AX900 WLAN-Stick (AIC8800D80)"}
+PKG = "irl4you-wifi-aic8800"
 MODULES = ("aic_load_fw", "aic8800_fdrv")
-HELPER_REV = 3
-KBUILD = b"obj-m += aic_load_fw/\nobj-m += aic8800_fdrv/\n".decode("ascii")
-CONF_TEXT = b"# IRL4YOU BOX: firmware of the AIC8800D80 is here\noptions aic_load_fw aic_fw_path=%s\n"
+NAME = "AIC8800-WLAN-Stick"
+# USB-Laufwerk-Modus (Umschaltung per SCSI-Auswurf) und Pandora-Klon (eigene Umschaltdatei aus dem Paket)
+MSC_IDS = tuple(f"a69c:57{x}" for x in ("21", "22", "23", "24", "25", "26", "27", "2a", "2c", "2f"))
+PANDORA_ID = "1111:1111"
+# Arbeitsmodus: Lader (8d80) und fertiger Stick (8d81)
+WORKING_IDS = ("a69c:8d81", "368b:8d81")
+LOADER_IDS = ("a69c:8d80",)
+KNOWN = {i: NAME for i in MSC_IDS + LOADER_IDS + WORKING_IDS + (PANDORA_ID,)}
 
 
 def log(msg):
@@ -63,21 +49,12 @@ def status(**kw):
     os.replace(tmp, STATUS)
 
 
-def run(args, timeout=60, **kw):
-    return subprocess.run(args, capture_output=True, text=True, errors="replace", timeout=timeout, **kw)
+def run(args, timeout=60):
+    return subprocess.run(args, capture_output=True, text=True, errors="replace", timeout=timeout)
 
 
-def release():
-    return os.uname().release
-
-
-def kernel_supported(rel=None):
-    return (rel or release()).split("-")[0] == SRC_KERNEL
-
-
-def usb_ids_present(root=None):
+def usb_ids_present(root=SYSFS_USB):
     out = set()
-    root = root or SYSFS_USB
     try:
         names = os.listdir(root)
     except OSError:
@@ -98,179 +75,15 @@ def usb_ids_present(root=None):
 
 def wanted(present=None):
     present = usb_ids_present() if present is None else present
-    return {i: CANDIDATES[i] for i in sorted(CANDIDATES) if i in present}
+    return sorted(i for i in KNOWN if i in present)
 
 
-def tree_digest(root, prefixes=NEEDED):
-    rows = []
-    for dp, _dn, fn in os.walk(root):
-        for f in fn:
-            p = os.path.join(dp, f)
-            rel = os.path.relpath(p, root).replace(os.sep, "/")
-            if any(rel == x or rel.startswith(x + "/") for x in prefixes):
-                with open(p, "rb") as fh:
-                    rows.append((rel, hashlib.sha256(fh.read()).hexdigest()))
-    rows.sort()
-    return hashlib.sha256("".join("%s\0%s\n" % r for r in rows).encode()).hexdigest()
+def modules_ok(run_cmd=run):
+    return all(run_cmd(["modinfo", "-n", m]).returncode == 0 for m in MODULES)
 
 
-def extract_needed(data, dest):
-    total = 0
-    with tarfile.open(fileobj=io.BytesIO(data), mode="r:gz") as tf:
-        for m in tf:
-            name = m.name.split("/", 1)[1] if "/" in m.name else ""
-            if not name:
-                continue
-            if name.startswith("/") or ".." in name.split("/"):
-                raise RuntimeError("Das Archiv enthält einen ungültigen Pfad")
-            if not any(name == x or name.startswith(x + "/") for x in NEEDED):
-                continue
-            if m.isdir():
-                os.makedirs(os.path.join(dest, name), exist_ok=True)
-            elif m.isreg():
-                total += m.size
-                if total > MAX_UNPACKED:
-                    raise RuntimeError("Das Archiv ist größer als erwartet")
-                target = os.path.join(dest, name)
-                os.makedirs(os.path.dirname(target), exist_ok=True)
-                with open(target, "wb") as out:
-                    out.write(tf.extractfile(m).read())
-            else:
-                raise RuntimeError("Das Archiv enthält eine Verknüpfung oder ein Gerät")
-
-
-def download(url=None, opener=urllib.request.urlopen):
-    with opener(url or URL, timeout=60) as r:
-        data = r.read(MAX_DOWNLOAD + 1)
-    if len(data) > MAX_DOWNLOAD:
-        raise RuntimeError("Der Download ist größer als erwartet")
-    return data
-
-
-def fetch_source(dest, opener=urllib.request.urlopen):
-    extract_needed(download(opener=opener), dest)
-    got = tree_digest(dest)
-    if got != TREE_SHA256:
-        raise RuntimeError("Die heruntergeladenen Dateien sind nicht die erwarteten (Prüfsumme)")
-    return dest
-
-
-def marker(name):
-    return os.path.join(PERSIST, name)
-
-
-def read_json(path):
-    try:
-        with open(path) as f:
-            return json.load(f)
-    except (OSError, ValueError):
-        return {}
-
-
-def write_json(path, data):
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    tmp = path + ".tmp"
-    with open(tmp, "w") as f:
-        json.dump(data, f)
-    os.chmod(tmp, 0o644)
-    os.replace(tmp, path)
-
-
-def module_dir(rel=None):
-    return f"{LIB_MODULES}/{rel or release()}/updates/aic8800"
-
-
-def installed_ok(rel=None):
-    rel = rel or release()
-    rec = read_json(marker("installed.json"))
-    return (rec.get("kernel") == rel and rec.get("commit") == COMMIT
-            and all(os.path.isfile(f"{module_dir(rel)}/{m}.ko") for m in MODULES)
-            and os.path.isfile(f"{FW_DIR}/fmacfw_8800d80_u02.bin") and os.path.isfile(MODPROBE_CONF))
-
-
-def belacoder_running():
-    try:
-        for d in os.listdir("/proc"):
-            if d.isdigit():
-                try:
-                    with open(f"/proc/{d}/comm") as f:
-                        if f.read().strip() == "belacoder":
-                            return True
-                except OSError:
-                    pass
-    except OSError:
-        pass
-    return False
-
-
-def tools_ok(rel=None):
-    rel = rel or release()
-    miss = [t for t in ("make", "gcc", "usb_modeswitch", "depmod", "modprobe") if not shutil.which(t)]
-    build = f"{LIB_MODULES}/{rel}/build"
-    for f in ("Makefile", "Module.symvers", ".config", "scripts/mod/modpost"):
-        if not os.path.exists(os.path.join(build, f)):
-            miss.append(f"Kernel-Header ({f})")
-            break
-    return miss
-
-
-def build_modules(src, rel=None):
-    rel = rel or release()
-    d = os.path.join(src, "drivers", "aic8800")
-    with open(os.path.join(d, "Kbuild"), "w") as f:
-        f.write(KBUILD)
-    r = run(["make", "-j4", "-C", f"{LIB_MODULES}/{rel}/build", f"M={d}", "modules"], timeout=BUILD_TIMEOUT)
-    out = {}
-    for m in MODULES:
-        ko = os.path.join(d, m, m + ".ko")
-        if not os.path.isfile(ko):
-            raise RuntimeError("Der Bau des Treibers ist fehlgeschlagen: " + (r.stdout + r.stderr)[-200:].replace("\n", " "))
-        v = run(["modinfo", "-F", "vermagic", ko]).stdout.strip()
-        if not v.startswith(rel):
-            raise RuntimeError(f"Das gebaute Modul passt nicht zum Kernel (Modulversion '{v[:40]}')")
-        out[m] = ko
-    return out
-
-
-def install_files(src, kos, rel=None):
-    rel = rel or release()
-    made = []
-    os.makedirs(module_dir(rel), exist_ok=True)
-    for m, ko in kos.items():
-        dest = f"{module_dir(rel)}/{m}.ko"
-        shutil.copy(ko, dest + ".neu")
-        os.chmod(dest + ".neu", 0o644)
-        os.replace(dest + ".neu", dest)
-        made.append(dest)
-    os.makedirs(FW_DIR, exist_ok=True)
-    fw_src = os.path.join(src, *NEEDED[-1].split("/"))
-    for name in sorted(os.listdir(fw_src)):
-        dest = os.path.join(FW_DIR, name)
-        shutil.copy(os.path.join(fw_src, name), dest)
-        os.chmod(dest, 0o644)
-        made.append(dest)
-    os.makedirs(os.path.dirname(MODPROBE_CONF), exist_ok=True)
-    with open(MODPROBE_CONF, "w") as f:
-        f.write(CONF_TEXT.decode("ascii") % FW_DIR)
-    made.append(MODPROBE_CONF)
-    run(["depmod", "-a", rel], timeout=120)
-    return made
-
-
-def remove_files(rel=None):
-    rel = rel or release()
-    for m in reversed(MODULES):
-        run(["modprobe", "-r", m], timeout=60)
-    shutil.rmtree(module_dir(rel), ignore_errors=True)
-    shutil.rmtree(os.path.dirname(FW_DIR), ignore_errors=True)
-    try:
-        os.remove(MODPROBE_CONF)
-    except OSError:
-        pass
-    run(["depmod", "-a", rel], timeout=120)
-
-
-def netdev_for_usb(ident, net_root=SYSFS_NET, resolve=os.path.realpath):
+def netdev_for_usb(idents, net_root=SYSFS_NET, resolve=os.path.realpath):
+    """Name der WLAN-Schnittstelle, die zu einem der USB-Geräte gehört (sonst "")."""
     try:
         names = sorted(os.listdir(net_root))
     except OSError:
@@ -286,7 +99,7 @@ def netdev_for_usb(ident, net_root=SYSFS_NET, resolve=os.path.realpath):
             except OSError:
                 p = os.path.dirname(p)
                 continue
-            if f"{v}:{pr}" == ident:
+            if f"{v}:{pr}" in idents:
                 return n
             break
     return ""
@@ -295,16 +108,22 @@ def netdev_for_usb(ident, net_root=SYSFS_NET, resolve=os.path.realpath):
 def wait_for_wlan(timeout=60, find=netdev_for_usb, sleep=time.sleep, now=time.time):
     end = now() + timeout
     while True:
-        name = find(WORKING_ID)
+        name = find(WORKING_IDS)
         if name or now() >= end:
             return name
         sleep(2)
 
 
-def switch_mode(present=usb_ids_present, sleep=time.sleep, now=time.time, timeout=20):
-    r = run(["usb_modeswitch", "-KW", "-v", VENDOR, "-p", MSC_ID.split(":")[1]], timeout=30)
+def switch_cmd(ident):
+    if ident == PANDORA_ID:
+        return ["usb_modeswitch", "-c", "/etc/usb_modeswitch.d/1111:1111"]
+    return ["usb_modeswitch", "-KW", "-v", ident.split(":")[0], "-p", ident.split(":")[1]]
+
+
+def switch_mode(ident, present=usb_ids_present, run_cmd=run, sleep=time.sleep, now=time.time, timeout=20):
+    r = run_cmd(switch_cmd(ident), timeout=30)
     end = now() + timeout
-    while MSC_ID in present():
+    while ident in present():
         if now() >= end:
             last = [x.strip() for x in (r.stdout + r.stderr).splitlines() if x.strip()]
             return (last[-1] if last else "keine Antwort")[:80]
@@ -312,90 +131,39 @@ def switch_mode(present=usb_ids_present, sleep=time.sleep, now=time.time, timeou
     return ""
 
 
-def do_auto(opener=urllib.request.urlopen):
-    rel = release()
+def do_auto():
     need = wanted()
     if not need:
         return 0
-    names = ", ".join(sorted(set(need.values())))
-    ids = sorted(need)
-    if not kernel_supported(rel):
-        status(state="unsupported", ids=ids, message=f"Für den Kernel {rel} gibt es keinen vorbereiteten Treiber ({names}). Dieser Stick läuft dort möglicherweise nicht richtig.")
+    if all(i in WORKING_IDS for i in need) and netdev_for_usb(WORKING_IDS):
+        status(state="ok", ids=need, message=f"Treiber für {NAME} ist eingerichtet.")
         return 0
-    if WORKING_ID in usb_ids_present() and netdev_for_usb(WORKING_ID):
-        status(state="ok", ids=ids, message=f"Treiber für {names} ist eingerichtet.")
+    if not modules_ok():
+        status(state="unsupported", ids=need, message=f"Für den Kernel {os.uname().release} fehlt das Treiberpaket {PKG}. Der {NAME} läuft so nicht.")
         return 0
-    sig = hashlib.sha256(f"{rel}|{COMMIT}|{HELPER_REV}".encode()).hexdigest()[:16]
-    if read_json(marker("failed.json")).get("signature") == sig:
-        return 0
-    if belacoder_running():
-        status(state="waiting", ids=ids, message=f"Der Treiber für {names} wird nach der Übertragung eingerichtet (er lädt Module nach).")
-        return 0
-    made, tmpdir, fresh = [], None, False
     try:
-        if not installed_ok(rel):
-            miss = tools_ok(rel)
-            if miss:
-                write_json(marker("failed.json"), {"signature": sig, "message": "fehlt: " + ", ".join(miss)})
-                status(state="failed", ids=ids, message="Der Treiber kann nicht gebaut werden, es fehlt: " + ", ".join(miss) + ".")
-                return 0
-            status(state="working", ids=ids, message=f"Treiber für {names} wird geholt, gebaut und eingerichtet (einige Minuten, braucht Internet) …")
-            tmpdir = tempfile.mkdtemp(prefix="pipbox-wlandriver-", dir=TMPROOT)
-            try:
-                src = fetch_source(tmpdir, opener)
-            except OSError as e:
-                status(state="waiting", ids=ids, message=f"Der Treiber für {names} braucht einmal Internet zum Herunterladen (github.com), es klappt noch nicht. Die Box versucht es später erneut: {str(e)[:100]}")
-                return 0
-            kos = build_modules(src, rel)
-            made = install_files(src, kos, rel)
-            fresh = True
-            write_json(marker("installed.json"), {"kernel": rel, "commit": COMMIT, "time": int(time.time())})
-        if MSC_ID in usb_ids_present():
-            status(state="working", ids=ids, message=f"Der Stick {names} wird in den WLAN-Modus geschaltet …")
-            err = switch_mode()
-            if err:
-                raise RuntimeError(f"Der Stick ließ sich nicht in den WLAN-Modus schalten: {err}")
-        elif LOADER_ID in usb_ids_present():
-            run(["modprobe", "aic_load_fw"], timeout=60)
+        for ident in need:
+            if ident in MSC_IDS or ident == PANDORA_ID:
+                status(state="working", ids=need, message=f"Der {NAME} wird in den WLAN-Modus geschaltet …")
+                err = switch_mode(ident)
+                if err:
+                    raise RuntimeError(f"Der Stick ließ sich nicht in den WLAN-Modus schalten: {err}")
+            elif ident in LOADER_IDS:
+                run(["modprobe", "aic_load_fw"])
         name = wait_for_wlan()
         if not name:
             raise RuntimeError("Der Stick hat keine WLAN-Schnittstelle bekommen")
-        if os.path.exists(marker("failed.json")):
-            os.remove(marker("failed.json"))
-        log(f"Treiber eingerichtet für {names}: {name}")
-        status(state="ok", ids=ids, message=f"Treiber für {names} ist eingerichtet. Die WLAN-Schnittstelle heißt {name}.")
+        log(f"Treiber eingerichtet für {NAME}: {name}")
+        status(state="ok", ids=need, message=f"Treiber für {NAME} ist eingerichtet. Die WLAN-Schnittstelle heißt {name}.")
     except Exception as e:
         log(f"Treiber nicht eingerichtet: {e!r}")
-        if fresh or made:
-            try:
-                remove_files(rel)
-                if os.path.exists(marker("installed.json")):
-                    os.remove(marker("installed.json"))
-            except Exception as e2:
-                log(f"Rückbau fehlgeschlagen: {e2!r}")
-        write_json(marker("failed.json"), {"signature": sig, "message": str(e)[:200]})
-        status(state="failed", ids=ids, message=f"Der Treiber für {names} ließ sich nicht einrichten: {str(e)[:160]}")
-    finally:
-        if tmpdir and os.path.basename(tmpdir).startswith("pipbox-wlandriver-"):
-            shutil.rmtree(tmpdir, ignore_errors=True)
-    return 0
-
-
-def do_uninstall():
-    rel = release()
-    remove_files(rel)
-    for m in ("installed.json", "failed.json"):
-        try:
-            os.remove(marker(m))
-        except OSError:
-            pass
-    log("Treiber entfernt")
+        status(state="failed", ids=need, message=f"Der {NAME} ließ sich nicht einrichten: {str(e)[:160]}")
     return 0
 
 
 def main():
     mode = sys.argv[1] if len(sys.argv) > 1 else "auto"
-    if mode not in ("auto", "uninstall"):
+    if mode != "auto":
         log("Unbekannte Anforderung verworfen.")
         return 0
     os.makedirs(RUN, exist_ok=True)
@@ -405,7 +173,7 @@ def main():
     except OSError:
         return 0
     try:
-        return do_auto() if mode == "auto" else do_uninstall()
+        return do_auto()
     except Exception as e:
         log(f"Fehler: {e!r}")
         status(state="failed", message=str(e)[:200])

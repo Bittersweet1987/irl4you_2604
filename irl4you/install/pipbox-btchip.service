@@ -1,7 +1,6 @@
 [Unit]
 Description=IRL4YOU BOX Bluetooth-Chip der ROCK 5B Plus (nur dort: auf den Herstellertreiber mit Firmware umhängen)
 After=local-fs.target
-Before=bluetooth.service
 
 [Service]
 Type=oneshot

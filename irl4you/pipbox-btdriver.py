@@ -1,77 +1,47 @@
 #!/usr/bin/env python3
+"""IRL4YOU BOX: trägt Bluetooth-Sticks nach, die der btusb-Treiber des Kernels (6.1) nicht kennt.
+
+Der Kernel kennt die meisten Realtek-Sticks (TP-Link UB500, ASUS BT500, RTL8761B ...) und die Barrot-Sticks (UGREEN BT6.0) selbst, samt
+Firmware (linux-firmware) und den Behelfen für deren Eigenheiten. Es fehlen nur wenige Kennungen; für diese wird zur Laufzeit ein Eintrag
+im btusb angelegt (new_id, Vorlage 0bda:b009 = Realtek) und der Stick neu angebunden. Es wird nichts gebaut oder dauerhaft verändert;
+nach dem Neustart oder Einstecken legt der Dienst den Eintrag erneut an. Zustand: /run/pipbox-btdriver/status.json.
+"""
+import errno
 import fcntl
-import hashlib
 import json
 import os
 import re
-import shutil
 import stat
 import subprocess
 import sys
-import tempfile
 import time
 
-SRC = "/opt/pipbox/btusb-src"
-SRC_FILES = ("btusb.c", "btintel.h", "btbcm.h", "btrtl.h")
-SRC_KERNEL = "5.10.160"
-LIB_MODULES = "/lib/modules"
 RUN = "/run/pipbox-btdriver"
 STATUS = f"{RUN}/status.json"
 LOCK = "/run/pipbox-btdriver.lock"
 REQ = "/var/lib/pipbox/btdriver-request"
-FW_WAIT = 25
-MODPROBE_CONF = "/etc/modprobe.d/pipbox-btdriver.conf"
-RTK_VENDORS = {"0bda", "0b05", "0489", "04ca", "04c5", "0930", "0cb5", "0cb8", "10ec", "1358", "13d3", "2ff8"}
-MODPROBE_TEXT = b"# IRL4YOU BOX: let btusb (with extra IDs) take Realtek sticks, not rtk_btusb\nblacklist rtk_btusb\n".decode("ascii")
-STEPS = 5
-PERSIST = "/var/lib/pipbox-btdriver"
 SYSFS_USB = "/sys/bus/usb/devices"
-ANCHOR = "\t{ USB_DEVICE(0x0bda, 0xb009), .driver_info = BTUSB_REALTEK },\n"
-BUILD_TIMEOUT = 900
+SYSFS_BT = "/sys/class/bluetooth"
+DRV = "/sys/bus/usb/drivers/btusb"
+REF_ID = ("0bda", "b009")           # Realtek-Eintrag der Tabelle im Kernel: Vorlage für die nachgetragenen Kennungen
+STEPS = 3
 
-CANDIDATES = {
+# Im btusb von Linux 6.1.172 (Rockchip-BSP) bereits enthalten, kein Eingriff nötig
+BUILTIN = {
     "2357:0604": "TP-Link UB500 (Realtek RTL8761BUV)",
     "2550:8761": "Realtek RTL8761B (2550:8761)",
-    "2c4e:0115": "Mercusys MA530 (Realtek RTL8761B)",
     "0bda:8771": "Realtek RTL8761B (0bda:8771)",
-    "0bda:a725": "Realtek (0bda:a725)",
-    "2b89:8761": "Realtek RTL8761B (2b89:8761)",
-}
-BARROT = {
+    "0b05:190e": "ASUS USB-BT500 (Realtek RTL8761B)",
     "33fa:0012": "UGREEN BT6.0 Adapter (Barrot)",
     "33fa:0010": "Barrot Bluetooth-Stick (33fa:0010)",
 }
-CANDIDATES.update(BARROT)
-EXTRA_IDS = {"0b05:190e": "ASUS USB-BT500 (Realtek RTL8761B)"}
-ALL_IDS = {**CANDIDATES, **EXTRA_IDS}
-REALTEK_IDS = {i: n for i, n in ALL_IDS.items() if i not in BARROT}
-RECV_ANCHOR = b"\t\tif (!hci_skb_expect(skb)) {\n\t\t\t/* Complete frame */\n\t\t\tdata->recv_event(data->hdev, skb);\n".decode("ascii")
-COMPLETE_MARK = b"\t\t\t/* Complete frame */\n".decode("ascii")
-IF_NO_SKB = b"\t\tif (!skb) {\n".decode("ascii")
-DONE_MARKS = (b"Unexpected continuation".decode("ascii"), b"Unexpected stray byte".decode("ascii"))
-RECV_START_ANCHOR = b"\t\tif (!skb) {\n\t\t\tskb = bt_skb_alloc(HCI_MAX_EVENT_SIZE, GFP_ATOMIC);\n".decode("ascii")
-RECV_START_GUARD = (
-    b"\t\t\t/* IRL4YOU BOX: a new event always starts with the complete header. A single byte as a packet of its own is a\n"
-    b"\t\t\t * bug of the stick (Barrot appends it after a 16 byte reply): drop it, or every further reply is shifted. */\n"
-    b"\t\t\tif (count < HCI_EVENT_HDR_SIZE) {\n"
-    b"\t\t\t\tbt_dev_warn(data->hdev, \"Unexpected stray byte: %d bytes\", count);\n"
-    b"\t\t\t\tbreak;\n"
-    b"\t\t\t}\n\n").decode("ascii")
-RECV_GUARD = (
-    b"\t\t\t/* IRL4YOU BOX, after Linux 7722d6fb54: every data packet belongs to at least one event. If fewer bytes than an event\n"
-    b"\t\t\t * header are left after a complete event, that is a bug of the stick (Barrot sends one byte too many): drop them,\n"
-    b"\t\t\t * or every further reply is shifted by one byte and the start of the adapter fails. */\n"
-    b"\t\t\tif (count && count < HCI_EVENT_HDR_SIZE) {\n"
-    b"\t\t\t\tbt_dev_warn(data->hdev, \"Unexpected continuation: %d bytes\", count);\n"
-    b"\t\t\t\tcount = 0;\n"
-    b"\t\t\t}\n\n").decode("ascii")
-
-SRC_SHA256 = {
-    "btusb.c": "5dbce6032028414fe89067e13ba3e3d4bf9dfb5a0e592771d8c35f68dfd50626",
-    "btintel.h": "fa261ff6177abfe2d29fed0af0aa93344d0f11c51cb9ea7a9804563dc11ae5db",
-    "btbcm.h": "5006497bf37ef95acc186f7c62b51ddbaaecdfcf09bb46f2d250dbc39c93f0b4",
-    "btrtl.h": "759be416a2bbe7d20e98b06f1273b8a7e654770251865e7a049fe6a9c5700298",
+# Fehlen im Kernel 6.1: werden nachgetragen
+MISSING = {
+    "2c4e:0115": "Mercusys MA530 (Realtek RTL8761B)",
+    "0bda:a725": "Realtek (0bda:a725)",
+    "2b89:8761": "Realtek RTL8761B (2b89:8761)",
 }
+CANDIDATES = {**BUILTIN, **MISSING}
 
 
 def log(msg):
@@ -99,9 +69,8 @@ def step(n, text, **kw):
 
 
 def take_request(path=None):
-    path = path or REQ
     try:
-        fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK | os.O_CLOEXEC)
+        fd = os.open(path or REQ, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK | os.O_CLOEXEC)
     except OSError:
         return False
     try:
@@ -111,27 +80,28 @@ def take_request(path=None):
     finally:
         os.close(fd)
     try:
-        os.unlink(path)
+        os.unlink(path or REQ)
     except OSError:
         pass
     return ok
 
 
-def run(args, timeout=60, **kw):
-    return subprocess.run(args, capture_output=True, text=True, errors="replace", timeout=timeout, **kw)
+def read_text(path):
+    try:
+        with open(path, errors="replace") as f:
+            return f.read()
+    except OSError:
+        return ""
 
 
-def release():
-    return os.uname().release
+def write_sysfs(path, text):
+    with open(path, "w") as f:
+        f.write(text)
 
 
-def kernel_supported(rel=None):
-    return (rel or release()).split("-")[0] == SRC_KERNEL
-
-
-def usb_ids_present(root=None):
-    out = set()
-    root = root or SYSFS_USB
+def usb_devices(root=SYSFS_USB):
+    """{usb-id: [Gerätename, ...]} der angesteckten Geräte."""
+    out = {}
     try:
         names = os.listdir(root)
     except OSError:
@@ -139,421 +109,139 @@ def usb_ids_present(root=None):
     for n in names:
         if ":" in n:
             continue
-        try:
-            with open(f"{root}/{n}/idVendor") as f:
-                v = f.read().strip().lower()
-            with open(f"{root}/{n}/idProduct") as f:
-                p = f.read().strip().lower()
-        except OSError:
-            continue
-        out.add(f"{v}:{p}")
+        v = read_text(f"{root}/{n}/idVendor").strip().lower()
+        p = read_text(f"{root}/{n}/idProduct").strip().lower()
+        if v and p:
+            out.setdefault(f"{v}:{p}", []).append(n)
     return out
 
 
-def wanted(present=None):
-    present = usb_ids_present() if present is None else present
-    return {i: CANDIDATES[i] for i in sorted(CANDIDATES) if i in present}
+def wanted(devs=None):
+    devs = usb_devices() if devs is None else devs
+    return {i: CANDIDATES[i] for i in sorted(CANDIDATES) if i in devs}
 
 
-def patch_recv_intr(text):
-    if all(m in text for m in DONE_MARKS):
-        return text
-    if text.count(RECV_ANCHOR) != 1 or text.count(RECV_START_ANCHOR) != 1:
-        raise RuntimeError("btusb.c hat nicht den erwarteten Aufbau (Ankerpunkt fehlt)")
-    head, tail = RECV_ANCHOR.split(COMPLETE_MARK, 1)
-    text = text.replace(RECV_ANCHOR, head + RECV_GUARD + COMPLETE_MARK + tail, 1)
-    return text.replace(RECV_START_ANCHOR, IF_NO_SKB + RECV_START_GUARD + RECV_START_ANCHOR.split("\n", 1)[1], 1)
-
-
-def patch_source(text, ids=None):
-    ids = list(REALTEK_IDS if ids is None else ids)
-    if text.count(ANCHOR) != 1:
-        raise RuntimeError("btusb.c hat nicht den erwarteten Aufbau (Ankerpunkt fehlt)")
-    lines = []
-    for i in ids:
-        v, p = i.split(":")
-        if re.search(rf"USB_DEVICE\(0x{v}, 0x{p}\)", text, re.I):
-            continue
-        lines.append(f"\t{{ USB_DEVICE(0x{v}, 0x{p}), .driver_info = BTUSB_REALTEK }},\n")
-    if not lines:
-        return text
-    return text.replace(ANCHOR, ANCHOR + "\n\t/* IRL4YOU BOX: weitere Realtek-Sticks (RTL8761B/BU), vom Kernel nicht erkannt */\n" + "".join(lines), 1)
-
-
-def check_source(src=None):
-    src = src or SRC
-    for name in SRC_FILES:
-        try:
-            with open(os.path.join(src, name), "rb") as f:
-                h = hashlib.sha256(f.read()).hexdigest()
-        except OSError:
-            raise RuntimeError(f"Quelle {name} fehlt")
-        if h != SRC_SHA256[name]:
-            raise RuntimeError(f"Quelle {name} ist nicht die erwartete")
-
-
-def module_path(rel=None):
-    return f"{LIB_MODULES}/{rel or release()}/updates/btusb.ko"
-
-
-def marker(name):
-    return os.path.join(PERSIST, name)
-
-
-def read_json(path):
-    try:
-        with open(path) as f:
-            return json.load(f)
-    except (OSError, ValueError):
-        return {}
-
-
-def write_json(path, data):
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    tmp = path + ".tmp"
-    with open(tmp, "w") as f:
-        json.dump(data, f)
-    os.chmod(tmp, 0o644)
-    os.replace(tmp, path)
-
-
-def signature(rel, ids):
-    return hashlib.sha256((rel + "|" + ",".join(sorted(ids))).encode()).hexdigest()[:16]
-
-
-def installed_ok(rel=None, ids=None):
-    rel = rel or release()
-    rec = read_json(marker("installed.json"))
-    return (os.path.isfile(module_path(rel)) and rec.get("kernel") == rel
-            and set(ids or ()) <= set(rec.get("ids", [])))
-
-
-def registered(rel=None):
-    rel = rel or release()
-    out = run(["modinfo", "-k", rel, "-n", "btusb"]).stdout.strip()
-    return bool(out) and os.path.realpath(out) == os.path.realpath(module_path(rel))
-
-
-def heal(rel):
-    if not registered(rel):
-        run(["depmod", "-a", rel], timeout=120)
-        if not registered(rel):
-            return "rebuild"
-    want = run(["modinfo", "-F", "srcversion", module_path(rel)]).stdout.strip()
-    have = loaded_srcversion()
-    if want and have and have != want:
-        if belacoder_running():
-            return "waiting"
-        step(4, "Bluetooth wird neu geladen", manual=False)
-        if not reload_bluetooth() or loaded_srcversion() != want:
-            return "rebuild"
-    return "ok"
-
-
-def belacoder_running():
-    try:
-        for d in os.listdir("/proc"):
-            if d.isdigit():
-                try:
-                    with open(f"/proc/{d}/comm") as f:
-                        if f.read().strip() == "belacoder":
-                            return True
-                except OSError:
-                    pass
-    except OSError:
-        pass
-    return False
-
-
-def tools_ok(rel=None):
-    rel = rel or release()
-    miss = [t for t in ("make", "gcc") if not shutil.which(t)]
-    build = f"{LIB_MODULES}/{rel}/build"
-    for f in ("Makefile", "Module.symvers", ".config", "scripts/mod/modpost"):
-        if not os.path.exists(os.path.join(build, f)):
-            miss.append(f"Kernel-Header ({f})")
-            break
-    return miss
-
-
-def build_module(rel=None, ids=None):
-    rel = rel or release()
-    check_source()
-    tmp = tempfile.mkdtemp(prefix="pipbox-btdriver-", dir="/var/tmp")
-    try:
-        for name in SRC_FILES:
-            shutil.copy(os.path.join(SRC, name), os.path.join(tmp, name))
-        with open(os.path.join(tmp, "btusb.c"), encoding="utf-8", errors="surrogateescape") as f:
-            text = f.read()
-        with open(os.path.join(tmp, "btusb.c"), "w", encoding="utf-8", errors="surrogateescape") as f:
-            f.write(patch_recv_intr(patch_source(text, ids)))
-        with open(os.path.join(tmp, "Kbuild"), "w") as f:
-            f.write("obj-m := btusb.o\n")
-        r = run(["make", "-C", f"{LIB_MODULES}/{rel}/build", f"M={tmp}", "modules"], timeout=BUILD_TIMEOUT)
-        ko = os.path.join(tmp, "btusb.ko")
-        if r.returncode != 0 or not os.path.isfile(ko):
-            raise RuntimeError("Der Bau des Treibers ist fehlgeschlagen: " + (r.stdout + r.stderr)[-200:].replace("\n", " "))
-        v = run(["modinfo", "-F", "vermagic", ko]).stdout.strip()
-        if not v.startswith(rel):
-            raise RuntimeError(f"Das gebaute Modul passt nicht zum Kernel (Modulversion '{v[:40]}')")
-        return ko
-    except Exception:
-        shutil.rmtree(tmp, ignore_errors=True)
-        raise
-
-
-def adapter_present(timeout=15):
-    end = time.time() + timeout
-    while time.time() < end:
-        try:
-            if any(n.startswith("hci") for n in os.listdir("/sys/class/bluetooth")):
-                return True
-        except OSError:
-            pass
-        time.sleep(1)
-    return False
-
-
-def dmesg_lines():
-    return run(["dmesg"], timeout=20).stdout.splitlines()
-
-
-def loaded_srcversion():
-    try:
-        with open("/sys/module/btusb/srcversion") as f:
-            return f.read().strip()
-    except OSError:
-        return ""
-
-
-def hci_for_usb(ident, bt_root="/sys/class/bluetooth", resolve=os.path.realpath):
+def hci_for_dev(dev, bt_root=SYSFS_BT, usb_root=SYSFS_USB, resolve=os.path.realpath):
+    base = resolve(os.path.join(usb_root, dev))
     try:
         names = sorted(n for n in os.listdir(bt_root) if re.fullmatch(r"hci\d+", n))
     except OSError:
         return ""
-    for n in names:
-        p = resolve(os.path.join(bt_root, n))
-        while p and p != os.path.dirname(p):
-            try:
-                with open(os.path.join(p, "idVendor")) as f:
-                    v = f.read().strip().lower()
-                with open(os.path.join(p, "idProduct")) as f:
-                    pr = f.read().strip().lower()
-            except OSError:
-                p = os.path.dirname(p)
-                continue
-            if f"{v}:{pr}" == ident:
-                return n
-            break
-    return ""
+    return next((n for n in names if resolve(os.path.join(bt_root, n, "device")).startswith(base + os.sep)), "")
 
 
-def barrot_errors(ids, timeout=20, hci=hci_for_usb, sleep=time.sleep, lines=None):
-    bad = []
-    for i in ids:
-        end, name = time.time() + timeout, ""
-        while True:
-            name = hci(i)
-            if name or time.time() >= end:
-                break
-            sleep(1)
-        if not name:
-            bad.append(f"{i}: es gibt keinen Adapter")
-            continue
-        sleep(6)
-        hit = [x.strip()[:160] for x in lines() if re.search(rf"{name}: .*(tx timeout|Opcode .* failed|hardware error)", x)]
-        if hit:
-            bad.append(f"{i}: {hit[-1]}")
-    return bad
+def wait_hci(dev, timeout=20, find=hci_for_dev, sleep=time.sleep, now=time.time):
+    end = now() + timeout
+    while True:
+        name = find(dev)
+        if name or now() >= end:
+            return name
+        sleep(1)
 
 
-def firmware_errors(text):
-    bad = []
-    for line in text.splitlines():
-        if re.search(r"RTL|rtl_bt|rtl87", line) and re.search(r"fail|error|not found|-2\b|-22\b", line, re.I):
-            bad.append(line.strip()[:160])
-    return bad
+def dynid_line(ident):
+    v, p = ident.split(":")
+    return f"{v} {p} 0 {REF_ID[0]} {REF_ID[1]}"
 
 
-def active_units(units):
-    return [u for u in units if run(["systemctl", "is-active", "--quiet", u]).returncode == 0]
+def has_dynid(ident, text=None):
+    v, p = ident.split(":")
+    text = read_text(DRV + "/new_id") if text is None else text
+    return any(line.split()[:2] == [v, p] for line in text.splitlines())
 
 
-def rtk_conflict(ids):
-    return any(i.split(":")[0] in RTK_VENDORS and i in ALL_IDS and i not in BARROT for i in ids)
+def add_dynid(ident):
+    try:
+        write_sysfs(DRV + "/new_id", dynid_line(ident))
+    except OSError as e:
+        # ENODEV: kein ungebundenes Gerät passte (der Stick hängt schon am allgemeinen Treiber); der Eintrag steht trotzdem
+        if e.errno != errno.ENODEV or not has_dynid(ident):
+            raise
 
 
-def set_rtk_blacklist(on):
-    if on:
-        write_text(MODPROBE_CONF, MODPROBE_TEXT)
-    else:
+def rebind(dev, drv=DRV, usb_root=SYSFS_USB):
+    """Schnittstellen des Sticks vom btusb lösen und neu anbinden, damit der neue Tabelleneintrag greift."""
+    try:
+        ifs = sorted(n for n in os.listdir(f"{usb_root}/{dev}") if n.startswith(dev + ":"))
+    except OSError:
+        return
+    for i in ifs:
+        if os.path.exists(f"{drv}/{i}"):
+            write_sysfs(f"{drv}/unbind", i)
         try:
-            os.remove(MODPROBE_CONF)
+            write_sysfs(f"{drv}/bind", i)
         except OSError:
             pass
 
 
-def write_text(path, text):
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    tmp = path + ".tmp"
-    with open(tmp, "w") as f:
-        f.write(text)
-    os.chmod(tmp, 0o644)
-    os.replace(tmp, path)
-
-
-def reload_bluetooth():
-    units = active_units(("pipbox-dji.service", "bluetooth.service"))
-    for u in units:
-        run(["systemctl", "stop", u], timeout=60)
-    unloaded = run(["modprobe", "-r", "btusb"], timeout=60).returncode == 0
-    if os.path.exists(MODPROBE_CONF):
-        run(["modprobe", "-r", "rtk_btusb"], timeout=60)
-    r = run(["modprobe", "btusb"], timeout=60)
-    ok = unloaded and r.returncode == 0 and adapter_present()
-    for u in ("bluetooth.service", "pipbox-dji.service"):
-        if u in units:
-            run(["systemctl", "start", u], timeout=60)
-    return ok
-
-
-def install_module(ko, rel=None):
-    rel = rel or release()
-    dest = module_path(rel)
-    os.makedirs(os.path.dirname(dest), exist_ok=True)
-    backup = None
-    if os.path.exists(dest):
-        backup = dest + ".vorher"
-        shutil.copy2(dest, backup)
-    tmp = dest + ".neu"
-    shutil.copy(ko, tmp)
-    os.chmod(tmp, 0o644)
-    os.replace(tmp, dest)
-    run(["depmod", "-a", rel], timeout=120)
-    return backup
-
-
-def rollback(backup, rel=None):
-    rel = rel or release()
-    dest = module_path(rel)
+def unblock_hci(hci, bt_root=SYSFS_BT):
+    """Hebt eine Funksperre (rfkill, "soft") des Adapters auf: ein gespeicherter Sperrzustand aus dem Image würde sonst jedes Einschalten verhindern."""
+    done = False
     try:
-        if backup and os.path.exists(backup):
-            os.replace(backup, dest)
-        elif os.path.exists(dest):
-            os.remove(dest)
-    except OSError as e:
-        log(f"Rückbau: {e}")
-    run(["depmod", "-a", rel], timeout=120)
-    set_rtk_blacklist(False)
-    reload_bluetooth()
+        subs = os.listdir(f"{bt_root}/{hci}")
+    except OSError:
+        return False
+    for n in subs:
+        soft = f"{bt_root}/{hci}/{n}/soft"
+        if n.startswith("rfkill") and read_text(soft).strip() == "1":
+            write_sysfs(soft, "0")
+            done = True
+    return done
+
+
+def stream_running():
+    return subprocess.run(["pgrep", "-x", "irl4you-encoder"], capture_output=True).returncode == 0
 
 
 def do_auto(force=False):
-    rel = release()
     need = wanted()
 
     def st(**kw):
         status(manual=bool(force), **kw)
     if not need:
         if force:
-            st(state="none", ids=[], message="Es steckt kein Bluetooth-Stick, der diesen Treiber braucht.")
+            st(state="none", ids=[], message="Es steckt kein Bluetooth-Stick, den dieser Helfer betreut.")
         return 0
     names = ", ".join(need.values())
-    if not kernel_supported(rel):
-        st(state="unsupported", ids=sorted(need), message=f"Für den Kernel {rel} gibt es keinen vorbereiteten Treiber ({names}). Dieser Stick läuft dort möglicherweise nicht richtig.")
-        return 0
-    if not force and installed_ok(rel, need) and not (rtk_conflict(need) and not os.path.exists(MODPROBE_CONF)):
-        h = heal(rel)
-        if h == "ok":
-            st(state="ok", ids=sorted(need), message=f"Treiber für {names} ist eingerichtet.")
-            return 0
-        if h == "waiting":
-            st(state="waiting", ids=sorted(need), message=f"Der Treiber für {names} wird nach der Übertragung geladen (er lädt Bluetooth neu).")
-            return 0
-        log("Eingespieltes Modul wird nicht benutzt und ließ sich nicht eintragen: wird neu gebaut")
-    sig = signature(rel, need)
-    if not force and read_json(marker("failed.json")).get("signature") == sig:
-        return 0
-    if belacoder_running():
-        st(state="waiting", ids=sorted(need), message=f"Der Treiber für {names} wird nach der Übertragung eingerichtet (er lädt Bluetooth neu).")
-        return 0
-    step(1, "Voraussetzungen werden geprüft", manual=bool(force), ids=sorted(need), message=f"Treiber für {names} wird gebaut und eingerichtet (einige Minuten) …")
-    miss = tools_ok(rel)
-    if miss:
-        write_json(marker("failed.json"), {"signature": sig, "message": "fehlt: " + ", ".join(miss)})
-        st(state="failed", ids=sorted(need), message="Der Treiber kann nicht gebaut werden, es fehlt: " + ", ".join(miss) + ".")
-        return 0
-    backup, tmpdir, done = None, None, False
+    ids = sorted(need)
+    devs = usb_devices()
+    problems = []
     try:
-        step(2, "Treiber wird gebaut", manual=bool(force))
-        ko = build_module(rel, list(REALTEK_IDS))
-        tmpdir = os.path.dirname(ko)
-        want_src = run(["modinfo", "-F", "srcversion", ko]).stdout.strip()
-        before = len(dmesg_lines())
-        step(3, "Treiber wird eingespielt", manual=bool(force))
-        backup = install_module(ko, rel)
-        step(4, "Bluetooth wird neu geladen", manual=bool(force))
-        if rtk_conflict(need):
-            set_rtk_blacklist(True)
-        if not reload_bluetooth():
-            raise RuntimeError("Nach dem Laden des Treibers gibt es keinen Bluetooth-Adapter (oder das alte Modul ließ sich nicht entladen)")
-        if want_src and loaded_srcversion() != want_src:
-            raise RuntimeError("Das neue Modul wurde nicht geladen (das alte läuft noch)")
-        step(5, "Stick wird geprüft", manual=bool(force))
-        new = dmesg_lines()[before:]
-        if any(i not in BARROT for i in need):
-            end = time.time() + FW_WAIT
-            while not (any("RTL" in x for x in new) or firmware_errors("\n".join(new))) and time.time() < end:
-                time.sleep(1)
-                new = dmesg_lines()[before:]
-            bad = firmware_errors("\n".join(new))
-            if bad:
-                raise RuntimeError("Firmware des Sticks ließ sich nicht laden: " + bad[-1])
-            if not any("RTL" in x for x in new):
-                last = [x.strip()[-90:] for x in new if "Bluetooth" in x or "btusb" in x][-1:]
-                raise RuntimeError("Der Treiber hat keine Firmware für den Stick geladen (keine Meldung des Realtek-Teils)" + (f", zuletzt: {last[0]}" if last else ""))
-        barrot = [i for i in need if i in BARROT]
-        if barrot:
-            bad = barrot_errors(barrot, lines=lambda: dmesg_lines()[before:])
-            if bad:
-                raise RuntimeError("Der Barrot-Stick startet auch mit dem neuen Treiber nicht: " + bad[-1])
-        write_json(marker("installed.json"), {"kernel": rel, "ids": sorted(ALL_IDS), "time": int(time.time())})
-        if os.path.exists(marker("failed.json")):
-            os.remove(marker("failed.json"))
-        done = True
-        log(f"Treiber eingerichtet für {names}")
-        st(state="ok", ids=sorted(need), step=STEPS, message=f"Treiber für {names} ist eingerichtet. Eine Kamera fragt nach dem Wechsel des Sticks eventuell einmal nach der Kopplung.")
-    except Exception as e:
-        log(f"Treiber nicht eingerichtet: {e!r}")
-        if not done:
-            if os.path.exists(module_path(rel)) or backup:
-                try:
-                    rollback(backup, rel)
-                except Exception as e2:
-                    log(f"Rückbau fehlgeschlagen: {e2!r}")
-            write_json(marker("failed.json"), {"signature": sig, "message": str(e)[:200]})
-            st(state="failed", ids=sorted(need), message=f"Der Treiber für {names} ließ sich nicht einrichten, es läuft der Standardtreiber weiter: {str(e)[:160]}")
-    finally:
-        if tmpdir and tmpdir.startswith("/var/tmp/pipbox-btdriver-"):
-            shutil.rmtree(tmpdir, ignore_errors=True)
+        for ident in ids:
+            for dev in devs[ident]:
+                if ident in MISSING and not has_dynid(ident):
+                    if stream_running():
+                        st(state="waiting", ids=ids, message=f"Der Stick {need[ident]} wird nach der Übertragung eingerichtet (Bluetooth fehlt dabei kurz).")
+                        return 0
+                    step(1, "Stick wird eingetragen", ids=ids, message=f"{need[ident]} wird dem Bluetooth-Treiber bekannt gemacht …")
+                    add_dynid(ident)
+                    step(2, "Stick wird neu angebunden")
+                    rebind(dev)
+                elif not hci_for_dev(dev):
+                    step(2, "Stick wird neu angebunden", ids=ids)
+                    rebind(dev)
+                step(3, "Stick wird geprüft")
+                hci = wait_hci(dev)
+                if not hci:
+                    problems.append(f"{need[ident]}: es entsteht kein Bluetooth-Adapter")
+                elif unblock_hci(hci):
+                    log(f"{hci}: Funksperre aufgehoben")
+    except OSError as e:
+        problems.append(f"Zugriff auf den Treiber nicht möglich: {str(e)[:100]}")
+    if problems:
+        log("Bluetooth: " + "; ".join(problems))
+        st(state="failed", ids=ids, step=STEPS, message=f"Der Stick ließ sich nicht einrichten: {problems[-1][:160]}")
+    else:
+        log(f"Bluetooth-Stick eingerichtet: {names}")
+        st(state="ok", ids=ids, step=STEPS, message=f"Treiber für {names} ist eingerichtet. Eine Kamera fragt nach dem Wechsel des Sticks eventuell einmal nach der Kopplung.")
     return 0
 
 
 def do_uninstall():
-    rel = release()
-    for p in (module_path(rel), module_path(rel) + ".vorher"):
-        try:
-            os.remove(p)
-        except OSError:
-            pass
-    run(["depmod", "-a", rel], timeout=120)
-    set_rtk_blacklist(False)
-    for m in ("installed.json", "failed.json"):
-        try:
-            os.remove(marker(m))
-        except OSError:
-            pass
-    log("Treiber entfernt; das Standardmodul gilt nach dem nächsten Neustart wieder")
+    for ident in MISSING:
+        if has_dynid(ident):
+            write_sysfs(DRV + "/remove_id", " ".join(ident.split(":")))
+    log("Nachgetragene Kennungen entfernt")
     return 0
 
 

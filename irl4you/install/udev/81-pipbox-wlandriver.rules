@@ -1,4 +1,6 @@
-# Löst beim Einstecken eines WLAN-Sticks mit AIC8800D80 (UGREEN AX900) die Einrichtung aus (pipbox-wlandriver.service). Der Stick meldet sich zuerst als
-# USB-Laufwerk (a69c:5723); der Dienst holt den Treiber einmal, schaltet den Stick um und prüft, dass eine WLAN-Schnittstelle entsteht. Rückweg: Datei löschen.
-ACTION=="add", SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", ATTR{idVendor}=="a69c", ATTR{idProduct}=="5723", TAG+="systemd", ENV{SYSTEMD_WANTS}+="pipbox-wlandriver.service"
+# Löst beim Einstecken eines WLAN-Sticks mit AIC8800-Chip (z. B. UGREEN AX900, Tenda U11) die Einrichtung aus (pipbox-wlandriver.service).
+# Der Stick meldet sich zuerst als USB-Laufwerk (a69c:5721 ... 572f) oder als Pandora-Klon (1111:1111); der Dienst schaltet ihn um und prüft,
+# dass eine WLAN-Schnittstelle entsteht. Die Treiber selbst kommen als Pakete (irl4you-wifi-aic8800, irl4you-wifi-rtw88). Rückweg: Datei löschen.
+ACTION=="add", SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", ATTR{idVendor}=="a69c", ATTR{idProduct}=="572[1-7acf]", TAG+="systemd", ENV{SYSTEMD_WANTS}+="pipbox-wlandriver.service"
 ACTION=="add", SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", ATTR{idVendor}=="a69c", ATTR{idProduct}=="8d80", TAG+="systemd", ENV{SYSTEMD_WANTS}+="pipbox-wlandriver.service"
+ACTION=="add", SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", ATTR{idVendor}=="1111", ATTR{idProduct}=="1111", TAG+="systemd", ENV{SYSTEMD_WANTS}+="pipbox-wlandriver.service"

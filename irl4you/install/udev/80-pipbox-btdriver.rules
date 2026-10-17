@@ -1,5 +1,5 @@
-# Löst beim Einstecken eines Bluetooth-Sticks (Realtek oder Barrot), den der Kernel 5.10 nicht richtig kennt, den Treiberbau aus (pipbox-btdriver.service).
-# Der Dienst prüft selbst, ob etwas zu tun ist (Kernel, Werkzeuge, keine Übertragung). Rückweg: Datei löschen.
+# Löst beim Einstecken eines Bluetooth-Sticks (Realtek oder Barrot) die Prüfung aus (pipbox-btdriver.service): fehlt dem Kernel (6.1) eine Kennung, wird sie
+# zur Laufzeit nachgetragen; außerdem wird eine Funksperre (rfkill) des Adapters aufgehoben. Der Dienst prüft selbst, ob etwas zu tun ist. Rückweg: Datei löschen.
 
 # Realtek RTL8761B (0bda:8771)
 ACTION=="add", SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", ATTR{idVendor}=="0bda", ATTR{idProduct}=="8771", TAG+="systemd", ENV{SYSTEMD_WANTS}+="pipbox-btdriver.service"

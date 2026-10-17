@@ -1,21 +1,20 @@
 [Unit]
-Description=IRL4YOU BOX Bluetooth-Treiber für Realtek- und Barrot-Sticks (baut bei Bedarf das Modul btusb neu)
+Description=IRL4YOU BOX Bluetooth-Sticks nachtragen, die der Kernel nicht kennt (btusb-Kennungen zur Laufzeit)
 After=local-fs.target
 
 [Service]
 Type=oneshot
 ExecStart=/usr/bin/python3 /opt/pipbox/pipbox-btdriver.py auto
-TimeoutStartSec=25min
+TimeoutStartSec=3min
 Nice=10
 CapabilityBoundingSet=CAP_SYS_MODULE CAP_SYSLOG CAP_DAC_OVERRIDE CAP_FOWNER CAP_CHOWN
 NoNewPrivileges=yes
 ProtectSystem=strict
-ReadWritePaths=/lib/modules /run /var/lib/pipbox /etc/modprobe.d
+ReadWritePaths=/run /var/lib/pipbox
 StateDirectory=pipbox-btdriver
 ProtectHome=yes
 PrivateTmp=yes
 ProtectControlGroups=yes
-ProtectKernelTunables=yes
 ProtectClock=yes
 ProtectHostname=yes
 RestrictAddressFamilies=AF_UNIX AF_NETLINK
