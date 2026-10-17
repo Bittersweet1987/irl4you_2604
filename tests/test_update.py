@@ -95,6 +95,12 @@ class FakeGitHub:
                 fake.requests.append((self.headers.get("Host"), u.path, self.headers.get("Authorization")))
                 base = "/repos/%s/" % fake.repo
                 p = u.path
+                if p == base + "commits" and "path" in q:
+                    return self.js(fake.version_commits(q["sha"][0]))
+                if p.startswith(base + "compare/"):
+                    a, b = p.rsplit("/", 1)[1].split("...")
+                    ia, ib = fake.index(a), fake.index(b)
+                    return self.js({"ahead_by": ia - ib}) if ia is not None and ib is not None else self.js({}, 404)
                 if p == base + "commits":
                     return self.js([fake.api(c) for c in fake.commits][:int(q.get("per_page", ["30"])[0])])
                 if p.startswith(base + "commits/") and p.endswith("/check-runs"):
@@ -148,6 +154,21 @@ class FakeGitHub:
              "tamper": tamper or {}, "extra": extra or []}
         self.commits.insert(0, c)
         return c
+
+    def index(self, sha):
+        for i, c in enumerate(self.commits):
+            if c["sha"] == sha:
+                return i
+        return None
+
+    def version_commits(self, sha):
+        """Neuester Commit ab sha abwärts, der VERSION ändert (Release)."""
+        i = self.index(sha)
+        for j in range(i, len(self.commits)):
+            below = self.commits[j + 1]["files"].get("VERSION") if j + 1 < len(self.commits) else None
+            if self.commits[j]["files"].get("VERSION") != below:
+                return [self.api(self.commits[j])]
+        return []
 
     def find(self, ref):
         for c in self.commits:
@@ -360,6 +381,18 @@ class TestInstall(Base):
         self.assertEqual(self.u.active_id(), self.rid(c))
         self.assertEqual(self.status()["version"], "0.1.0 (%s)" % c["sha"][:7])
         self.assertEqual(self.hooks()[-1].split()[:2], ["install", "0.1.0"])
+
+    def test_dritte_stelle_zaehlt_commits_seit_release(self):
+        self.gh.add("0.2")
+        self.assertTrue(self.u.install())
+        self.assertEqual(self.status()["version"].split(" ")[0], "0.2.0")
+        for _ in range(3):
+            self.gh.add("0.2")
+        self.assertTrue(self.u.install())
+        self.assertEqual(self.status()["version"].split(" ")[0], "0.2.3")
+        self.gh.add("0.3")
+        self.assertTrue(self.u.install())
+        self.assertEqual(self.status()["version"].split(" ")[0], "0.3.0")
 
     def test_not_newer(self):
         self.gh.add()

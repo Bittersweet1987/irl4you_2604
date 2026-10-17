@@ -335,6 +335,20 @@ class Updater:
             raise Refuse("Der Zweig %s hat keine Commits" % self.cfg.branch)
         return out
 
+    def build_number(self, sha):
+        """Dritte Stelle der Version: Commits seit dem letzten Release. Ein Release ist der letzte Commit, der VERSION ändert."""
+        try:
+            rel = self._json("/repos/%s/commits?sha=%s&path=VERSION&per_page=1" % (self.cfg.repo, sha))
+            base = rel[0]["sha"]
+            if not SHA_RE.match(base):
+                raise ValueError(base)
+            if base == sha:
+                return 0
+            return int(self._json("/repos/%s/compare/%s...%s" % (self.cfg.repo, base, sha))["ahead_by"])
+        except (Refuse, ValueError, KeyError, IndexError, TypeError) as e:
+            self.log("Dritte Stelle der Version nicht ermittelbar (%s), 0 angenommen" % e)
+            return 0
+
     def resolve(self, ref):
         return self._commit(self._json("/repos/%s/commits/%s" % (self.cfg.repo, urllib.parse.quote(ref))))
 
@@ -442,14 +456,17 @@ class Updater:
             raise Refuse("Dem Archiv fehlen Dateien des Commits")
 
     @staticmethod
-    def assemble(repo, dest, commit):
-        """Paket aus dem Repository zusammensetzen: irl4you/ (Programmstand) + release/hooks + updater/ + VERSION + manifest.json."""
+    def assemble(repo, dest, commit, build=0):
+        """Paket aus dem Repository zusammensetzen: irl4you/ (Programmstand) + release/hooks + updater/ + VERSION + manifest.json.
+        Steht in VERSION nur 'x.y' (Release), wird 'build' (Commits seit dem Release) als dritte Stelle angehängt."""
         src = os.path.join(repo, "irl4you")
         if not os.path.isdir(src) or os.path.islink(src):
             raise Refuse("Im Commit fehlt der Ordner irl4you/")
         try:
             with open(os.path.join(repo, "VERSION"), encoding="utf-8") as f:
                 version = f.read().strip()
+            if re.match(r"^\d{1,4}\.\d{1,4}$", version):
+                version = "%s.%d" % (version, build)
             with open(os.path.join(repo, "release", "manifest.json"), encoding="utf-8") as f:
                 manifest = json.loads(f.read().replace("@VERSION@", version))
         except (OSError, ValueError):
@@ -688,7 +705,7 @@ class Updater:
             self.verify_tree(repo_dir, tree_info.get("tree") or [])
             self.log("Commit %s geladen, Dateien stimmen mit dem Git-Baum überein" % short(sha))
             pkg = os.path.join(work, "pkg")
-            self.assemble(repo_dir, pkg, sha)
+            self.assemble(repo_dir, pkg, sha, self.build_number(sha))
             self.read_manifest(pkg, sha)
             dest = os.path.join(self.cfg.releases, rid)
             if os.path.lexists(dest):
