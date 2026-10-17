@@ -33,6 +33,10 @@ try:
 except Exception:
     st = {}
 args = [a for a in sys.argv[1:] if not a.startswith("--")]
+if args and args[0] == "show":
+    u = sys.argv[-1]
+    print("loaded" if u in st.get("known", ["pipbox.service", "pipbox-send.service"]) else "not-found")
+    sys.exit(0)
 if args and args[0] == "is-active":
     on = args[1] in st.get("active", ["pipbox.service"])
     print("active" if on else "inactive")
@@ -220,9 +224,12 @@ class Base(unittest.TestCase):
     def make(self, **kw):
         return U.Updater(U.Config(path=None, overrides=dict(self.overrides, **kw)), sleep=lambda s: None)
 
-    def set_units(self, active):
+    def set_units(self, active, known=None):
+        st = {"active": active}
+        if known is not None:
+            st["known"] = known
         with open(os.path.join(os.path.dirname(self.sysctl), "systemctl.json"), "w") as f:
-            json.dump({"active": active}, f)
+            json.dump(st, f)
 
     def calls(self):
         try:
@@ -394,6 +401,33 @@ class TestInstall(Base):
         self.assertFalse(self.u.install())
         self.assertEqual(self.u.active_id(), self.rid(c0))
         self.assertTrue(self.hooks()[-1].startswith("rollback 2.0.0"))
+
+    def test_missing_units_are_skipped(self):
+        """Basis-System ohne pipbox.service: Gesundheitsprüfung und Neustart überspringen den Dienst, das Update gelingt."""
+        self.set_units([], known=[])
+        c = self.gh.add()
+        self.assertTrue(self.u.install())
+        self.assertEqual(self.u.active_id(), self.rid(c))
+        self.assertNotIn("restart pipbox.service", self.calls())
+        s = self.status()
+        self.assertEqual((s["state"], s["skipped_units"]), ("done", ["pipbox.service"]))
+        self.assertIn("pipbox.service", s["message"])
+        with open(self.overrides["log_file"]) as f:
+            self.assertIn("Dienst pipbox.service ist auf dieser Box nicht eingerichtet", f.read())
+
+    def test_missing_unit_does_not_hide_a_broken_one(self):
+        self.set_units([], known=["pipbox.service"])           # eingerichtet, läuft aber nicht
+        self.gh.add(manifest={"health_units": ["pipbox.service", "gibt-es-nicht.service"]})
+        self.assertFalse(self.u.install())
+        self.assertEqual(self.status()["state"], "failed")
+
+    def test_hook_failure_still_rolls_back_without_units(self):
+        self.set_units([], known=[])
+        c0 = self.gh.add()
+        self.u.install()
+        self.gh.add("2.0.1", hook=HOOK_FAIL)
+        self.assertFalse(self.u.install())
+        self.assertEqual(self.u.active_id(), self.rid(c0))
 
     def test_not_while_sending(self):
         self.gh.add()

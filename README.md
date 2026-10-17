@@ -37,7 +37,8 @@ und `/opt/pipbox` zeigt auf `current` (die Pfade von IRL4YOU bleiben gleich).
    Tarball genau dieses Commits laden, streng entpacken (keine Pfade oder Verweise nach außen, keine Geräte), **jede Datei gegen den
    Git-Baum des Commits prüfen** (Blob-Hash; nichts fehlt, nichts ist zusätzlich), Paket zusammensetzen (`irl4you/` +
    `release/hooks` + `updater/` + `VERSION` + Manifest), Verweis atomar umhängen, `hooks/install`, Dienste neu starten,
-   Gesundheit prüfen.
+   Gesundheit prüfen (nur Dienste, die auf der Box eingerichtet sind; fehlende werden übersprungen und in Protokoll und
+   Status vermerkt, ein eingerichteter, aber nicht laufender Dienst führt weiter zum Zurückrollen).
 4. **Fehler:** startet die neue Version nicht, hängt der Helfer den Verweis sofort zurück, führt `hooks/install` der alten
    Version aus und startet deren Dienste. Die Oberfläche bekommt eine Meldung.
 5. **Zurück / Wechseln:** `rollback` springt auf die vorher aktive Version, `switch <Commit>` auf einen beliebigen Stand

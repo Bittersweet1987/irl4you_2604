@@ -170,6 +170,7 @@ class Updater:
         self.now = now
         self.sleep = sleep
         self.opener = urllib.request.build_opener(_NoAuthOnForeignRedirect())
+        self.skipped = set()                    # Dienste aus dem Manifest, die auf der Box (noch) fehlen
 
     # ---------- Protokoll und Status ----------
 
@@ -553,13 +554,25 @@ class Updater:
             return -9, ["Zeitüberschreitung"]
         return p.returncode, (p.stdout + p.stderr).splitlines()[-30:]
 
+    def known_units(self, units, what):
+        """Nur Dienste, die auf dieser Box eingerichtet sind; die übrigen werden übersprungen (mit Meldung im Protokoll)."""
+        known = []
+        for u in units:
+            r = self.systemctl("show", "-p", "LoadState", "--value", u)
+            if r.returncode != 0 or r.stdout.strip() in ("", "not-found", "masked"):
+                self.log("%s: Dienst %s ist auf dieser Box nicht eingerichtet, übersprungen" % (what, u))
+                self.skipped.add(u)
+            else:
+                known.append(u)
+        return known
+
     def restart(self, manifest):
         self.systemctl("daemon-reload")
-        for unit in manifest.get("restart", []):
+        for unit in self.known_units(manifest.get("restart", []), "Neustart"):
             self.systemctl("restart", unit)
 
     def healthy(self, rid, manifest, previous):
-        units = manifest.get("health_units", [])
+        units = self.known_units(manifest.get("health_units", []), "Gesundheitsprüfung")
         end = self.now() + self.cfg.health_timeout
         while True:
             bad = [u for u in units if self.systemctl("is-active", "--quiet", u).returncode != 0]
@@ -720,8 +733,9 @@ class Updater:
         self.log("Update auf %s abgeschlossen" % self.label(new))
         m = self.manifest_of(new)
         self.status(state="done", step="", version=self.label(new), commit=new, available=False, progress=100,
-                    reboot_required=bool(m.get("reboot")),
-                    message="%s ist installiert." % self.label(new) + (" Bitte neu starten." if m.get("reboot") else ""))
+                    reboot_required=bool(m.get("reboot")), skipped_units=sorted(self.skipped),
+                    message="%s ist installiert." % self.label(new) + (" Bitte neu starten." if m.get("reboot") else "")
+                    + (" Nicht eingerichtet, daher nicht geprüft: %s." % ", ".join(sorted(self.skipped)) if self.skipped else ""))
         return True
 
     def _switch_local(self, rid, cur):
