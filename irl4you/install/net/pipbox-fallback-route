@@ -1,0 +1,27 @@
+#!/bin/sh
+# IRL4YOU BOX: Ausweichweg ins Internet für die Box selbst (Tailscale, Updates, Zeit), NetworkManager-Dispatcher.
+# NetworkManager gibt jeder Karte mit Gateway schon eine eigene Standardroute (Kabel vor WLAN vor Mobilfunk). Nur wenn eine Karte
+# keine bekommt (Profil mit "never-default"), trägt dieses Skript eine mit schlechter Priorität (1000 + Nummer der Karte) nach,
+# damit die Box auch dann einen Weg hat, wenn alle anderen Karten ausfallen. Die Sendewege (Quell-Routing) ändert das nicht.
+IFACE="${DEVICE_IP_IFACE:-$1}"
+EVENT="$2"
+case "$IFACE" in ""|lo|tailscale*|docker*|veth*|br-*|virbr*|tun*|tap*|wg*|zt*|p2p*) exit 0 ;; esac
+case "$IFACE" in *[!A-Za-z0-9_.-]*) exit 0 ;; esac
+idx=$(cat "/sys/class/net/$IFACE/ifindex" 2>/dev/null)
+case "$idx" in ''|*[!0-9]*) exit 0 ;; esac
+metric=$((1000 + idx))
+
+case "$EVENT" in
+  up|dhcp4-change|reapply)
+    [ -n "$IP4_GATEWAY" ] && [ "$IP4_GATEWAY" != "0.0.0.0" ] || exit 0
+    if [ -z "$(ip -4 route show default dev "$IFACE" | grep -v "metric $metric")" ]; then
+      ip -4 route replace default via "$IP4_GATEWAY" dev "$IFACE" metric "$metric" 2>/dev/null || true
+    else
+      ip -4 route del default dev "$IFACE" metric "$metric" 2>/dev/null || true
+    fi
+    ;;
+  down|pre-down)
+    ip -4 route del default dev "$IFACE" metric "$metric" 2>/dev/null || true
+    ;;
+esac
+exit 0

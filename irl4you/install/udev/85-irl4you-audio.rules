@@ -1,0 +1,13 @@
+# IRL4YOU BOX: gleichbleibende ALSA-Namen für USB-Tongeräte (Kameras mit Ton, Mikrofone, Capture-Karten).
+# Manche DJI-Kameras hängen einen Teil der Seriennummer an den Namen oder melden sich ohne Namen; die Box soll sie immer gleich nennen.
+SUBSYSTEM!="sound", GOTO="irl4you_audio_end"
+ACTION!="change", GOTO="irl4you_audio_end"
+ENV{SOUND_INITIALIZED}!="1", GOTO="irl4you_audio_end"
+ENV{ID_BUS}!="usb", GOTO="irl4you_audio_end"
+ATTR{id}=="C4K", GOTO="irl4you_audio_end"
+ATTR{id}=="DJIPocket3", GOTO="irl4you_audio_end"
+ENV{ID_MODEL}=="OsmoAction4", ATTR{id}="OsmoAction4", GOTO="irl4you_audio_end"
+ATTR{id}=="OsmoAction5?*", ATTR{id}="OsmoAction5", GOTO="irl4you_audio_end"
+ATTR{id}=="OsmoAction6?*", ATTR{id}="OsmoAction6", GOTO="irl4you_audio_end"
+ATTR{id}=="OsmoPocket4?*", ATTR{id}="OsmoPocket4", GOTO="irl4you_audio_end"
+LABEL="irl4you_audio_end"

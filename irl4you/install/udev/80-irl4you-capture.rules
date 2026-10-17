@@ -1,0 +1,9 @@
+# IRL4YOU BOX: feste Namen für Videoeingänge
+#   /dev/hdmirx       HDMI-Eingang des RK3588 (Rockchip-BSP-Treiber)
+#   /dev/usb_capture  USB-Aufnahmegerät (Capture-Karte, Webcam)
+ACTION=="remove", GOTO="irl4you_capture_end"
+SUBSYSTEM!="video4linux", GOTO="irl4you_capture_end"
+ENV{ID_V4L_PRODUCT}=="rk_hdmirx", SYMLINK+="hdmirx", GOTO="irl4you_capture_end"
+ATTR{name}=="rk_hdmirx", SYMLINK+="hdmirx", GOTO="irl4you_capture_end"
+ENV{ID_BUS}=="usb", ENV{ID_V4L_CAPABILITIES}=="*:capture:*", SYMLINK+="usb_capture"
+LABEL="irl4you_capture_end"

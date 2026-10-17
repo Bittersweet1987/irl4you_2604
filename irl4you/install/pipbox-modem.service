@@ -1,0 +1,8 @@
+[Unit]
+Description=IRL4YOU BOX Mobilfunk-Helfer (nmcli/mmcli, nur feste Aktionen)
+After=NetworkManager.service ModemManager.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /opt/pipbox/pipbox-modem.py
+TimeoutStartSec=8min

@@ -1,0 +1,7 @@
+# IRL4YOU BOX: Statistik des RTMP-Eingangs (XML) für die Oberfläche, die HDMI-Einspeisung und die Tests.
+server {
+  listen 1936;
+  location / {
+    rtmp_stat all;
+  }
+}

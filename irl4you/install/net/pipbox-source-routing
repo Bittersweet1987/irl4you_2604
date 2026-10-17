@@ -1,0 +1,78 @@
+#!/bin/sh
+# IRL4YOU BOX: Quell-Routing je Netzkarte (NetworkManager-Dispatcher, ersetzt die dhclient-Hooks unter 22.04).
+# Jede Karte mit IPv4 bekommt eine eigene Routing-Tabelle mit dem Namen der Karte und die Regel "from <Adresse> lookup <Karte>".
+# So verlässt jedes Paket die Box über die Karte, deren Adresse es als Absender trägt. Darauf baut das Bündeln (SRTLA) auf:
+# der Sender öffnet je Leitung einen Socket mit der Adresse dieser Karte.
+# Aufruf durch NetworkManager: $1 = Schnittstelle, $2 = Ereignis; Adressen in IP4_ADDRESS_<n>, IP4_GATEWAY.
+IFACE="${DEVICE_IP_IFACE:-$1}"
+EVENT="$2"
+PREF=1000
+# Orte änderbar nur für die Tests (tests/test_95_irl4you_lokal.py)
+RT_ETC="${IRL4YOU_RT_ETC:-/etc/iproute2}"
+RUN_DIR="${IRL4YOU_RUN:-/run}"
+TABLES="$RT_ETC/rt_tables.d/irl4you.conf"
+
+case "$IFACE" in
+  ""|lo|tailscale*|docker*|veth*|br-*|virbr*|tun*|tap*|wg*|zt*|p2p*) exit 0 ;;
+esac
+case "$IFACE" in *[!A-Za-z0-9_.-]*) exit 0 ;; esac
+
+table_id() {
+  cat "$RT_ETC"/rt_tables "$RT_ETC"/rt_tables.d/*.conf /usr/share/iproute2/rt_tables /usr/share/iproute2/rt_tables.d/*.conf 2>/dev/null |
+    awk -v n="$1" '$1 ~ /^[0-9]+$/ && $2 == n { print $1; exit }'
+}
+
+# Tabelle für die Karte anlegen, wenn es noch keine mit ihrem Namen gibt (Nummern 100 bis 250)
+ensure_table() {
+  [ -n "$(table_id "$1")" ] && return 0
+  mkdir -p "$RT_ETC/rt_tables.d"
+  (
+    flock 9
+    [ -n "$(table_id "$1")" ] && exit 0
+    used=$(cat "$RT_ETC"/rt_tables "$RT_ETC"/rt_tables.d/*.conf /usr/share/iproute2/rt_tables /usr/share/iproute2/rt_tables.d/*.conf 2>/dev/null |
+      awk '$1 ~ /^[0-9]+$/ { print $1 }')
+    i=100
+    while [ $i -le 250 ]; do
+      echo "$used" | grep -qx "$i" || break
+      i=$((i + 1))
+    done
+    [ $i -le 250 ] || exit 1
+    echo "$i $1" >> "$TABLES"
+  ) 9>"$RUN_DIR/irl4you-rt-tables.lock"
+}
+
+clear_iface() {
+  n=0
+  while ip -4 rule del lookup "$1" 2>/dev/null && [ $n -lt 32 ]; do n=$((n + 1)); done
+  ip -4 route flush table "$1" 2>/dev/null || true
+}
+
+setup() {
+  ensure_table "$IFACE" || { logger -t pipbox-source-routing "keine freie Tabelle für $IFACE"; exit 0; }
+  clear_iface "$IFACE"
+  # Netz der Karte (direkt erreichbare Adressen) aus der Haupttabelle übernehmen
+  ip -4 route show table main dev "$IFACE" scope link | while read -r net rest; do
+    ip -4 route replace "$net" dev "$IFACE" $rest table "$IFACE" 2>/dev/null || true
+  done
+  if [ -n "$IP4_GATEWAY" ] && [ "$IP4_GATEWAY" != "0.0.0.0" ]; then
+    ip -4 route replace default via "$IP4_GATEWAY" dev "$IFACE" table "$IFACE"
+  else
+    # Punkt-zu-Punkt (Mobilfunk ohne Gateway): alles direkt über die Karte
+    ip -4 route replace default dev "$IFACE" table "$IFACE"
+  fi
+  i=0
+  while [ $i -lt "${IP4_NUM_ADDRESSES:-0}" ]; do
+    eval a=\"\${IP4_ADDRESS_$i}\"
+    addr=${a%% *}
+    ip=${addr%/*}
+    [ -n "$ip" ] && ip -4 rule add from "$ip" lookup "$IFACE" pref $PREF 2>/dev/null
+    i=$((i + 1))
+  done
+  logger -t pipbox-source-routing "$IFACE: Tabelle und Regeln gesetzt ($EVENT)"
+}
+
+case "$EVENT" in
+  up|dhcp4-change|reapply) setup ;;
+  down|pre-down) clear_iface "$IFACE" ;;
+esac
+exit 0

@@ -1,0 +1,10 @@
+[Unit]
+Description=IRL4YOU BOX Mobilfunk: Modems prüfen (nach dem Booten und jede Minute)
+
+[Timer]
+OnBootSec=30s
+OnUnitInactiveSec=1min
+AccuracySec=10s
+
+[Install]
+WantedBy=timers.target

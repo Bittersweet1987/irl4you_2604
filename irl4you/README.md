@@ -1,13 +1,15 @@
 # irl4you/
 
-Hier liegt der Programmstand von IRL4YOU, der auf die Box ausgeliefert wird (jeder Commit auf main ist ein Stand) (alles, was heute unter `/opt/pipbox` liegt).
-Der volle Stand aus `Belabox-2604\irl4you\` kommt hierher, sobald die Umstellung auf 26.04 so weit ist.
+Programmstand von IRL4YOU für Ubuntu 26.04 (alles, was auf der Box unter `/opt/pipbox` liegt; jeder Commit auf `main` ist ein Stand).
+Gepflegt wird er lokal in `Belabox-2604\irl4you\`, getestet (`tests/test_irl4you.py`, auf der Box die Suite in `Belabox-2604\tests`) und dann hierher committet.
 
-Heute enthalten (Basis für das Testsystem):
-- `install/system-install.sh`: richtet Systemteile ein (ruft `system-base-fixes.sh` auf, installiert `debs/*.deb`).
-  Kopiert **keine** Programmdateien (die liegen schon an ihrem Platz, `/opt/pipbox` zeigt auf die aktive Version). Mehrfach lauffähig.
-- `install/system-base-fixes.sh`: NetworkManager verwaltet alle Karten, Kernel-Hook, HDMI-Eingang im DTB, Tastatur/Sprache.
-- `install/zz-irl4you-boot`: Kernel-Hook (landet in `/etc/kernel/postinst.d/`): `/boot/Image`, `/boot/dtb`, `hdmirx` auf `okay`.
-- `debs/`: eigene .deb-Pakete (z. B. `irl4you-wifi-8821cu_*.deb`), werden von `system-install.sh` eingespielt. Nur `*.deb` erlaubt.
-
-Optional: `install/health.sh`: zusätzliche Prüfung nach dem Umschalten (z. B. Oberfläche antwortet auf Port 80).
+- `server.py` (Oberfläche, Port 8780 und 80), `pipbox_send.py`/`pipbox_live.py` (Sendekette mit `irl4you-encoder` und `irl4you-srtla`),
+  `pipbox_modem.py` + `pipbox-modem.py` (Mobilfunk), `dji*.py`, `hdmi_daemon.py`, Helfer `pipbox-*.py`, `web/`.
+- `install/system-install.sh`: wird von `hooks/install` aufgerufen. Reihenfolge: `system-base-fixes.sh` (NetworkManager, Kernel-Hook, HDMI-Eingang, Tastatur/Sprache),
+  eigene Pakete aus `debs/`, dann `irl4you-setup.sh` (Pakete aus Ubuntu, Benutzer, venv `/opt/irl4you/venv` für bleak, PiP-Baustein, NetworkManager-Hooks,
+  udev, nginx-RTMP, Dienste). Kopiert **keine** Programmdateien, mehrfach lauffähig.
+- `install/*.service|path|timer|socket`, `install/net/`, `install/udev/`, `install/nginx/`: Dienste und Systemdateien.
+- `install/health.sh`: nach dem Umschalten antwortet die Oberfläche auf Port 8780 und 80.
+- `install/install-2604.sh [--chroot] [--migrate-from DIR]`: Erstinstallation im Checkout (Daten der alten 22.04-Box übernehmen, Stand als erste Version einrichten).
+- `debs/`: eigene .deb-Pakete (nur `*.deb`), werden von `system-install.sh` eingespielt.
+- Einstellungen und Laufzeitdaten liegen nie hier, sondern unter `/var/lib/pipbox` und `/etc/pipbox`.

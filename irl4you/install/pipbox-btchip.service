@@ -1,0 +1,29 @@
+[Unit]
+Description=IRL4YOU BOX Bluetooth-Chip der ROCK 5B Plus (nur dort: auf den Herstellertreiber mit Firmware umhängen)
+After=local-fs.target
+Before=bluetooth.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /opt/pipbox/pipbox-btchip.py auto
+TimeoutStartSec=2min
+Nice=10
+CapabilityBoundingSet=CAP_SYS_MODULE CAP_SYSLOG CAP_DAC_OVERRIDE CAP_FOWNER CAP_CHOWN
+NoNewPrivileges=yes
+ProtectSystem=strict
+ReadWritePaths=/run /var/lib/pipbox /var/lib/pipbox-btchip /lib/firmware
+StateDirectory=pipbox-btchip
+ProtectHome=yes
+PrivateTmp=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+RestrictAddressFamilies=AF_UNIX AF_NETLINK
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+SystemCallArchitectures=native
+
+[Install]
+WantedBy=multi-user.target

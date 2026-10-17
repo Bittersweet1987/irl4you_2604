@@ -1,0 +1,8 @@
+[Unit]
+Description=IRL4YOU BOX Mobilfunk: neue Modems einrichten, gespeicherte Netztypen wieder setzen
+After=NetworkManager.service ModemManager.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /opt/pipbox/pipbox-modem.py apply
+TimeoutStartSec=3min

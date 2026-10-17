@@ -1,0 +1,10 @@
+# IRL4YOU BOX: Mobilfunk-Sticks, die usb-modeswitch-data (noch) nicht kennt.
+# Huawei E3372-325 (3566:2001): meldet sich erst als RNDIS (Klasse e0) und muss zurückgesetzt werden, sonst wird die NCM-Schnittstelle
+# nie bereit; danach erscheint er als CD-ROM (Klasse 08) und wird auf CDC-NCM umgeschaltet.
+ACTION!="add", GOTO="irl4you_ms_end"
+SUBSYSTEM!="usb", GOTO="irl4you_ms_end"
+ATTRS{idVendor}!="3566", GOTO="irl4you_ms_end"
+ATTRS{idProduct}!="2001", GOTO="irl4you_ms_end"
+ATTRS{bInterfaceClass}=="e0", RUN+="/usr/sbin/usb_modeswitch -v 3566 -p 2001 -R -W", GOTO="irl4you_ms_end"
+ATTRS{bInterfaceClass}=="08", RUN+="/usr/sbin/usb_modeswitch -v 3566 -p 2001 -X"
+LABEL="irl4you_ms_end"
