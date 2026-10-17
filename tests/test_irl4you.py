@@ -209,9 +209,12 @@ class TestPasswort(unittest.TestCase):
         self.assertFalse(os.path.exists(os.path.join(self.dir, "setup-code")))
         with self.assertRaises(ValueError):
             a.set_password("kurz", "10.0.0.4")
-        a.set_password("Ein-Langes-Passwort", "10.0.0.4")
+        with self.assertRaises(ValueError):
+            a.set_password("Ein-Langes-Passwort", "8.8.8.8")
+        self.assertTrue(a.setup_needed)
+        a.set_password("Ein-Langes-Passwort", "192.168.178.20")
         self.assertFalse(a.setup_needed)
-        self.assertTrue(a.valid(a.login("Ein-Langes-Passwort", "10.0.0.4")))
+        self.assertTrue(a.valid(a.login("Ein-Langes-Passwort", "192.168.178.20")))
         with self.assertRaises(ValueError):
             a.set_password("Anderes-Passwort-1", "10.0.0.5")
 

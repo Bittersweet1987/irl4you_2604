@@ -2,6 +2,7 @@
 
 import hashlib
 import hmac
+import ipaddress
 import json
 import os
 import secrets
@@ -191,7 +192,20 @@ class Auth:
 
     WAITING_MSG = "Auf der BELABOX ist noch kein Passwort gesetzt. Bitte zuerst in der BELABOX-Oberfläche eines festlegen."
 
+    TAILSCALE = ipaddress.ip_network("100.64.0.0/10")
+
+    @classmethod
+    def local_ip(cls, ip):
+        try:
+            a = ipaddress.ip_address(ip)
+        except ValueError:
+            return False
+        a = getattr(a, "ipv4_mapped", None) or a
+        return a.is_private or a.is_loopback or a.is_link_local or a in cls.TAILSCALE
+
     def set_password(self, pw, ip):
+        if not self.local_ip(ip):
+            raise ValueError("Die Ersteinrichtung ist nur aus dem lokalen Netz möglich")
         with self.lock:
             if self.mode == "belabox-wartet":
                 raise ValueError(self.WAITING_MSG)
