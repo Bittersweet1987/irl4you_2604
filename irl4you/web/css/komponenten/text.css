@@ -1,0 +1,8 @@
+/* Texte und Überschriften */
+body{margin:0;background:var(--c-bg);color:var(--c-text);font:var(--f-body)/1.4 var(--f-family)}
+.ui-h1{font-size:var(--f-h1);margin:0;color:var(--c-accent)}
+.ui-h2{font-size:var(--f-h2);text-transform:var(--f-caps);letter-spacing:var(--f-track);color:var(--c-accent);margin:0 0 var(--s-2)}
+.ui-h3{font-size:var(--f-h3);text-transform:var(--f-caps);letter-spacing:var(--f-track);color:var(--c-muted);margin:var(--s-4) 0 var(--s-1)}
+.ui-text{margin:0}
+.ui-muted{color:var(--c-muted)}
+.ui-hint{font-size:var(--f-tiny);color:var(--c-muted);margin-top:var(--s-2)}

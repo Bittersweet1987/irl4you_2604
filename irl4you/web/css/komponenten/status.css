@@ -1,0 +1,8 @@
+/* Statuspunkt, Zeile (Label/Wert), Fortschrittsbalken */
+.ui-dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:var(--s-2);background:var(--c-ok)}
+.ui-dot.off{background:var(--c-crit)}
+.ui-dot.wait{background:var(--c-warn)}
+.ui-dot.unk{background:var(--c-muted)}
+.ui-row{display:flex;justify-content:space-between;align-items:baseline;gap:var(--s-3);padding:var(--s-1) 0}
+.ui-bar{height:10px;border-radius:var(--r-pill);background:var(--c-line);overflow:hidden}
+.ui-bar>i{display:block;height:100%;background:var(--c-bar)}

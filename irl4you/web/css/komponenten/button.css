@@ -1,0 +1,8 @@
+/* Buttons und Buttongruppen. Varianten per Klasse: primary (Standard), secondary, danger, small */
+.ui-btn{font:inherit;min-height:var(--ctl-h);padding:var(--s-2) var(--s-3);border-radius:var(--r-ctl);border:var(--bw) solid transparent;background:var(--c-accent);color:var(--c-on-bar);font-weight:var(--f-weight-strong);cursor:pointer}
+.ui-btn:focus-visible{outline:2px solid var(--c-focus);outline-offset:2px}
+.ui-btn:disabled{opacity:.45;cursor:not-allowed}
+.ui-btn.secondary{background:transparent;color:var(--c-text);border-color:var(--c-line);font-weight:400}
+.ui-btn.danger{background:var(--c-crit);color:var(--c-on-crit)}
+.ui-btn.small{min-height:28px;padding:var(--s-1) var(--s-2);font-size:var(--f-small)}
+.ui-btngroup{display:flex;flex-wrap:wrap;gap:var(--s-2);margin-top:var(--s-3)}

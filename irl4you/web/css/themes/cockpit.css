@@ -1,0 +1,44 @@
+/* Theme "cockpit": Dunkel mit Neon-Akzent, eckig. Nur Token-Werte, keine Regeln. Aus dem bisherigen Design übernommen. */
+:root[data-design="cockpit"][data-theme="dark"],
+:root[data-design="cockpit"]:not([data-theme]){
+  --c-bg:#05080b;
+  --c-card:#0b1218;
+  --c-text:#d8f3ff;
+  --c-muted:#7f9db0;
+  --c-line:#1c3a4d;
+  --c-ctl:#2f6a86;
+  --c-accent:#00e5ff;
+  --c-bar:#00e5ff;
+  --c-blue:#4aa8ff;
+  --c-ok:#27f58a;
+  --c-warn:#ffb020;
+  --c-crit:#ff4d4d;
+  --c-on-bar:#021016;
+  --c-on-warn:#1a1000;
+  --c-on-ok:#021a0c;
+  --c-on-crit:#220404;
+  --c-shade:rgba(0,229,255,.12);
+  --c-focus:#ffea00;
+  --r-card:4px;--r-ctl:4px;color-scheme:dark;
+}
+:root[data-design="cockpit"][data-theme="light"]{
+  --c-bg:#e4eaee;
+  --c-card:#ffffff;
+  --c-text:#0b2530;
+  --c-muted:#486370;
+  --c-line:#a9bcc7;
+  --c-ctl:#44687a;
+  --c-accent:#006c8a;
+  --c-bar:#007a9c;
+  --c-blue:#1d5fd1;
+  --c-ok:#0f7a3d;
+  --c-warn:#9a5a00;
+  --c-crit:#b3231f;
+  --c-on-bar:#ffffff;
+  --c-on-warn:#ffffff;
+  --c-on-ok:#ffffff;
+  --c-on-crit:#ffffff;
+  --c-shade:rgba(0,40,60,.12);
+  --c-focus:#b45309;
+  --r-card:4px;--r-ctl:4px;color-scheme:light;
+}

@@ -1,0 +1,44 @@
+/* Theme "mischpult": Mischpult-Optik, warme Töne. Nur Token-Werte, keine Regeln. Aus dem bisherigen Design übernommen. */
+:root[data-design="mischpult"][data-theme="dark"],
+:root[data-design="mischpult"]:not([data-theme]){
+  --c-bg:#16181b;
+  --c-card:#25282d;
+  --c-text:#ece7d8;
+  --c-muted:#a8a396;
+  --c-line:#0c0d0f;
+  --c-ctl:#6b7078;
+  --c-accent:#f2a900;
+  --c-bar:#f2a900;
+  --c-blue:#5ca8e8;
+  --c-ok:#35e06c;
+  --c-warn:#ffb21e;
+  --c-crit:#ff3b30;
+  --c-on-bar:#1a1200;
+  --c-on-warn:#1a1200;
+  --c-on-ok:#04200d;
+  --c-on-crit:#250402;
+  --c-shade:rgba(0,0,0,.5);
+  --c-focus:#4dd0ff;
+  --r-card:4px;--r-ctl:4px;color-scheme:dark;
+}
+:root[data-design="mischpult"][data-theme="light"]{
+  --c-bg:#c4c8cc;
+  --c-card:#e8eaed;
+  --c-text:#14161a;
+  --c-muted:#33373d;
+  --c-line:#4a4f56;
+  --c-ctl:#4a4f56;
+  --c-accent:#8a4b00;
+  --c-bar:#8a4b00;
+  --c-blue:#1d5fd1;
+  --c-ok:#0f7a3d;
+  --c-warn:#9a5a00;
+  --c-crit:#b3231f;
+  --c-on-bar:#ffffff;
+  --c-on-warn:#ffffff;
+  --c-on-ok:#ffffff;
+  --c-on-crit:#ffffff;
+  --c-shade:rgba(0,0,0,.3);
+  --c-focus:#0b57d0;
+  --r-card:4px;--r-ctl:4px;color-scheme:light;
+}

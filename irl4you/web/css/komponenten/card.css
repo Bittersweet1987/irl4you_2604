@@ -1,0 +1,3 @@
+/* Rahmen / Karten */
+.ui-card{background:var(--c-card);border:var(--bw) solid var(--c-line);border-radius:var(--r-card);padding:var(--s-3);box-shadow:var(--shadow)}
+.ui-card+.ui-card{margin-top:var(--s-3)}

@@ -1,0 +1,44 @@
+/* Theme "kompakt": Dunkel, dicht, kleine Rundungen. Nur Token-Werte, keine Regeln. Aus dem bisherigen Design übernommen. */
+:root[data-design="kompakt"][data-theme="dark"],
+:root[data-design="kompakt"]:not([data-theme]){
+  --c-bg:#0b0f14;
+  --c-card:#121821;
+  --c-text:#e6ebf2;
+  --c-muted:#9aa7b8;
+  --c-line:#263142;
+  --c-ctl:#5b6b82;
+  --c-accent:#37c8e0;
+  --c-bar:#37c8e0;
+  --c-blue:#5aa2ff;
+  --c-ok:#3ddc84;
+  --c-warn:#f2b134;
+  --c-crit:#ff6159;
+  --c-on-bar:#06151a;
+  --c-on-warn:#1a1203;
+  --c-on-ok:#06210f;
+  --c-on-crit:#2a0a08;
+  --c-shade:rgba(0,0,0,.4);
+  --c-focus:#ffd24a;
+  --r-card:6px;--r-ctl:6px;color-scheme:dark;
+}
+:root[data-design="kompakt"][data-theme="light"]{
+  --c-bg:#e9edf2;
+  --c-card:#ffffff;
+  --c-text:#111827;
+  --c-muted:#4b5668;
+  --c-line:#c9d1dc;
+  --c-ctl:#7b8798;
+  --c-accent:#0a6a85;
+  --c-bar:#0a7f9d;
+  --c-blue:#1d4ed8;
+  --c-ok:#127a3c;
+  --c-warn:#a86100;
+  --c-crit:#c0281f;
+  --c-on-bar:#ffffff;
+  --c-on-warn:#ffffff;
+  --c-on-ok:#ffffff;
+  --c-on-crit:#ffffff;
+  --c-shade:rgba(17,24,39,.12);
+  --c-focus:#b45309;
+  --r-card:6px;--r-ctl:6px;color-scheme:light;
+}

@@ -1,0 +1,12 @@
+/* Formularfelder und Statusanzeigen */
+.ui-field{display:grid;gap:var(--s-1);margin-top:var(--s-2)}
+.ui-field>label{font-size:var(--f-small);color:var(--c-muted)}
+.ui-input{font:inherit;min-height:var(--ctl-h);padding:var(--s-2) var(--s-3);border-radius:var(--r-ctl);border:var(--bw) solid var(--c-line);background:var(--c-bg);color:var(--c-text)}
+.ui-input:focus-visible{outline:2px solid var(--c-focus);outline-offset:0}
+.ui-badge{display:inline-block;font-size:var(--f-tiny);padding:2px var(--s-2);border-radius:var(--r-pill);background:var(--c-line);color:var(--c-text)}
+.ui-badge.ok{background:var(--c-ok);color:var(--c-on-ok)}
+.ui-badge.warn{background:var(--c-warn);color:var(--c-on-warn)}
+.ui-badge.crit{background:var(--c-crit);color:var(--c-on-crit)}
+.ui-notice{border:var(--bw) solid var(--c-warn);border-radius:var(--r-ctl);padding:var(--s-2) var(--s-3);font-size:var(--f-small)}
+.ui-notice.crit{border-color:var(--c-crit)}
+.ui-notice.ok{border-color:var(--c-ok)}
