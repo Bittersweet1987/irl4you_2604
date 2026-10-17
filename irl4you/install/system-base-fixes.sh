@@ -36,5 +36,17 @@ fi
 [ -f /etc/default/keyboard ] || { printf 'XKBMODEL="pc105"\nXKBLAYOUT="de"\nXKBVARIANT=""\nXKBOPTIONS=""\nBACKSPACE="guess"\n' > /etc/default/keyboard; changed=1; }
 [ -f /etc/default/locale ] || { printf 'LANG=de_DE.UTF-8\nLANGUAGE=de_DE:de\n' > /etc/default/locale; changed=1; }
 
+# 4. Hostname irl4you: macht die Box unter http://irl4you.local erreichbar (mDNS über avahi). Nur wenn noch der Standardname gesetzt ist.
+cur=$(hostname 2>/dev/null || true)
+if [ -z "$cur" ] || [ "$cur" = belabox ] || [ "$cur" = localhost ]; then
+    hostnamectl set-hostname irl4you 2>/dev/null || echo irl4you > /etc/hostname
+    if grep -q '^127.0.1.1' /etc/hosts; then sed -i 's/^127.0.1.1.*/127.0.1.1 irl4you/' /etc/hosts; else echo '127.0.1.1 irl4you' >> /etc/hosts; fi
+    systemctl try-restart avahi-daemon 2>/dev/null || true
+    changed=1
+fi
+
+# 5. Systempartition auf die ganze Karte vergrößern (einmalig)
+sh "$HERE/grow-rootfs.sh" || true
+
 [ "$changed" = 1 ] && echo "system-base-fixes: Änderungen angewendet (Neustart empfohlen)" || echo "system-base-fixes: nichts zu tun"
 exit 0
