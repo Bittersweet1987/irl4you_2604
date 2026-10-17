@@ -181,14 +181,6 @@ def installed_versions():
     return res
 
 
-VERSION_RE = re.compile(r"^\d{1,3}\.\d{1,3}\.\d{1,3}(-[a-z0-9.]{1,16})?$")
-
-
-def vkey(v):
-    core, _, pre = v.partition("-")
-    return tuple(int(x) for x in core.split(".")), (1, ()) if not pre else (0, tuple(pre.split(".")))
-
-
 IFACE_NAME_RE = re.compile(r"^[A-Za-z0-9._-]{1,15}$")
 
 
