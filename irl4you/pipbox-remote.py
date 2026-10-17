@@ -9,8 +9,6 @@ import sys
 import time
 import urllib.request
 
-import pipbox_tailscale_repo as tsrepo
-
 STATE = "/var/lib/pipbox"
 REQ = f"{STATE}/remote-request"
 RUN = "/run/pipbox-remote"
@@ -33,6 +31,11 @@ CLOCK_JUMP_S = 120
 PROBE_PATH = "/api/auth"
 HOSTNAME = "irl4you-box"
 MODES = ("install", "login", "down", "serve_on", "serve_off", "funnel_on", "funnel_off", "stats_on", "stats_off", "logout")
+CODENAMES = ("resolute", "noble", "jammy", "focal")
+KEY_URL = "https://pkgs.tailscale.com/stable/ubuntu/{}.noarmor.gpg"
+LIST_URL = "https://pkgs.tailscale.com/stable/ubuntu/{}.tailscale-keyring.list"
+KEYRING = "/usr/share/keyrings/tailscale-archive-keyring.gpg"
+SOURCE = "/etc/apt/sources.list.d/tailscale.list"
 SERVE_TIMEOUT = 40
 URL_RE = re.compile(r"https://(?:login\.tailscale\.com|console\.tailscale\.com)/[A-Za-z0-9_./?=&%-]{4,200}")
 
@@ -83,15 +86,52 @@ def run_capture(cmd, timeout):
 
 
 def installed():
-    return tsrepo.installed()
+    return subprocess.run(["which", "tailscale"], capture_output=True).returncode == 0
+
+
+def codename():
+    for line in open("/etc/os-release"):
+        if line.startswith("VERSION_CODENAME="):
+            return line.split("=", 1)[1].strip().strip('"')
+    return ""
+
+
+def get(url, limit=100000):
+    if not url.startswith("https://pkgs.tailscale.com/"):
+        raise RuntimeError("Unerlaubte Quelle")
+    with urllib.request.urlopen(urllib.request.Request(url, headers={"User-Agent": "irl4you-box"}), timeout=30) as r:
+        return r.read(limit + 1)[:limit]
 
 
 def do_install():
     if installed():
         status(state="idle", message="Tailscale ist schon installiert.")
         return
-    tsrepo.install(log=log, status=status)
+    cn = codename()
+    if cn not in CODENAMES:
+        raise RuntimeError(f"Dieses System ({cn or '?'}) wird nicht unterstützt (Ubuntu 22.04, 24.04 und 26.04).")
+    status(state="working", step="Lade die Paketquelle von tailscale.com", message="")
+    key = get(KEY_URL.format(cn), 20000)
+    lst = get(LIST_URL.format(cn), 2000).decode()
+    if "pkgs.tailscale.com/stable/ubuntu" not in lst or "deb " not in lst:
+        raise RuntimeError("Die Quellenliste von tailscale.com sieht unerwartet aus")
+    with open(KEYRING, "wb") as f:
+        f.write(key)
+    os.chmod(KEYRING, 0o644)
+    with open(SOURCE, "w") as f:
+        f.write(lst)
+    os.chmod(SOURCE, 0o644)
+    env = dict(os.environ, DEBIAN_FRONTEND="noninteractive", LC_ALL="C")
+    status(step="Aktualisiere die Paketliste (nur Tailscale)")
+    subprocess.run(["apt-get", "update", "-o", "Dir::Etc::sourcelist=sources.list.d/tailscale.list",
+                    "-o", "Dir::Etc::sourceparts=-", "-o", "APT::Get::List-Cleanup=0"], env=env, capture_output=True, timeout=300)
+    status(step="Installiere Tailscale")
+    r = subprocess.run(["apt-get", "install", "-y", "--no-install-recommends", "-o", "DPkg::Lock::Timeout=120", "tailscale"],
+                       env=env, capture_output=True, text=True, timeout=900)
+    if r.returncode != 0 or not installed():
+        raise RuntimeError("Die Installation von Tailscale ist fehlgeschlagen: " + (r.stdout + r.stderr)[-150:].replace("\n", " "))
     subprocess.run(["systemctl", "enable", "--now", "tailscaled"], capture_output=True)
+    log("Tailscale installiert")
     status(state="idle", step="", message="Tailscale ist installiert. Als Nächstes verbinden.")
 
 

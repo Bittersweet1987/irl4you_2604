@@ -93,13 +93,6 @@ for u in ifplugd.service networking.service; do
   systemctl disable "$u" 2>/dev/null || true
 done
 
-step tailscale
-# Fernzugriff: Tailscale aus dem offiziellen Paketarchiv (Schlüssel gegen den bekannten Fingerabdruck geprüft, Aktualisierung über apt).
-# Kein Abbruch ohne Internet: die Oberfläche kann es später mit "Tailscale installieren" nachholen. Anmelden macht der Besitzer selbst in der Oberfläche.
-if ! command -v tailscale >/dev/null 2>&1; then
-  python3 "$HERE/pipbox_tailscale_repo.py" install || echo "WARNUNG: Tailscale konnte nicht installiert werden (Internet?); in der Oberfläche unter Fernzugriff nachholen." >&2
-fi
-
 step udev
 install -m 644 "$HERE/install/udev/80-irl4you-capture.rules" /etc/udev/rules.d/80-irl4you-capture.rules
 install -m 644 "$HERE/install/udev/85-irl4you-audio.rules" /etc/udev/rules.d/85-irl4you-audio.rules
@@ -158,7 +151,6 @@ UNITS="pipbox.service pipbox-dji.service pipbox-hdmi.service pipbox-health.servi
   pipbox-power.path pipbox-logmode.path pipbox-netaddr.path pipbox-logs.path pipbox-ssh.path pipbox-btdriver.timer pipbox-btdriver.path
   pipbox-wlandriver.timer pipbox-btchip.path pipbox-btchip.service pipbox-logrotate.timer pipbox-preview.socket
   pipbox-modem.path pipbox-modem-apply.timer irl4you-srs.service pipbox-rtmpstat.service NetworkManager.service ModemManager.service nginx.service ssh.service"
-[ -x /usr/sbin/tailscaled ] && UNITS="$UNITS tailscaled.service"
 if now; then
   systemctl daemon-reload
   systemctl disable pipbox-swupdate.path 2>/dev/null || true

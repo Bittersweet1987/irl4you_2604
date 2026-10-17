@@ -569,21 +569,7 @@ class TestInstallation(unittest.TestCase):
 
     def test_tailscale_resolute(self):
         rem = load_script("pipbox-remote.py", "pipbox_remote_t")
-        self.assertIn("resolute", rem.tsrepo.CODENAMES)
-
-    def test_tailscale_schluessel_fingerabdruck(self):
-        import hashlib
-        load_script("pipbox-remote.py", "pipbox_remote_t2")
-        import pipbox_tailscale_repo as ts
-        self.assertRegex(ts.FINGERPRINT, r"^[0-9A-F]{40}$")
-        body = bytes([4]) + bytes(5) + bytes([1, 0x0C]) + bytes([1]) * 100
-        want = hashlib.sha1(bytes([0x99]) + len(body).to_bytes(2, "big") + body).hexdigest().upper()
-        old = bytes([0x99]) + len(body).to_bytes(2, "big") + body + bytes([0xB4, 1, 0])
-        new = bytes([0xC6, len(body)]) + body
-        self.assertEqual(ts.key_fingerprint(old), want)
-        self.assertEqual(ts.key_fingerprint(new), want)
-        with self.assertRaises(ValueError):
-            ts.key_fingerprint(b"<html>")
+        self.assertIn("resolute", rem.CODENAMES)
 
     def test_dateigroesse_max_500_zeilen(self):
         """Regel von Marco (17.10.2026): kein Spaghetti-Code, möglichst höchstens 500 Zeilen je Datei. Das Paket webui/ hält sie ein (server.py ist nur der Einstieg)."""
