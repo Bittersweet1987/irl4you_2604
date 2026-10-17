@@ -1,0 +1,10 @@
+<details class="card wide" id="c_deck" open><summary><span class="sumh">Streamerbot Deck</span><button type="button" id="deck_opt" class="sec small chatoptbtn" aria-expanded="false" title="Adresse des Decks" aria-label="Adresse des Decks">⚙</button></summary>
+<div id="deck_optbox" class="chatopts" hidden>
+<div class="accrow"><label class="muted" for="deck_in">Adresse des Streamer.bot-Decks</label><input id="deck_in" type="url" maxlength="500" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="https://streamer.bot/decks/…" style="max-width:none;flex:1 1 260px"></div>
+<div class="accrow"><label class="muted" for="deck_w">Größe für Desktop und Tablet in Pixel (Breite × Höhe)</label><input id="deck_w" type="number" inputmode="numeric" min="200" max="4000" step="10" style="max-width:90px"> × <input id="deck_h" type="number" inputmode="numeric" min="320" max="4000" step="10" style="max-width:90px"></div>
+<div class="accrow"><label class="muted" for="deck_mw">Größe für Mobil in Pixel (Breite × Höhe)</label><input id="deck_mw" type="number" inputmode="numeric" min="200" max="4000" step="10" style="max-width:90px"> × <input id="deck_mh" type="number" inputmode="numeric" min="320" max="4000" step="10" style="max-width:90px"><button type="button" id="deck_save" class="sec small">Speichern</button></div>
+<div class="muted">Adresse und Größen sind auf der Box gespeichert und gelten für alle Geräte. Das Deck wird in der Größe der jeweiligen Ansicht gezeigt und auf schmalen Bildschirmen passend verkleinert. Die Höhe muss für das Auswahlfeld der Seiten reichen (mindestens 320). Leere Adresse speichern entfernt das Deck.</div>
+</div>
+<div id="deck_msg" class="muted" hidden></div>
+<div id="deck_wrap" class="chatwrap deckwrap"></div>
+</details>

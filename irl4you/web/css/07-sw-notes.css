@@ -1,0 +1,360 @@
+#sw_notes,
+#sw_hres {
+  max-height: 26em;
+  overflow: auto;
+  margin: 10px 0;
+  padding: 6px 14px 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg);
+  font-size: 14px;
+  line-height: 1.5;
+}
+#sw_notes h4,
+#sw_hres h4 {
+  margin: 12px 0 4px;
+  font-size: 14px;
+  color: var(--accent);
+  letter-spacing: 0.02em;
+}
+#sw_notes h4:first-child,
+#sw_hres h4:first-child {
+  margin-top: 6px;
+}
+#sw_notes ul,
+#sw_hres ul {
+  margin: 4px 0 8px;
+  padding-left: 20px;
+}
+#sw_notes li,
+#sw_hres li {
+  margin: 5px 0;
+}
+#sw_notes p,
+#sw_hres p {
+  margin: 4px 0;
+}
+#sw_notes code,
+#sw_hres code {
+  font-size: 12.5px;
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--card);
+}
+#rp_title,
+#rp_desc {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 6px 0;
+}
+#rp_out a.rpgo {
+  display: inline-block;
+  margin: 6px 0;
+  padding: 8px 14px;
+  border-radius: 10px;
+  background: var(--accent);
+  color: #000;
+  font-weight: 600;
+  text-decoration: none;
+}
+.rpcase {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  align-items: baseline;
+  padding: 6px 0;
+  border-top: 1px solid var(--line);
+}
+.rpcase.done .rpt {
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+.rpcase code {
+  font-size: 12.5px;
+}
+.rpcase .rpd {
+  color: var(--muted);
+  font-size: 13px;
+}
+#sw_hist {
+  margin: 8px 0;
+}
+#sw_hq {
+  width: 100%;
+  box-sizing: border-box;
+}
+#sw_hcount {
+  margin: 6px 0 0;
+}
+#sw_hres mark {
+  background: var(--warn);
+  color: #000;
+  border-radius: 3px;
+  padding: 0 1px;
+}
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 20px;
+  transform: translateX(-50%);
+  z-index: 80;
+  max-width: calc(100% - 32px);
+  padding: 10px 16px;
+  border: 1px solid var(--ok);
+  border-radius: 10px;
+  background: var(--card);
+  color: var(--text);
+  box-shadow: 0 8px 24px rgba(2, 6, 23, 0.6);
+  font-size: 14px;
+}
+#sw_notes {
+  white-space: pre-wrap;
+  border-left: 3px solid var(--line);
+  padding-left: 10px;
+  margin: 10px 0;
+}
+#updcard[open] > summary .sumh::before {
+  content: "\25BE  ";
+}
+#updcard[open] > summary {
+  margin-bottom: 10px;
+}
+.badge.attn {
+  background: var(--warn);
+  color: #0f172a;
+}
+.badge.ok {
+  background: var(--line);
+  color: var(--muted);
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+.dcam {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  margin: 8px 0;
+  padding: 0 12px;
+}
+.dcam > summary {
+  padding: 10px 0;
+  cursor: pointer;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  list-style: none;
+}
+.dcam > summary::-webkit-details-marker {
+  display: none;
+}
+.dcam .dname {
+  font-weight: 600;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dcam .dright {
+  white-space: nowrap;
+  flex: 0 0 auto;
+  font-size: 13px;
+}
+.dcam .dbody {
+  padding: 0 0 12px;
+}
+.dcam .dsub {
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+.dcam label.f,
+.dcam div.f {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+  margin: 8px 0 2px;
+  min-width: 0;
+}
+.dcam label.f input,
+.dcam label.f select,
+.dcam div.f select {
+  width: 100%;
+}
+.dcam .flh {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  min-height: 20px;
+}
+.dcam .flb {
+  background: none;
+  border: 0;
+  padding: 0 2px;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--accent);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.dcam .flb.crit {
+  color: var(--crit);
+}
+.dcam .flb:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.dcam .d-nearmsg {
+  font-size: 12px;
+  color: var(--warn);
+  margin-top: 4px;
+}
+.dcam .d-nearmsg:empty {
+  display: none;
+}
+.camreconn {
+  flex: none;
+  padding: 2px 8px;
+  line-height: 1.2;
+}
+.cam .camnet.withbtn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  overflow: visible;
+}
+.cam .camnet.withbtn select {
+  flex: 1 1 0;
+  min-width: 0;
+  width: auto;
+}
+.dcam .dnet {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 12px;
+}
+@media (max-width: 560px) {
+  .dcam .dnet {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.dcam .dnet[hidden],
+.dcam div.f[hidden],
+.dcam label.f[hidden] {
+  display: none;
+}
+.dcam .chk {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  font-size: 14px;
+}
+.dcam .dsec {
+  border-top: 1px solid var(--line);
+  margin-top: 10px;
+  padding-top: 6px;
+}
+.dcam .dsec > summary {
+  cursor: pointer;
+  font-size: 13px;
+  padding: 4px 0;
+}
+.subsec > summary {
+  display: block;
+  cursor: pointer;
+  list-style: none;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  margin: 14px 0 6px;
+}
+.subsec > summary::-webkit-details-marker {
+  display: none;
+}
+.subsec > summary::before {
+  content: "\25B8  ";
+}
+.subsec[open] > summary::before {
+  content: "\25BE  ";
+}
+.livehealth a.unsavedlnk,
+.alert a.unsavedlnk {
+  color: var(--crit);
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.dcam .dgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(120px, 100%), 1fr));
+  gap: 8px;
+}
+.dscan {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin-top: 6px;
+}
+button.sec {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--line);
+  font-weight: 400;
+}
+button.warnbtn {
+  background: var(--warn);
+}
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+pre {
+  white-space: pre-wrap;
+  word-break: break-all;
+  font-size: 11px;
+  color: var(--muted);
+  max-height: 220px;
+  overflow: auto;
+  margin: 8px 0 0;
+}
+.upd-line {
+  display: flex;
+  justify-content: space-between;
+  padding: 3px 0;
+}
+.livehealth {
+  font-size: 12px;
+  margin-top: 8px;
+  opacity: 0.85;
+}
+.livehealth .ok {
+  color: var(--ok);
+}
+.livehealth .warn {
+  color: var(--warn);
+}
+.livehealth .crit,
+.livehealth .err {
+  color: var(--crit);
+}
+details.locked > summary {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+body.sm .sens {
+  display: none !important;
+}
+.dangerbtn {
+  background: var(--crit);
+  border-color: var(--crit);
+  color: #fff;
+}

@@ -5,6 +5,7 @@ Versionsschema: x.y.z, angezeigt als vx.y.z. x gibt Marco vor (0 = Alpha). y ste
 ## 0.1
 - Neues Versionsschema (vorher 2.0.0-rc.x), erstes Release 0.1. Der Updater zählt die dritte Stelle selbst, sobald VERSION nur "x.y" enthält. Sonst unverändert gegenüber 2.0.0-rc.4.
 - Oberfläche aufgeteilt: server.py (7300 Zeilen) ist nur noch der Einstieg, die Teile liegen im Paket webui/ (jede Datei höchstens 500 Zeilen). Keine Funktionsänderung.
+- Weboberfläche aufgeteilt: index.html (365 KB) ist nur noch das Gerüst; je Karte eine Datei in web/partials/, Stile in web/css/, Skripte in web/js/ (formatiert, je höchstens etwa 500 Zeilen). Der Server setzt die Teile beim Ausliefern zusammen und liefert /ui/css und /ui/js aus. Keine Funktionsänderung.
 
 ## 2.0.0-rc.4
 - Feste Kartennamen (eth0, eth1) nach MAC nur noch als systemd-.link-Dateien, die beim nächsten Start gelten. Im laufenden Betrieb (Update) wird keine Karte mehr umbenannt, keine Netzwerkverbindung verändert. Behebt den Netzausfall beim Einspielen von rc.2.

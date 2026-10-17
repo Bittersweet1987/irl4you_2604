@@ -1,0 +1,367 @@
+.camdots .dot {
+  width: 9px;
+  height: 9px;
+  margin: 0;
+}
+.camdots:not(:empty) + .chatoptbtn {
+  margin-left: 0;
+}
+@keyframes sigpulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.55;
+    transform: scale(0.82);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sig .sigdot {
+    animation: none;
+  }
+}
+@media (min-width: 461px) {
+  .sig {
+    height: 28px;
+  }
+  .sig svg {
+    height: 28px;
+  }
+  .sig .sgs {
+    height: 28px;
+    font-size: 8px;
+    line-height: 9px;
+    min-width: 22px;
+    overflow: visible;
+  }
+}
+@media (max-width: 460px) {
+  .sig {
+    gap: 5px;
+    margin-left: 6px;
+  }
+  .sig .sgs {
+    display: none;
+  }
+  .sig svg {
+    width: 60px;
+  }
+  .camdots {
+    gap: 4px;
+  }
+  .camdots .dot {
+    width: 8px;
+    height: 8px;
+  }
+}
+.qrline {
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  opacity: 0.75;
+}
+.qrline:hover,
+.qrline:focus-within {
+  opacity: 1;
+}
+.qrline select {
+  width: auto;
+  min-width: 0;
+  padding: 1px 4px;
+  font-size: 12px;
+  height: 24px;
+}
+.qrbox {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 6px;
+}
+.qri {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  max-width: 100%;
+  font-size: 11px;
+}
+.qri svg {
+  width: 150px;
+  max-width: 100%;
+  height: auto;
+  border-radius: 3px;
+}
+.qrbox.big {
+  flex-direction: column;
+  gap: 16px;
+}
+.qrbox.big .qri svg {
+  width: 340px;
+}
+@media (max-width: 620px) {
+  .qrbox {
+    flex-direction: column;
+    gap: 18px;
+  }
+  .qri {
+    font-size: 14px;
+    gap: 4px;
+  }
+  .qri svg {
+    width: min(100%, 340px);
+  }
+}
+.cam .netnote,
+.cam .netlock {
+  margin: 3px 0 0;
+  font-size: 11px;
+  line-height: 1.3;
+  color: var(--muted);
+}
+.cam .netnote.ok {
+  color: var(--ok);
+}
+.cam .netnote.bad {
+  color: var(--crit);
+}
+.cam code {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--muted);
+  word-break: break-all;
+}
+.tag {
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 99px;
+  background: var(--line);
+  color: var(--muted);
+  margin-left: 6px;
+}
+.cam a.ren {
+  color: var(--text);
+  text-decoration: none;
+  border-bottom: 1px dotted var(--muted);
+}
+.dot.unk {
+  background: var(--muted);
+}
+.add {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+.add > label {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 4px;
+  min-width: 0;
+}
+.add > label[hidden] {
+  display: none;
+}
+.dlrow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.dlrow input[type="range"] {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+}
+.dlrow input[type="number"] {
+  width: 84px;
+  flex: none;
+}
+.add.dset {
+  align-items: center;
+}
+.sech {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  margin: 18px 0 6px;
+}
+.wform {
+  display: grid;
+  grid-template-columns: minmax(130px, 0.7fr) 1.4fr 1.4fr;
+  gap: 10px;
+  align-items: end;
+  margin-top: 10px;
+}
+.wform label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.wform select,
+.wform input {
+  width: 100%;
+  height: 38px;
+  box-sizing: border-box;
+}
+#srtlacard .autolbl {
+  margin-bottom: 12px;
+}
+.bkform {
+  grid-template-columns: 1fr 1fr;
+}
+.bkwhat {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 4px 28px;
+  margin: 6px 0 2px;
+}
+.bkwhat .bkwh {
+  font-weight: 650;
+  margin: 8px 0 2px;
+}
+.bkwhat ul {
+  margin: 0;
+  padding-left: 20px;
+}
+.bkwhat li {
+  margin: 3px 0;
+}
+.bkwhat .bkno li::marker {
+  color: var(--crit);
+}
+.bkwhat .bkyes li::marker {
+  color: var(--ok);
+}
+.bkplan label.logopt {
+  margin: 6px 0;
+}
+.bkplan .bkok {
+  color: var(--ok);
+}
+.bkplan .bkbad {
+  color: var(--crit);
+}
+.bkres div {
+  margin: 4px 0;
+}
+.ibtn {
+  display: inline-block;
+  margin-left: 8px;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid var(--accent);
+  background: transparent;
+  color: var(--accent);
+  font:
+    italic 700 13px/20px Georgia,
+    serif;
+  text-transform: none;
+  letter-spacing: 0;
+  cursor: pointer;
+  vertical-align: middle;
+}
+.swinfo {
+  display: inline-block;
+  margin-left: 8px;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid var(--accent);
+  background: transparent;
+  color: var(--accent);
+  font:
+    italic 700 13px/20px Georgia,
+    serif;
+  text-transform: none;
+  letter-spacing: 0;
+  cursor: pointer;
+  vertical-align: middle;
+}
+.ibtn[aria-expanded="true"] {
+  background: var(--accent);
+  color: #0f172a;
+}
+.ibrow {
+  display: block;
+  margin: 0 0 4px;
+}
+.ibrow .ibtn {
+  margin-left: 0;
+}
+details:not([open]) > summary .ibtn {
+  display: none;
+}
+details > summary .ibtn {
+  margin-left: 10px;
+  vertical-align: middle;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.hlp:not(.open) {
+  display: none;
+}
+html.nohelp :is(.ibtn, .ibrow, .helpbtn, .hlp) {
+  display: none !important;
+}
+.helpbtn {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid var(--accent);
+  background: transparent;
+  color: var(--accent);
+  font:
+    italic 700 13px/20px Georgia,
+    serif;
+  text-transform: none;
+  letter-spacing: 0;
+  cursor: pointer;
+  vertical-align: middle;
+}
+.helpbtn[aria-expanded="true"] {
+  background: var(--accent);
+  color: #0f172a;
+}
+@media (max-width: 620px) {
+  .wform {
+    grid-template-columns: 1fr;
+  }
+}
+.wstat {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  align-items: center;
+  padding: 9px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg);
+  margin-top: 8px;
+}
+.wstat .wdot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--line);
+  flex: none;
+}
+.wstat.ok .wdot {
+  background: var(--ok);
+}
+.wstat.bad .wdot {
+  background: var(--crit);
+}
+.wstat .wgrow {
+  flex: 1;
+  min-width: 160px;
+}

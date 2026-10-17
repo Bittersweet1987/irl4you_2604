@@ -1,0 +1,355 @@
+.wstat label {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  white-space: nowrap;
+}
+#wificard a {
+  color: var(--accent);
+}
+.pvbox {
+  position: relative;
+  width: 100%;
+  max-width: 640px;
+  background: linear-gradient(135deg, #1d3b6b, #0e2a4a 60%, #0a1f38);
+  border: 1px solid var(--line);
+  overflow: hidden;
+  user-select: none;
+  margin-top: 6px;
+}
+.pvmain {
+  position: absolute;
+  left: 12px;
+  top: 8px;
+  font-size: 13px;
+  color: #cbd5e1;
+}
+.pvpip {
+  touch-action: none;
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: #fff;
+  cursor: grab;
+  overflow: hidden;
+}
+.pvpip .pvin {
+  position: absolute;
+}
+.pvpip .pvrim {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  box-sizing: border-box;
+  pointer-events: none;
+}
+.pvpip b,
+.pvpip span {
+  position: relative;
+}
+.pvpip b {
+  font-size: 18px;
+}
+.pvpip span {
+  max-width: 96%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pvpip.drag {
+  cursor: grabbing;
+  outline: 2px solid var(--warn);
+}
+.pvpip.off {
+  outline: 1px dashed rgba(255, 255, 255, 0.6);
+}
+.pv1 .pvin {
+  background: linear-gradient(135deg, #0891b2, #164e63);
+}
+.pv2 .pvin {
+  background: linear-gradient(135deg, #059669, #064e3b);
+}
+.pv3 .pvin {
+  background: linear-gradient(135deg, #d97706, #78350f);
+}
+.pvs {
+  margin-top: 8px;
+  border-top: 1px solid var(--line);
+  padding-top: 6px;
+}
+.pvs > summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 13px;
+}
+.pvs .pvs-sum {
+  font-size: 12px;
+  opacity: 0.8;
+}
+.pvs .pvs-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px 10px;
+  margin: 4px 0;
+}
+.pvs .pvs-grid input[type="number"] {
+  width: 100%;
+}
+.pvs input[type="color"] {
+  width: 100%;
+  height: 30px;
+  padding: 2px;
+  box-sizing: border-box;
+}
+.pvs .sech {
+  margin: 10px 0 2px;
+}
+.pvs .pvs-info {
+  font-size: 12px;
+  margin: 2px 0 6px;
+}
+.wlist {
+  display: grid;
+  gap: 4px;
+  max-height: 260px;
+  overflow: auto;
+}
+.wrow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
+  gap: 12px;
+  align-items: center;
+  padding: 7px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  text-decoration: none;
+}
+.wrow:hover {
+  border-color: var(--accent);
+}
+.wrow.cur {
+  border-color: var(--ok);
+}
+.wname {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.wsig {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.wsec {
+  color: var(--muted);
+  font-size: 13px;
+  white-space: nowrap;
+}
+.wuse {
+  color: var(--ok);
+  font-size: 13px;
+}
+@media (max-width: 560px) {
+  .wrow {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .wsec,
+  .wuse {
+    grid-column: 1/-1;
+  }
+}
+.camcols {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(210px, 100%), 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+.camcol {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px;
+  background: var(--bg);
+}
+.camcol[hidden] {
+  display: none;
+}
+.camcol.slotoff {
+  display: none;
+}
+.batt {
+  font-size: 13px;
+  white-space: nowrap;
+}
+.batt.stale {
+  opacity: 0.6;
+}
+#camlights .row .nm {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#camlights.hasbatt {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 4.3em 5.4em;
+  column-gap: 14px;
+  align-items: baseline;
+}
+#camlights.hasbatt .row,
+#camlights.hasbatt .hrow {
+  display: contents;
+}
+#camlights.hasbatt .row > span {
+  padding: 4px 0;
+}
+#camlights.hasbatt .row > span:last-child {
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+#camlights .battcell {
+  text-align: center;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+#camlights .hrow .mid {
+  text-align: center;
+}
+.cam .camnet {
+  display: block;
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cam .camnet select {
+  padding: 2px 6px;
+  font-size: 12px;
+  width: 100%;
+  max-width: 100%;
+}
+.camcol h3 {
+  margin: 0;
+  font-size: 13px;
+  color: var(--accent);
+}
+.camcol .opt {
+  color: var(--muted);
+  font-weight: 400;
+}
+.camcol > label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.camcol > label[hidden] {
+  display: none;
+}
+.camcol .fixed {
+  min-height: 2.2em;
+  display: flex;
+  align-items: center;
+}
+.srvrow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+.srvrow select {
+  flex: 1 1 200px;
+}
+input,
+select,
+button {
+  font: inherit;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--text);
+}
+input:focus,
+select:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 0;
+}
+button {
+  background: var(--bar);
+  color: #0f172a;
+  font-weight: 600;
+  border-color: transparent;
+  cursor: pointer;
+}
+button.mv {
+  background: transparent;
+  color: var(--muted);
+  border-color: var(--line);
+  padding: 4px 8px;
+  font-size: 12px;
+  line-height: 1;
+}
+button.mv:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+button.del {
+  background: transparent;
+  color: var(--crit);
+  border-color: var(--line);
+  padding: 4px 10px;
+  font-size: 13px;
+}
+details.card > summary {
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  list-style: none;
+}
+details.card > summary::-webkit-details-marker {
+  display: none;
+}
+details.card > summary .sumh {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+}
+details.card > summary .sumh::before,
+html[data-design] details.card > summary .sumh::before {
+  color: var(--warn);
+  border-color: var(--warn);
+}
+details.card > summary .sumh::before {
+  content: "\25B8  ";
+}
+details.card[open] > summary .sumh::before {
+  content: "\25BE  ";
+}
+details.card[open] > summary {
+  margin-bottom: 10px;
+}
+.statgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(230px, 100%), 1fr));
+  gap: 12px;
+  margin-top: 4px;
+}

@@ -1,0 +1,378 @@
+html[data-design="cockpit"] .alert {
+  border-radius: 3px;
+  padding: 6px 10px;
+  font-size: 13px;
+}
+html[data-design="cockpit"] #mfoot {
+  border-radius: 6px;
+  border-color: var(--ctl);
+}
+html[data-design="cockpit"] .mf-live {
+  border-radius: 6px;
+  color: var(--onok);
+  font-family: ui-monospace, "SF Mono", SFMono-Regular, Consolas, "Liberation Mono", monospace;
+}
+html[data-design="cockpit"] .mf-live.busy {
+  color: var(--onwarn);
+}
+html[data-design="cockpit"] .mf-t {
+  border-radius: 6px;
+  border-color: var(--ctl);
+  font-family: ui-monospace, "SF Mono", SFMono-Regular, Consolas, "Liberation Mono", monospace;
+}
+html[data-design="cockpit"] input[type="checkbox"],
+input[type="radio"] {
+  width: 16px;
+  height: 16px;
+  min-height: 0;
+  padding: 0;
+  accent-color: var(--accent);
+}
+html[data-design="cockpit"] :is(button, input, select, summary, a):focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+html[data-design="mischpult"][data-theme="dark"],
+html[data-design="mischpult"]:not([data-theme]) {
+  --bg: #16181b;
+  --card: #25282d;
+  --text: #ece7d8;
+  --muted: #a8a396;
+  --line: #0c0d0f;
+  --ctl: #6b7078;
+  --accent: #f2a900;
+  --bar: #f2a900;
+  --blue: #5ca8e8;
+  --ok: #35e06c;
+  --warn: #ffb21e;
+  --crit: #ff3b30;
+  --onbar: #1a1200;
+  --onwarn: #1a1200;
+  --onok: #04200d;
+  --oncrit: #250402;
+  --shade: rgba(0, 0, 0, 0.5);
+  --focus: #4dd0ff;
+  --r: 4px;
+  color-scheme: dark;
+}
+html[data-design="mischpult"][data-theme="light"] {
+  --bg: #c4c8cc;
+  --card: #e8eaed;
+  --text: #14161a;
+  --muted: #33373d;
+  --line: #4a4f56;
+  --ctl: #4a4f56;
+  --accent: #8a4b00;
+  --bar: #8a4b00;
+  --blue: #1d5fd1;
+  --ok: #0f7a3d;
+  --warn: #9a5a00;
+  --crit: #b3231f;
+  --onbar: #ffffff;
+  --onwarn: #ffffff;
+  --onok: #ffffff;
+  --oncrit: #ffffff;
+  --shade: rgba(0, 0, 0, 0.3);
+  --focus: #0b57d0;
+  --r: 4px;
+  color-scheme: light;
+}
+html[data-design="mischpult"] body {
+  font:
+    14px/1.4 ui-sans-serif,
+    system-ui,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
+}
+html[data-design="mischpult"] header {
+  border-radius: var(--r);
+  border: 1px solid var(--line);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--card) 92%, #fff),
+    var(--card) 55%,
+    color-mix(in srgb, var(--card) 90%, #000)
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 2px 8px var(--shade);
+}
+html[data-design="mischpult"] main {
+  gap: 14px;
+  padding: 14px;
+}
+html[data-design="mischpult"] .card {
+  position: relative;
+  border-radius: var(--r);
+  border: 1px solid var(--line);
+  padding: 14px 16px 14px;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--card) 92%, #fff),
+    var(--card) 55%,
+    color-mix(in srgb, var(--card) 90%, #000)
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.25),
+    0 3px 8px var(--shade);
+}
+html[data-design="mischpult"] details.card::before {
+  content: "";
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #b9bdc3, #4a4d52 70%);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.55),
+    inset 0 -1px 1px rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+  top: 5px;
+  left: 5px;
+}
+html[data-design="mischpult"] details.card::after {
+  content: "";
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #b9bdc3, #4a4d52 70%);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.55),
+    inset 0 -1px 1px rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+  top: 5px;
+  right: 5px;
+}
+html[data-design="mischpult"] details.card > summary {
+  padding: 0 14px;
+}
+html[data-design="mischpult"] details.card > summary .sumh,
+html[data-design="mischpult"] .sech,
+html[data-design="mischpult"] .subsec > summary,
+html[data-design="mischpult"] .card h2 {
+  color: var(--text);
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+html[data-design="mischpult"] details.card[open] > summary {
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 2px groove var(--line);
+}
+html[data-design="mischpult"] .sech {
+  color: var(--accent);
+}
+html[data-design="mischpult"] .big {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text);
+  text-shadow: 0 0 10px color-mix(in srgb, var(--accent) 35%, transparent);
+  font-variant-numeric: tabular-nums;
+}
+html[data-design="mischpult"] .statbox {
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--bg) 55%, var(--card));
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.45);
+}
+html[data-design="mischpult"] :is(input, select) {
+  background: color-mix(in srgb, var(--bg) 70%, #000);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.55);
+  color: var(--text);
+}
+html[data-design="mischpult"] :is(input, select, button) {
+  border-radius: 3px;
+}
+html[data-design="mischpult"] button {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--bar) 88%, #fff), var(--bar) 55%, color-mix(in srgb, var(--bar) 80%, #000));
+  color: var(--onbar);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  border: 1px solid var(--line);
+  box-shadow:
+    0 3px 0 var(--line),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+html[data-design="mischpult"] button.sec,
+html[data-design="mischpult"] header .hdr button,
+html[data-design="mischpult"] .seg button,
+html[data-design="mischpult"] :is(.ibtn, .helpbtn) {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--card) 80%, #fff), color-mix(in srgb, var(--card) 85%, #000));
+  color: var(--text);
+  font-weight: 600;
+  border: 1px solid var(--line);
+  box-shadow:
+    0 3px 0 var(--line),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+html[data-design="mischpult"] button:active {
+  transform: translateY(2px);
+  box-shadow:
+    0 1px 0 var(--line),
+    inset 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+html[data-design="mischpult"] button:disabled {
+  box-shadow: none;
+  transform: none;
+}
+html[data-design="mischpult"] button.warnbtn {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--warn) 85%, #fff), var(--warn));
+  color: var(--onwarn);
+}
+html[data-design="mischpult"] .dangerbtn {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--crit) 85%, #fff), var(--crit));
+  color: var(--oncrit);
+}
+html[data-design="mischpult"] .livebtn {
+  border-radius: 3px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+html[data-design="mischpult"] .livebtn:not(.on):not(.busy) {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--ok) 85%, #fff), var(--ok));
+  color: var(--onok);
+  box-shadow:
+    0 3px 0 var(--line),
+    0 0 12px color-mix(in srgb, var(--ok) 60%, transparent);
+}
+html[data-design="mischpult"] .livebtn.on {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--crit) 85%, #fff), var(--crit));
+  color: var(--oncrit);
+  box-shadow:
+    0 3px 0 var(--line),
+    0 0 12px color-mix(in srgb, var(--crit) 60%, transparent);
+}
+html[data-design="mischpult"] .livebtn.busy,
+html[data-design="mischpult"] .badge.attn,
+html[data-design="mischpult"] .badge.demo {
+  color: var(--onwarn);
+}
+html[data-design="mischpult"] .seg button.on,
+html[data-design="mischpult"] :is(.ibtn, .helpbtn)[aria-expanded="true"],
+html[data-design="mischpult"] #pb_awake[aria-pressed="true"] {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--bar) 88%, #fff), var(--bar));
+  color: var(--onbar);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.45);
+}
+html[data-design="mischpult"] .hsw.on {
+  color: var(--onok);
+}
+html[data-design="mischpult"] .badge {
+  border-radius: 3px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  border: 1px solid var(--line);
+}
+html[data-design="mischpult"] .bar {
+  height: 14px;
+  padding: 2px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--bg) 55%, #000);
+  border: 1px solid var(--line);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6);
+}
+html[data-design="mischpult"] .bar > i {
+  border-radius: 1px;
+  -webkit-mask: repeating-linear-gradient(90deg, #000 0 6px, transparent 6px 8px);
+  mask: repeating-linear-gradient(90deg, #000 0 6px, transparent 6px 8px);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--bar) 60%, transparent);
+}
+html[data-design="mischpult"] .dot {
+  width: 12px;
+  height: 12px;
+  border: 1px solid var(--line);
+  box-shadow:
+    0 0 8px 1px var(--ok),
+    inset 0 -2px 3px rgba(0, 0, 0, 0.35),
+    inset 0 1px 1px rgba(255, 255, 255, 0.5);
+}
+html[data-design="mischpult"] .dot.off {
+  box-shadow:
+    0 0 8px 1px var(--crit),
+    inset 0 -2px 3px rgba(0, 0, 0, 0.35),
+    inset 0 1px 1px rgba(255, 255, 255, 0.5);
+}
+html[data-design="mischpult"] .dot.wait {
+  box-shadow:
+    0 0 8px 1px var(--warn),
+    inset 0 -2px 3px rgba(0, 0, 0, 0.35),
+    inset 0 1px 1px rgba(255, 255, 255, 0.5);
+}
+html[data-design="mischpult"] .dot.unk {
+  box-shadow: inset 0 -2px 3px rgba(0, 0, 0, 0.35);
+}
+html[data-design="mischpult"] .alert {
+  border-radius: 3px;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.35);
+}
+html[data-design="mischpult"] #mfoot {
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--card) 92%, #fff),
+    var(--card) 55%,
+    color-mix(in srgb, var(--card) 90%, #000)
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 0 0 8px var(--bg),
+    0 -12px 12px -4px var(--shade);
+}
+html[data-design="mischpult"] .mf-live {
+  border-radius: 4px;
+  color: var(--onok);
+  box-shadow:
+    0 3px 0 var(--line),
+    0 0 12px color-mix(in srgb, var(--ok) 50%, transparent);
+}
+html[data-design="mischpult"] .mf-live.busy {
+  color: var(--onwarn);
+}
+html[data-design="mischpult"] .mf-t {
+  border-radius: 4px;
+  border: 1px solid var(--line);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--card) 80%, #fff), color-mix(in srgb, var(--card) 85%, #000));
+  box-shadow:
+    0 3px 0 var(--line),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+html[data-design="mischpult"] :is(button, input, select, summary, a):focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+html[data-design="cockpit"] .mf-t {
+  min-height: 60px;
+  gap: 3px;
+  padding: 3px;
+  font:
+    700 12px/1.1 ui-monospace,
+    "SF Mono",
+    SFMono-Regular,
+    Consolas,
+    "Liberation Mono",
+    monospace;
+  letter-spacing: 0.02em;
+  color: var(--text);
+  background: color-mix(in srgb, var(--bg) 55%, var(--card));
+  border: 2px solid var(--ctl);
+}
+html[data-design="cockpit"] .mf-t svg {
+  width: 26px;
+  height: 26px;
+}
+html[data-design="cockpit"] .mf-cam.live {
+  color: var(--ok);
+  border-color: var(--ok);
+}
+html[data-design="cockpit"] .mf-cam.ismain {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+  color: var(--accent);
+}

@@ -19,6 +19,7 @@ except ImportError:
 
 from .access import client_origin
 from .common import WEB_DIR, read
+from .webfiles import expand_includes
 
 
 class HttpBase(BaseHTTPRequestHandler):
@@ -253,5 +254,5 @@ class HttpBase(BaseHTTPRequestHandler):
         return True
 
     def page(self, name):
-        body = read(os.path.join(WEB_DIR, name), "")
+        body = expand_includes(read(os.path.join(WEB_DIR, name), ""))
         self.send_bytes(200, body.encode(), "text/html; charset=utf-8")

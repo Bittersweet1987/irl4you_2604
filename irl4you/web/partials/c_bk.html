@@ -1,0 +1,55 @@
+<details class="card wide" id="c_bk"><summary><span class="sumh">Einstellungen sichern</span></summary>
+<div class="sech">Sichern</div>
+<label class="logopt"><input type="checkbox" id="bk_secrets" checked>
+<b>Passwörter mitnehmen</b> (WLAN, Hotspot, DJI, Stream-ID). Dann immer mit einem Passwort verschlüsselt.</label>
+<div class="wform bkform">
+<label class="muted"><span id="bk_pwlab">Passwort zum Verschlüsseln (mindestens 8 Zeichen)</span><input type="password" id="bk_pw" autocomplete="new-password" maxlength="128"></label>
+<label class="muted">Passwort wiederholen<input type="password" id="bk_pw2" autocomplete="new-password" maxlength="128"></label>
+</div>
+<details class="subsec" id="bk_what"><summary>Was wird gesichert?</summary>
+<div class="bkwhat">
+<div><div class="bkwh">Ist in der Sicherung</div><ul class="bkyes">
+<li>Kameras und ihre Netzwerkkarte</li>
+<li>Bildaufbau und Sendeeinstellungen</li>
+<li>SRTLA-Server (Stream-ID nur mit dem Haken oben)</li>
+<li>Sendewege, Kameranetz und Hotspots (Netzwerkkarten werden über die MAC-Adresse zugeordnet)</li>
+<li>Gespeicherte WLAN-Netze (Passwörter nur mit dem Haken oben)</li>
+<li>DJI-Kameras: Name, Bildeinstellungen und Verbindung (Passwort nur mit dem Haken oben)</li>
+<li>HDMI-Eingang und Automatischer Start</li>
+<li>Eigene Namen für Verbindungen und Sticks</li>
+<li>Twitch: Kanal, Schwelle und Nachricht der Akku-Warnung</li>
+</ul></div>
+<div><div class="bkwh">Ist nicht dabei</div><ul class="bkno">
+<li>Bluetooth-Kopplung der DJI-Kameras</li>
+<li>Twitch-Anmeldung und Token</li>
+<li>Tailscale-Verbindung und Freigaben</li>
+<li>Feste Zusatzadresse</li>
+<li>Protokolle und Mitschnitte</li>
+</ul></div>
+</div>
+</details>
+<div class="actions"><button id="bk_export" type="button">Datei herunterladen</button></div>
+<div id="bk_msg" class="ph" role="status"></div>
+<div class="sech">Einspielen</div>
+<div class="ph" style="margin-top:0">Datei wählen, Teile auswählen. Nur ohne Sendung. Der Stand davor wird gesichert.</div>
+<div class="actions"><input type="file" id="bk_file" accept=".json,application/json"></div>
+<div id="bk_ipwrow" class="wform bkform" hidden><label class="muted">Passwort der Datei<input type="password" id="bk_ipw" autocomplete="off" maxlength="128"></label><div class="actions"><button id="bk_open" type="button" class="sec">Öffnen</button></div></div>
+<div id="bk_plan" class="bkplan" hidden></div>
+<div id="bk_prog" class="prog" hidden><div class="bar"><i></i></div><div class="progline"><span><b class="progpct"></b>
+<span class="progtxt"></span></span><span class="progel muted"></span></div></div>
+<div id="bk_imsg" class="ph bkres" role="status"></div>
+<div id="bk_todo" class="bktodo" hidden>
+<div class="sech">Nach dem Einspielen noch zu erledigen</div>
+<label class="logopt"><input type="checkbox" data-todo="dji">
+<b>DJI-Kameras:</b> einmal neu koppeln und verbinden (die Bluetooth-Kopplung ist nicht in der Sicherung).</label>
+<label class="logopt"><input type="checkbox" data-todo="twitch">
+<b>Twitch:</b> in der Karte Chat neu anmelden (Anmeldung und Token sind nicht in der Sicherung).</label>
+<label class="logopt"><input type="checkbox" data-todo="tailscale">
+<b>Tailscale:</b> in der Karte Fernzugriff neu verbinden und die Freigabe wieder einschalten.</label>
+<label class="logopt"><input type="checkbox" data-todo="net">
+<b>Sendewege und Netzwerk für Kameras prüfen:</b> Heißen die Netzwerkkarten auf dieser Box anders (eth0, eth1), stimmen die Einstellungen nicht.</label>
+<div class="ph">Dein Browser merkt sich die Haken. Sind alle gesetzt, verschwindet dieser Hinweis.</div>
+</div>
+<div class="actions"><button id="bk_restore" type="button" class="sec" hidden>Letzten Stand zurückholen</button>
+<button id="bk_reload" type="button" class="sec" hidden>Seite neu laden</button></div>
+</details>

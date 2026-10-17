@@ -1,0 +1,369 @@
+html[data-design="kontrast"] .badge {
+  font-size: 15px;
+  font-weight: 800;
+  padding: 4px 10px;
+  border: 2px solid var(--text);
+  border-radius: 6px;
+}
+html[data-design="kontrast"] .badge.attn,
+html[data-design="kontrast"] .badge.demo,
+html[data-design="kontrast"] header .hdr > .badge.demo {
+  background: var(--warn);
+  color: var(--onwarn);
+}
+html[data-design="kontrast"] .statbox,
+html[data-design="kontrast"] .camcol,
+html[data-design="kontrast"] .wstat,
+html[data-design="kontrast"] .wrow,
+html[data-design="kontrast"] .chatopts,
+html[data-design="kontrast"] #sw_notes {
+  border: 3px solid var(--line);
+  border-radius: var(--r);
+  padding: 12px 14px;
+}
+html[data-design="kontrast"] .bar {
+  height: 16px;
+  border: 2px solid var(--text);
+  border-radius: 4px;
+  background: var(--bg);
+}
+html[data-design="kontrast"] .bar > i {
+  border-radius: 0;
+}
+html[data-design="kontrast"] .alert {
+  border: 3px solid var(--text);
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 17px;
+}
+html[data-design="kontrast"] .hsw.on {
+  background: var(--ok);
+  color: var(--onok);
+}
+html[data-design="kontrast"] a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+html[data-design="kontrast"] :is(button, input, select, summary, a):focus-visible {
+  outline: 4px solid var(--focus);
+  outline-offset: 3px;
+}
+html[data-design="kontrast"] #mfoot {
+  border: 3px solid var(--line);
+  border-radius: 14px;
+}
+html[data-design="kontrast"] .mf-live {
+  min-height: 64px;
+  font-size: 22px;
+  border: 3px solid var(--text);
+  color: var(--onok);
+}
+html[data-design="kontrast"] .mf-live.on {
+  color: var(--oncrit);
+}
+html[data-design="kontrast"] .mf-live.busy {
+  color: var(--onwarn);
+}
+html[data-design="kontrast"] .mf-t {
+  min-height: 64px;
+  border: 3px solid var(--ctl);
+  font-size: 12px;
+  background: var(--card);
+  color: var(--text);
+}
+html[data-design="kontrast"] .mf-t svg {
+  width: 28px;
+  height: 28px;
+}
+html[data-design="kontrast"] .mf-cam.live {
+  color: var(--ok);
+}
+html[data-design="kontrast"] .mf-aud.muted {
+  color: var(--crit);
+  border-color: var(--crit);
+}
+html[data-design="kontrast"] .mf-info {
+  font-size: 28px;
+  color: var(--text);
+}
+html[data-design="cockpit"][data-theme="dark"],
+html[data-design="cockpit"]:not([data-theme]) {
+  --bg: #05080b;
+  --card: #0b1218;
+  --text: #d8f3ff;
+  --muted: #7f9db0;
+  --line: #1c3a4d;
+  --ctl: #2f6a86;
+  --accent: #00e5ff;
+  --bar: #00e5ff;
+  --blue: #4aa8ff;
+  --ok: #27f58a;
+  --warn: #ffb020;
+  --crit: #ff4d4d;
+  --onbar: #021016;
+  --onwarn: #1a1000;
+  --onok: #021a0c;
+  --oncrit: #220404;
+  --shade: rgba(0, 229, 255, 0.12);
+  --focus: #ffea00;
+  --r: 4px;
+  color-scheme: dark;
+}
+html[data-design="cockpit"][data-theme="light"] {
+  --bg: #e4eaee;
+  --card: #ffffff;
+  --text: #0b2530;
+  --muted: #486370;
+  --line: #a9bcc7;
+  --ctl: #44687a;
+  --accent: #006c8a;
+  --bar: #007a9c;
+  --blue: #1d5fd1;
+  --ok: #0f7a3d;
+  --warn: #9a5a00;
+  --crit: #b3231f;
+  --onbar: #ffffff;
+  --onwarn: #ffffff;
+  --onok: #ffffff;
+  --oncrit: #ffffff;
+  --shade: rgba(0, 40, 60, 0.12);
+  --focus: #b45309;
+  --r: 4px;
+  color-scheme: light;
+}
+html[data-design="cockpit"] body {
+  font:
+    14px/1.35 ui-sans-serif,
+    system-ui,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
+}
+html[data-design="cockpit"] header {
+  border-radius: var(--r);
+  padding: 6px 12px;
+  max-width: min(1400px, calc(100% - 24px));
+  width: calc(100% - 24px);
+  border-color: var(--ctl);
+}
+html[data-design="cockpit"] h1 {
+  font:
+    700 15px ui-monospace,
+    "SF Mono",
+    SFMono-Regular,
+    Consolas,
+    "Liberation Mono",
+    monospace;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+html[data-design="cockpit"] main {
+  max-width: 1400px;
+  gap: 10px;
+  padding: 10px 12px 20px;
+  grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
+}
+html[data-design="cockpit"] .card {
+  border-radius: var(--r);
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--accent);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--card) 92%, var(--accent)), var(--card) 40px);
+}
+html[data-design="cockpit"] details.card[open] > summary {
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--line);
+}
+html[data-design="cockpit"] details.card > summary .sumh,
+html[data-design="cockpit"] .sech,
+html[data-design="cockpit"] .subsec > summary,
+html[data-design="cockpit"] .card h2 {
+  font:
+    700 11px ui-monospace,
+    "SF Mono",
+    SFMono-Regular,
+    Consolas,
+    "Liberation Mono",
+    monospace;
+  letter-spacing: 0.16em;
+  color: var(--accent);
+}
+html[data-design="cockpit"] .big {
+  font:
+    700 40px/1 ui-monospace,
+    "SF Mono",
+    SFMono-Regular,
+    Consolas,
+    "Liberation Mono",
+    monospace;
+  letter-spacing: -0.02em;
+  color: var(--accent);
+}
+html[data-design="cockpit"] .statbox .big {
+  font-size: 38px;
+}
+html[data-design="cockpit"] .big .unit,
+html[data-design="cockpit"] .unit {
+  font:
+    400 12px ui-monospace,
+    "SF Mono",
+    SFMono-Regular,
+    Consolas,
+    "Liberation Mono",
+    monospace;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+}
+html[data-design="cockpit"] .num,
+html[data-design="cockpit"] .dyn,
+html[data-design="cockpit"] .sig .sgv,
+html[data-design="cockpit"] .row b,
+html[data-design="cockpit"] .statbox .row span:last-child {
+  font-family: ui-monospace, "SF Mono", SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  font-variant-numeric: tabular-nums;
+}
+html[data-design="cockpit"] .row {
+  padding: 2px 0;
+}
+html[data-design="cockpit"] .statgrid {
+  gap: 8px;
+  grid-template-columns: repeat(auto-fit, minmax(min(190px, 100%), 1fr));
+}
+html[data-design="cockpit"] .statbox {
+  border: 1px solid var(--ctl);
+  border-radius: var(--r);
+  padding: 8px 10px 10px;
+  background: color-mix(in srgb, var(--bg) 70%, var(--card));
+  position: relative;
+}
+html[data-design="cockpit"] .statbox::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--accent);
+  opacity: 0.7;
+}
+html[data-design="cockpit"] .ph {
+  font-size: 11.5px;
+  line-height: 1.4;
+}
+html[data-design="cockpit"] :is(input, select, button) {
+  min-height: 34px;
+  padding: 5px 9px;
+  border-radius: var(--r);
+}
+html[data-design="cockpit"] :is(input, select) {
+  border-color: var(--ctl);
+}
+html[data-design="cockpit"] button {
+  background: var(--bar);
+  color: var(--onbar);
+  font:
+    700 13px ui-monospace,
+    "SF Mono",
+    SFMono-Regular,
+    Consolas,
+    "Liberation Mono",
+    monospace;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+html[data-design="cockpit"] button.sec,
+html[data-design="cockpit"] header .hdr button {
+  border-color: var(--ctl);
+  text-transform: none;
+}
+html[data-design="cockpit"] button.warnbtn {
+  color: var(--onwarn);
+}
+html[data-design="cockpit"] .dangerbtn {
+  color: var(--oncrit);
+}
+html[data-design="cockpit"] .livebtn {
+  font:
+    700 13px ui-monospace,
+    "SF Mono",
+    SFMono-Regular,
+    Consolas,
+    "Liberation Mono",
+    monospace;
+  letter-spacing: 0.08em;
+  border-radius: var(--r);
+}
+html[data-design="cockpit"] .livebtn:not(.on):not(.busy) {
+  background: var(--ok);
+  border-color: var(--ok);
+  color: var(--onok);
+}
+html[data-design="cockpit"] .livebtn.busy,
+html[data-design="cockpit"] .badge.attn,
+html[data-design="cockpit"] .badge.demo {
+  color: var(--onwarn);
+}
+html[data-design="cockpit"] .seg button {
+  min-height: 32px;
+  border-radius: var(--r);
+  font:
+    600 12px ui-monospace,
+    "SF Mono",
+    SFMono-Regular,
+    Consolas,
+    "Liberation Mono",
+    monospace;
+  border-color: var(--ctl);
+}
+html[data-design="cockpit"] .seg button.on {
+  color: var(--onbar);
+  border-color: var(--bar);
+}
+html[data-design="cockpit"] :is(.ibtn, .helpbtn)[aria-expanded="true"],
+html[data-design="cockpit"] #pb_awake[aria-pressed="true"],
+html[data-design="cockpit"] .evchip {
+  color: var(--onbar);
+}
+html[data-design="cockpit"] .hsw.on {
+  color: var(--onok);
+}
+html[data-design="cockpit"] .badge {
+  border-radius: 3px;
+  font:
+    700 11px ui-monospace,
+    "SF Mono",
+    SFMono-Regular,
+    Consolas,
+    "Liberation Mono",
+    monospace;
+  padding: 2px 7px;
+  letter-spacing: 0.06em;
+}
+html[data-design="cockpit"] .bar {
+  height: 8px;
+  border-radius: 0;
+  background: repeating-linear-gradient(90deg, var(--line) 0 5px, transparent 5px 7px);
+}
+html[data-design="cockpit"] .bar > i {
+  border-radius: 0;
+  -webkit-mask: repeating-linear-gradient(90deg, #000 0 5px, transparent 5px 7px);
+  mask: repeating-linear-gradient(90deg, #000 0 5px, transparent 5px 7px);
+}
+html[data-design="cockpit"] .dot {
+  box-shadow: 0 0 6px currentColor;
+}
+html[data-design="cockpit"] .dot {
+  color: var(--ok);
+}
+html[data-design="cockpit"] .dot.off {
+  color: var(--crit);
+}
+html[data-design="cockpit"] .dot.wait {
+  color: var(--warn);
+}
+html[data-design="cockpit"] .dot.unk {
+  color: var(--muted);
+  box-shadow: none;
+}

@@ -1,0 +1,28 @@
+<details class="card wide" id="swcard">
+<summary><span class="sumh">Software-Update (IRL4YOU BOX)</span><span id="sw_badge" class="badge ok">…</span></summary>
+<div class="ph" style="margin-top:0">Holt neue Versionen dieser Software aus dem Repository auf GitHub. Kameras, Server und Einstellungen bleiben erhalten. Nicht während einer Übertragung.</div>
+<div class="row"><span>Installiert</span><span><b id="sw_cur">–</b><button type="button" id="sw_curinfo" class="swinfo" aria-controls="sw_hist" aria-label="Änderungen dieser Version anzeigen" title="Änderungen dieser Version anzeigen" hidden>i</button></span></div>
+<div class="row"><span>Neueste auf GitHub</span><b id="sw_latest">–</b></div>
+<div id="sw_notes" hidden></div>
+<div class="actions" style="margin:6px 0 0"><button id="sw_histbtn" type="button" class="sec" aria-expanded="false" aria-controls="sw_hist">Alle Änderungen</button></div>
+<div id="sw_hist" hidden>
+<input id="sw_hq" type="search" placeholder="Suchen, z. B. Vorschau, Chat, Fußleiste" aria-label="Änderungen durchsuchen" autocomplete="off" maxlength="60">
+<div id="sw_hcount" class="ph"></div>
+<div id="sw_hres"></div>
+</div>
+<div class="swpick">
+<label class="muted" for="sw_ver">Auf eine bestimmte Version wechseln (auch ältere):</label>
+<div class="dlrow"><input id="sw_ver" list="sw_vers" placeholder="Version wählen oder eintragen, z. B. 0.9.0" autocomplete="off" maxlength="24">
+<button id="sw_switch" type="button" class="sec">Wechseln</button></div>
+<datalist id="sw_vers"></datalist>
+<div id="sw_verinfo" class="ph"></div>
+</div>
+<div class="actions">
+<button id="sw_check" type="button" class="sec">Nach Updates suchen</button>
+<button id="sw_install" type="button" class="sec" disabled>Update installieren</button>
+<button id="sw_rollback" type="button" class="sec" hidden>Zurück zur vorherigen Version</button>
+</div>
+<div id="swprog" class="prog" hidden><div class="bar"><i></i></div><div class="progline"><span><b class="progpct"></b>
+<span class="progtxt"></span></span><span class="progel muted"></span></div></div>
+<div id="sw_msg" class="ph"></div>
+</details>

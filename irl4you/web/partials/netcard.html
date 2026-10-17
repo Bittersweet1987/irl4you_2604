@@ -1,0 +1,59 @@
+<details class="card wide" id="netcard" open><summary><span class="sumh">Verbindungen</span></summary>
+<details class="subsec" id="net_up"><summary>Verbindungen zum Senden (Upload)</summary>
+<div class="ph" style="margin-top:0">Die Box sendet gleichzeitig über alle Netze mit Häkchen (Bonding). Das Häkchen wird sofort gespeichert und wirkt auch während der Sendung nach wenigen Sekunden. Das Kameranetz darf mitgenutzt werden.</div>
+<div id="b_ups"></div>
+<div id="neterr" class="err"></div>
+<div id="upinfo" class="ph"></div>
+</details>
+<details class="subsec" id="net_wifi"><summary>WLAN-Verbindungen (z. B. Handy-Hotspot, auch zum Senden nutzbar)</summary><div class="sens"><div id="wificard">
+<div class="ph" style="margin-top:0">Verbindet die Box mit einem WLAN, zum Beispiel dem Hotspot eines Handys. Danach in der Zeile der WLAN-Karte „Zum Senden verwenden“ ankreuzen (wird sofort gespeichert). Das Passwort wird nur an das Netzwerk-Programm der Box übergeben und nicht gespeichert.</div>
+<div id="wifidev"></div>
+<div id="hsmsg" class="ph" style="margin:6px 0" role="status"></div>
+<div class="wform">
+<label class="muted">WLAN-Karte<select id="w_if"></select></label>
+<label class="muted">Netzname (SSID)<input id="w_ssid" maxlength="32" autocomplete="off"></label>
+<label class="muted">Passwort<input id="w_pw" type="password" maxlength="64" autocomplete="new-password" placeholder="leer bei offenem Netz"></label>
+</div>
+<label class="muted" style="display:block;margin:8px 0"><input type="checkbox" id="w_hidden"> verstecktes Netz (Name wird nicht ausgesendet)</label>
+<div class="actions"><button id="w_scan" type="button" class="sec">Netze suchen</button>
+<button id="w_connect" type="button">Verbinden</button>
+<button id="w_disc" type="button" class="sec">Trennen</button></div>
+<div id="wifidriver" class="ph" style="margin:8px 0" role="status"></div>
+<div id="wifimsg" class="ph" style="margin:8px 0" role="status"></div>
+<div id="wifinets" class="ph"></div>
+<div id="wifisaved" class="ph"></div>
+</div></div>
+</details>
+<details class="subsec" id="net_modem"><summary>Mobilfunk-Modems (USB-Sticks, M.2)</summary>
+<div class="ph" style="margin-top:0">Steckt ein Mobilfunk-Modem mit SIM-Karte, richtet die Box es automatisch ein (APN nach SIM-Karte). Danach in „Verbindungen zum Senden“ ankreuzen. Hier lassen sich APN, Roaming, Netztyp und ein festes Netz einstellen.</div>
+<div id="modemlist"></div>
+<div id="modemmsg" class="ph" style="margin:8px 0" role="status"></div>
+</details>
+<details class="subsec" id="net_bt"><summary>Bluetooth</summary>
+<div class="ph" style="margin-top:0">Die Bluetooth-Sticks dieser Box. Steht ein Stick als nicht nutzbar da, fehlt ihm der Treiber oder er wird nicht unterstützt.</div>
+<div id="btcard"><div class="ph">Wird geladen …</div></div>
+<div id="btdrvprog" class="prog" hidden><div class="bar"><i></i></div><div class="progline"><span><b class="progpct"></b>
+<span class="progtxt"></span></span><span class="progel muted"></span></div></div>
+<div id="btdrvmsg" class="ph" role="status"></div>
+<div class="actions"><button id="btdrv_go" type="button" disabled>Treiber jetzt einrichten</button></div>
+<div class="ph" data-hlp>Baut und lädt den Bluetooth-Treiber für Sticks, die der Kernel nicht kennt (zum Beispiel TP-Link UB500 oder UGREEN BT6.0). Das dauert einige Minuten, Bluetooth fehlt dabei kurz. Während einer Übertragung wartet die Box damit bis zum Ende. Auf der ROCK 5B Plus richtet der Knopf außerdem den Bluetooth-Chip des Boards ein, wenn er noch nicht läuft.</div>
+<div class="sech">Handyverbindungen</div>
+<div class="ph" data-hlp>Zeigt den Akkustand gekoppelter Handys. Die Box fragt alle 10 Minuten kurz nach und trennt danach wieder, es gibt keine Dauerverbindung. Android meldet den Akku in Schritten von 20 %, ein iPhone in Schritten von etwa 10 %. Das Handy muss in der Nähe sein und Bluetooth an haben.</div>
+<div id="phonecard"></div>
+<div class="actions"><button id="ph_pair" type="button">Handy koppeln</button></div>
+<div id="ph_msg" class="ph"></div>
+<div class="sech">Controller</div>
+<div class="ph" data-hlp>Bluetooth-Controller mit Tasten, zum Beispiel ein Mini-Tastenfeld oder ein Gamepad. Controller einschalten, in den Kopplungsmodus bringen, nah an die Box legen und suchen. Funktionen für die Tasten folgen später.</div>
+<div id="ctrlcard"></div>
+<div class="actions"><button id="ct_scan" type="button">Nach Controllern suchen</button>
+<label class="chk"><input type="checkbox" id="ct_all"> Alle Geräte zeigen</label></div>
+<div id="ctrlfound"></div>
+<div id="ct_msg" class="ph"></div>
+</details>
+<details class="subsec" id="net_ua"><summary>Zugriff auf diese Oberfläche</summary>
+<label class="chk"><input type="checkbox" id="ua_block"> Über fremde WLANs sperren</label>
+<div class="ph" data-hlp>Die Oberfläche ist unverschlüsselt (HTTP). In einem WLAN, in dem die Box nur Gast ist (Hotel, Handy-Hotspot, fremdes Netz), kann dort jeder mitlesen. Ist der Schalter an, antwortet die Box in solchen WLANs nicht. Erreichbar bleiben Ethernet, der Hotspot der Box, USB und Tailscale (HTTPS). Wer sich aussperrt, schaltet den Schalter über Ethernet oder Tailscale wieder aus.</div>
+<div id="ua_info" class="ph"></div>
+<div id="ua_err" class="err"></div>
+</details>
+</details>

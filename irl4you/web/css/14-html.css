@@ -1,0 +1,236 @@
+html[data-design="cockpit"] .mf-cam.ismain.live {
+  color: var(--ok);
+  border-color: var(--ok);
+  box-shadow: inset 0 0 0 1px var(--ok);
+}
+html[data-design="cockpit"] .mf-cam.off {
+  color: var(--muted);
+}
+html[data-design="cockpit"] .mf-aud {
+  color: var(--text);
+}
+html[data-design="cockpit"] .mf-aud.muted {
+  color: var(--crit);
+  border-color: var(--crit);
+}
+html[data-design="cockpit"] .mf-live {
+  min-height: 60px;
+  font:
+    800 20px/1 ui-monospace,
+    "SF Mono",
+    SFMono-Regular,
+    Consolas,
+    "Liberation Mono",
+    monospace;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+html[data-design="cockpit"] .mf-info {
+  font-size: 26px;
+  color: var(--text);
+}
+html[data-design="mischpult"] .mf-t {
+  min-height: 60px;
+  gap: 3px;
+  padding: 3px;
+  font:
+    700 12px/1.1 ui-sans-serif,
+    system-ui,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
+  letter-spacing: 0.03em;
+  color: var(--text);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--bg) 70%, #000), color-mix(in srgb, var(--bg) 85%, var(--card)));
+  border: 1px solid var(--line);
+  box-shadow:
+    0 3px 0 var(--line),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+html[data-design="mischpult"] .mf-t svg {
+  width: 26px;
+  height: 26px;
+}
+html[data-design="mischpult"] .mf-t:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 var(--line);
+}
+html[data-design="mischpult"] .mf-cam.live {
+  color: var(--ok);
+  box-shadow:
+    0 3px 0 var(--line),
+    inset 0 -3px 0 var(--ok);
+}
+html[data-design="mischpult"] .mf-cam.ismain {
+  border-color: var(--accent);
+  box-shadow:
+    0 3px 0 var(--line),
+    inset 0 0 0 1px var(--accent);
+}
+html[data-design="mischpult"] .mf-cam.ismain.live {
+  box-shadow:
+    0 3px 0 var(--line),
+    inset 0 0 0 1px var(--accent),
+    inset 0 -3px 0 var(--ok);
+}
+html[data-design="mischpult"] .mf-cam.off {
+  color: var(--muted);
+}
+html[data-design="mischpult"] .mf-aud {
+  color: var(--text);
+}
+html[data-design="mischpult"] .mf-aud.muted {
+  color: var(--crit);
+  border-color: var(--crit);
+}
+html[data-design="mischpult"] .mf-live {
+  min-height: 60px;
+  font-size: 20px;
+  font-weight: 800;
+}
+html[data-design="mischpult"] .mf-info {
+  font-size: 26px;
+  color: var(--text);
+}
+html[data-design="mischpult"][data-theme="light"] :is(input, select) {
+  background: #f8f9fb;
+  color: #14161a;
+  border: 1px solid #4a4f56;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+html[data-design="mischpult"][data-theme="light"] details.card > summary .sumh,
+html[data-design="mischpult"][data-theme="light"] .sech,
+html[data-design="mischpult"][data-theme="light"] .subsec > summary,
+html[data-design="mischpult"][data-theme="light"] .card h2 {
+  text-shadow: none;
+}
+html[data-design="mischpult"][data-theme="light"] .sech {
+  color: #7a4200;
+}
+html[data-design="mischpult"][data-theme="light"] .big {
+  text-shadow: none;
+  color: #14161a;
+}
+html[data-design="mischpult"][data-theme="light"] .badge {
+  background: #d3d6db;
+  color: #14161a;
+  border: 1px solid #4a4f56;
+}
+html[data-design="mischpult"][data-theme="light"] .badge.attn,
+html[data-design="mischpult"][data-theme="light"] .badge.demo {
+  background: #e69a00;
+  color: #14161a;
+}
+html[data-design="mischpult"][data-theme="light"] button {
+  background: linear-gradient(180deg, #a65a00, #7d4300);
+  color: #ffffff;
+  border: 1px solid #2b2d31;
+  box-shadow:
+    0 3px 0 #2b2d31,
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  text-shadow: none;
+}
+html[data-design="mischpult"][data-theme="light"] button.sec,
+html[data-design="mischpult"][data-theme="light"] header .hdr button,
+html[data-design="mischpult"][data-theme="light"] .seg button,
+html[data-design="mischpult"][data-theme="light"] :is(.ibtn, .helpbtn) {
+  background: linear-gradient(180deg, #fafbfc, #d3d6db);
+  color: #14161a;
+  border: 1px solid #4a4f56;
+  box-shadow:
+    0 3px 0 #4a4f56,
+    inset 0 1px 0 #fff;
+}
+html[data-design="mischpult"][data-theme="light"] .seg button.on,
+html[data-design="mischpult"][data-theme="light"] :is(.ibtn, .helpbtn)[aria-expanded="true"],
+html[data-design="mischpult"][data-theme="light"] #pb_awake[aria-pressed="true"] {
+  background: linear-gradient(180deg, #a65a00, #7d4300);
+  color: #ffffff;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.45);
+}
+html[data-design="mischpult"][data-theme="light"] button.warnbtn {
+  background: linear-gradient(180deg, #e69a00, #b87800);
+  color: #14161a;
+}
+html[data-design="mischpult"][data-theme="light"] .dangerbtn {
+  background: linear-gradient(180deg, #d6453d, #a82a25);
+  color: #ffffff;
+}
+html[data-design="mischpult"][data-theme="light"] .livebtn:not(.on):not(.busy),
+html[data-design="mischpult"][data-theme="light"] .mf-live {
+  background: linear-gradient(180deg, #1f9d4a, #0f7a3d);
+  color: #ffffff;
+  box-shadow:
+    0 3px 0 #2b2d31,
+    0 0 10px rgba(15, 122, 61, 0.45);
+}
+html[data-design="mischpult"][data-theme="light"] .livebtn.on {
+  background: linear-gradient(180deg, #d6453d, #a82a25);
+  color: #ffffff;
+}
+html[data-design="mischpult"][data-theme="light"] .livebtn.busy {
+  background: linear-gradient(180deg, #e69a00, #b87800);
+  color: #14161a;
+}
+html[data-design="mischpult"][data-theme="light"] .mf-t {
+  background: linear-gradient(180deg, #fafbfc, #d3d6db);
+  color: #14161a;
+  border: 1px solid #4a4f56;
+  box-shadow:
+    0 3px 0 #4a4f56,
+    inset 0 1px 0 #fff;
+}
+html[data-design="mischpult"][data-theme="light"] .mf-cam.live {
+  color: #0a6b30;
+  box-shadow:
+    0 3px 0 #4a4f56,
+    inset 0 -3px 0 #0f7a3d;
+}
+html[data-design="mischpult"][data-theme="light"] .mf-cam.ismain {
+  border-color: #8a4b00;
+  box-shadow:
+    0 3px 0 #4a4f56,
+    inset 0 0 0 1px #8a4b00;
+}
+html[data-design="mischpult"][data-theme="light"] .mf-cam.off {
+  color: #4a4f56;
+}
+html[data-design="mischpult"][data-theme="light"] .mf-aud.muted {
+  color: #a82a25;
+  border-color: #a82a25;
+}
+html[data-design="mischpult"][data-theme="light"] .bar {
+  background: #4a4f56;
+  border: 1px solid #14161a;
+}
+html[data-design="mischpult"][data-theme="light"] .statbox {
+  background: #dfe2e6;
+  border: 1px solid #4a4f56;
+}
+html[data-design="mischpult"][data-theme="light"] .alert {
+  background: #f4e3b5;
+  color: #14161a;
+}
+html[data-design] header h1 {
+  white-space: nowrap;
+}
+html[data-design] header .hdr {
+  gap: 6px;
+}
+html[data-design] :is(.pbpick, .langbtns) button {
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--ctl, var(--line));
+  font-weight: 500;
+  border-radius: 10px;
+  min-height: 44px;
+  padding: 10px 12px;
+  font-size: 16px;
+  filter: none;
+}
+html[data-design] :is(.pbpick, .langbtns) button.on {
+  background: var(--bar);
+  border-color: var(--bar);
+  color: var(--onbar, var(--card));
+  font-weight: 700;
+}

@@ -1,0 +1,15 @@
+<section class="card wide" id="livecard" aria-label="Live">
+<div id="livebox">
+<div class="row liverow" style="justify-content:flex-start"><span class="big" id="livestate">–</span><span id="liveup" class="liveup" hidden title="Gesamter Upload über die gewählten Netze"></span><span id="liveserver" class="muted livesrv"></span><span id="livetemp" class="livetemp" hidden title="Temperatur der Box (Prozessor)"></span></div>
+<div id="swapbar" hidden><div class="sech" style="margin:12px 0 6px">Hauptbild</div><div class="seg" id="swapbtns" role="group" aria-label="Hauptbild wählen"></div></div>
+<div id="livewhy" class="ph"></div>
+<div id="livehint" class="pending" hidden><span>Live geht erst, wenn der Bildaufbau fertig ist: Hauptkamera wählen und „Bildaufbau speichern“.</span><button type="button" id="live_topipe" class="warnbtn">Zum Bildaufbau</button></div>
+<div id="srvhint" class="pending" hidden><span>Live geht erst, wenn ein SRTLA-Server eingetragen ist: Server hinzufügen und auswählen.</span><button type="button" id="live_tosrv" class="warnbtn">Zum SRTLA-Server</button></div>
+<div id="nethint" class="pending" hidden><span>Zwei Verbindungen nutzen denselben Adressbereich bei verschiedenen Geräten (zum Beispiel zwei Modems oder Hotspots mit 192.168.8.x): Das führt zu Adresskonflikten, und Kameras können ausfallen. Bitte eine davon trennen:</span>
+<b id="nethint_cards"></b></div>
+<div id="livepending" class="pending" hidden><span id="livepending_t"></span>
+<button type="button" id="live_restart" class="warnbtn">Stream neu starten</button><button type="button" id="live_ignore" class="sec">Später</button></div>
+<div id="liveerr" class="err"></div>
+<div id="livehealth" class="livehealth"></div>
+</div>
+</section>

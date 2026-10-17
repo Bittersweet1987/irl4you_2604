@@ -7,6 +7,7 @@ Läuft unter Windows und Linux nur mit der Standardbibliothek; der bcrypt-Test b
 import importlib
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -348,6 +349,62 @@ class TestNetzPruefung(unittest.TestCase):
         sysinst = open(os.path.join(INSTALL, "system-install.sh"), encoding="utf-8").read()
         self.assertIn("/run/irl4you-net-before", sysinst)
         self.assertLess(sysinst.index("/run/irl4you-net-before"), sysinst.index("sh install/system-base-fixes.sh"), "Netz merken, bevor etwas geändert wird")
+
+
+class TestWebDateien(unittest.TestCase):
+    """index.html ist aufgeteilt: Gerüst + partials/ (je Karte) + css/ + js/. Alles hängt aneinander und bleibt klein."""
+    WEB = os.path.join(IRL, "web")
+    BEKANNT_GROSS = {"js/18-app.js": 520}       # eine einzige zusammenhängende Funktion (Anordnung der Karten), noch nicht zerlegt
+
+    def setUp(self):
+        self.wf = irl("webui.webfiles")
+        self.index = open(os.path.join(self.WEB, "index.html"), encoding="utf-8").read()
+
+    def test_groesse_je_datei(self):
+        zu_gross = []
+        for d in ("css", "js", "partials", ""):
+            for f in sorted(os.listdir(os.path.join(self.WEB, d))):
+                if f.endswith((".css", ".js", ".html")):
+                    rel = (d + "/" if d else "") + f
+                    n = len(open(os.path.join(self.WEB, rel), encoding="utf-8").read().splitlines())
+                    if n > self.BEKANNT_GROSS.get(rel, 500):
+                        zu_gross.append("%s: %d Zeilen" % (rel, n))
+        self.assertEqual(zu_gross, [])
+
+    def test_alles_verknuepft(self):
+        for name in re.findall(r"<!--#include ([a-z0-9_-]+\.html)-->", self.index):
+            self.assertTrue(os.path.exists(os.path.join(self.WEB, "partials", name)), "Teil fehlt: " + name)
+        refs = re.findall(r'(?:href|src)="/ui/(css|js)/([^"]+)"', self.index)
+        self.assertGreater(len(refs), 20)
+        for kind, name in refs:
+            self.assertTrue(os.path.exists(os.path.join(self.WEB, kind, name)), "Datei fehlt: %s/%s" % (kind, name))
+        for kind in ("css", "js"):       # nichts liegt herum, das nicht eingebunden ist (Unterordner css/tokens, themes, komponenten gehören dem Design-System)
+            for f in [x for x in os.listdir(os.path.join(self.WEB, kind)) if re.match(r"^[0-9]{2}-", x)]:
+                self.assertIn('/ui/%s/%s"' % (kind, f), self.index, "nicht eingebunden: %s/%s" % (kind, f))
+
+    def test_seite_zusammengesetzt(self):
+        full = self.wf.expand_includes(self.index, self.WEB)
+        self.assertNotIn("<!--#include", full)
+        ids = re.findall(r'id="([^"]+)"', full)
+        self.assertEqual(len(ids), len(set(ids)), "doppelte id: %s" % sorted({i for i in ids if ids.count(i) > 1}))
+        for must in ("livecard", "c_cams", "pipecard", "netcard", "c_layout", "c_power", "hdr_live", "stagefoot"):
+            self.assertIn('id="%s"' % must, full)
+        self.assertEqual(full.count("<main>"), 1)
+        self.assertEqual(full.count("</main>"), 1)
+
+    def test_auslieferung_nur_erlaubte_dateien(self):
+        sf = self.wf.static_file("/ui/css/01-root.css", self.WEB)
+        self.assertEqual(sf[1], "text/css; charset=utf-8")
+        self.assertIn(b"{", sf[0])
+        self.assertEqual(self.wf.static_file("/ui/js/00-theme-init.js", self.WEB)[1], "application/javascript; charset=utf-8")
+        for bad in ("/ui/js/../server.py", "/ui/css/..%2f..%2fserver.css", "/ui/js/01-app.css", "/ui/partials/livecard.html", "/ui/js/", "/ui/js/x/y.js",
+                    "/ui/js/nope.js", "/ui/../index.html", "/ui/js/01-app.js/"):
+            self.assertIsNone(self.wf.static_file(bad, self.WEB), bad)
+
+    def test_keine_neuen_inline_styles(self):
+        """Die Karten haben noch Inline-Styles aus der Zeit vor der Aufteilung (Stand 17.10.2026: 102); neue kommen nicht dazu, das Design-System räumt sie auf."""
+        n = len(re.findall(r' style="', self.wf.expand_includes(self.index, self.WEB)))
+        self.assertLessEqual(n, 102)
 
 
 class TestDispatcher(unittest.TestCase):

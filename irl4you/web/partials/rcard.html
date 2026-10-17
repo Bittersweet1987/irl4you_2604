@@ -1,0 +1,57 @@
+<details class="card wide" id="rcard">
+<summary><span class="sumh">Fernzugriff (Tailscale)</span><span class="lockhint" id="rlock" hidden> · Streammodus ist an</span><span id="r_badge" class="badge">…</span></summary>
+<div class="ph" style="margin-top:0">Erreichen Sie die Oberfläche von unterwegs, <b>nur über Ihr privates Tailscale-Netz</b>, nie öffentlich im Internet. Jedes Gerät, das zugreifen soll, braucht die Tailscale-App und Ihr Konto.</div>
+<div id="r_info"></div>
+<div id="r_login" hidden><a id="r_loginlink" class="btnlink" target="_blank" rel="noopener noreferrer" href="#">Bei Tailscale anmelden</a>
+<div class="ph">Der Link öffnet Tailscale. Melden Sie sich mit Ihrem Konto an (z. B. GitHub oder Google) und klicken Sie dort auf „Connect“. Danach hier einen Moment warten.</div></div>
+<div id="r_url_row" class="row" hidden><span>Adresse im privaten Netz</span><span><a id="r_url" target="_blank" rel="noopener noreferrer" href="#"></a>
+<button id="r_copy" type="button" class="sec" style="padding:2px 8px;font-size:12px">Kopieren</button></span></div>
+<div id="r_https" class="pending" hidden><b>Für die Freigabe muss HTTPS im Tailscale-Konto einmal freigeschaltet sein.</b> Dort „MagicDNS“ und „HTTPS Certificates“ einschalten, danach hier „Oberfläche im privaten Netz freigeben“ drücken.<div style="margin-top:8px"><a id="r_httpslink" class="btnlink" href="https://login.tailscale.com/admin/dns" target="_blank" rel="noopener noreferrer">Tailscale-Einstellungen öffnen</a></div></div>
+<div id="r_warn" class="err" hidden>Achtung: „Funnel“ ist an, die Oberfläche ist öffentlich im Internet erreichbar. Mit „Freigabe beenden“ abschalten.</div>
+<div class="actions" id="r_actions"></div>
+<div id="r_msg" class="ph"></div>
+<details class="dsec" id="statshare"><summary>Statistik öffentlich (für OBS und Homepage)</summary>
+<p class="ph">Gibt <b>nur die Statistik</b> (Sendewege, Bitrate, Temperatur, Kameras …) über eine eigene öffentliche Adresse frei, zum Beispiel für eine Browserquelle in OBS oder eine Homepage. Die Oberfläche der Box bleibt davon unberührt und kann privat bleiben. Der Zugriff geht nur mit einem geheimen Schlüssel in der Adresse, höchstens 3 Betrachter gleichzeitig. Die Adresse bleibt fest, auch wenn die Box ihr Netz wechselt.</p>
+<div id="ss_nc" class="pending" hidden>Zuerst oben mit Tailscale verbinden.</div>
+<label class="chk"><input type="checkbox" id="ss_on"> Statistik öffentlich freigeben</label>
+<div id="ss_body" hidden>
+<div class="muted" style="margin-top:8px">Was darf nach außen?</div>
+<label class="chk"><input type="checkbox" data-ssg="send"> Senden (Bitrate, Verlust, Laufzeit)</label>
+<label class="chk"><input type="checkbox" data-ssg="net"> Sendewege und Netze</label>
+<label class="chk"><input type="checkbox" data-ssg="cameras"> Kameras</label>
+<label class="chk"><input type="checkbox" data-ssg="cpu"> Prozessor und Speicher</label>
+<label class="chk"><input type="checkbox" data-ssg="temp"> Temperaturen</label>
+<label class="chk"><input type="checkbox" data-ssg="alerts"> Meldungen</label>
+<label class="chk"><input type="checkbox" data-ssg="cores"> Prozessor-Details (Kerne, GPU)</label>
+<label class="chk"><input type="checkbox" data-ssg="disk"> Speicherplatz</label>
+<div class="muted" style="margin-top:8px">Adresse der Seite (zum Beispiel für die Browserquelle in OBS)</div>
+<input type="text" id="ss_page" readonly aria-label="Adresse der Statistik-Seite mit Schlüssel" style="width:100%">
+<div class="muted" style="margin-top:6px">WebSocket-Adresse (für die eigene statistik.html oder andere Programme)</div>
+<input type="text" id="ss_ws" readonly aria-label="WebSocket-Adresse der Statistik mit Schlüssel" style="width:100%">
+<div class="actions"><button type="button" id="ss_cpage" class="sec small">Adresse der Seite kopieren</button>
+<button type="button" id="ss_cws" class="sec small">WebSocket-Adresse kopieren</button>
+<button type="button" id="ss_dl" class="sec small">statistik.html herunterladen</button>
+<button type="button" id="ss_new" class="sec small">Neuen Schlüssel erzeugen</button></div>
+<div class="muted" id="ss_clients"></div>
+<p class="ph">Wer die Adresse kennt, sieht diese Werte. Gib sie nicht weiter und stelle die Datei nicht öffentlich ins Netz: Auf einer Homepage sehen Besucher die Adresse der Box und den Schlüssel.</p>
+</div>
+<div class="ph" id="ss_msg"></div>
+<div class="err" id="ss_err"></div>
+</details>
+<div class="ph" style="margin-top:14px">Tailscale-App für Ihre Geräte (offizielle Stores):</div>
+<div class="actions" id="r_apps">
+<a class="btnlink" target="_blank" rel="noopener noreferrer" href="https://play.google.com/store/apps/details?id=com.tailscale.ipn">Android (Play Store)</a>
+<a class="btnlink" target="_blank" rel="noopener noreferrer" href="https://apps.apple.com/app/tailscale/id1470499037">iPhone/iPad (App Store)</a>
+<a class="btnlink" target="_blank" rel="noopener noreferrer" href="https://tailscale.com/download/mac">Mac</a>
+<a class="btnlink" target="_blank" rel="noopener noreferrer" href="https://tailscale.com/download/windows">Windows</a>
+<a class="btnlink" target="_blank" rel="noopener noreferrer" href="https://tailscale.com/download/linux">Linux</a>
+</div>
+<details><summary class="muted">Anleitung für Handy und Rechner</summary>
+<ol>
+<li><b>Konto:</b> Auf tailscale.com kostenlos anmelden (z. B. mit GitHub, Google, Microsoft oder Apple).</li>
+<li><b>Box:</b> Hier „Ja, einrichten“, dann „Verbinden“, den Link öffnen, anmelden, „Connect“ klicken.</li>
+<li><b>Freigabe:</b> „Oberfläche im privaten Netz freigeben“. Falls Tailscale nach „HTTPS“ fragt: den Link öffnen, „Funnel“ <b>aus</b> lassen, „Enable HTTPS“ klicken, dann erneut freigeben.</li>
+<li><b>Handy und Rechner:</b> Die App „Tailscale“ installieren (tailscale.com/download), mit <b>demselben Konto</b> anmelden, Verbindung einschalten.</li>
+<li><b>Zugriff:</b> Die Adresse oben im Browser öffnen, mit dem BELABOX-Passwort anmelden. Es ist nichts am Router freizugeben.</li>
+</ol></details>
+</details>

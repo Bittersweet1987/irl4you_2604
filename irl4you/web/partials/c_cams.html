@@ -1,0 +1,101 @@
+<details class="card wide" id="c_cams" open><summary><span class="sumh">Kameras</span></summary>
+<details class="subsec" id="rtmp_sec"><summary>Aktive Kameras</summary>
+<div id="cams"></div>
+<div class="ph" data-hlp>Die Kamera sendet an die angezeigte RTMP-Adresse. Die Adresse gilt für die Verbindung der Kamera: je Kamera hier in der Zeile wählbar (DJI-Kameras in ihrer eigenen Karte), sonst für die Hauptverbindung, die Sie darunter bei „Hauptverbindung“ gewählt haben.</div>
+<div class="sech">Hauptverbindung</div>
+<div class="ph" style="margin-top:0">Gilt für die angezeigte RTMP-Adresse jeder Kamera ohne eigene Verbindung (Handy, Drohne, DJI-Kamera und so weiter). Eine andere Verbindung wählt man je Kamera in der Liste „Aktive Kameras“ oben; jede DJI-Kamera wählt sie unten in ihrer eigenen Karte.</div>
+<div class="add" style="margin-bottom:6px"><select id="netsel"></select></div>
+<div id="netinfo" class="ph"></div>
+</details>
+<details class="subsec" id="rtmp_new"><summary>Neue RTMP-Kamera anlegen</summary>
+<form id="addcam" class="add">
+<input id="f_name" placeholder="Name, z. B. Hauptkamera" maxlength="40" required>
+<input id="f_key" placeholder="Schlüssel (leer = automatisch)" maxlength="32">
+<button type="submit">Kamera hinzufügen</button>
+</form>
+<div class="qrline" id="qrnew"><select id="qrn_app" aria-label="App"></select>
+<button type="button" class="sec" id="qrn_go" style="padding:2px 8px;font-size:12px">QR-Code erzeugen</button>
+<button type="button" class="helpbtn" id="qrn_help" aria-label="Erklärung zeigen" aria-expanded="false">i</button></div>
+<div class="ph" id="qrn_help_txt" hidden>IRL Pro und Moblin: den Code mit der Kamera-App des Handys scannen und den Link öffnen. GoPro: zuerst den Hotspot der Box einrichten und die GoPro damit verbinden (GoPro-App), dann bei Labs-Firmware die Codes 1, 2, 3 nacheinander vor die Kamera halten. Das Handy oder die GoPro muss die Box erreichen. Der Code enthält den Kamera-Schlüssel.</div>
+<div id="qrn_out"></div>
+<div id="formerr" class="err"></div>
+</details>
+<details class="subsec" id="dji_sec"><summary>DJI-Kameras (Bluetooth)</summary><div id="djicard">
+<div id="djinote" class="muted"></div>
+<div id="djiadapt" class="ph"></div>
+<div id="djicams"></div>
+<div class="actions"><button id="d_scan" type="button">Nach DJI-Kameras suchen</button><span id="djiscanning" class="muted" hidden></span></div>
+<div id="djiscan"></div>
+<div class="ph" data-hlp>Kamera einschalten und wach halten, Kopplung an der Kamera bestätigen. Sie tritt dem gewählten WLAN bei und streamt zu dieser Box. Unterstützt: Osmo Action 3, 4, 5 Pro, 6 und Osmo Pocket 3, 4 und 4 Pro. Welche Kamera Hauptbild oder Bild-in-Bild ist, wählen Sie in der Karte „Bildaufbau“.</div>
+<div id="djierr" class="err"></div>
+</div>
+</details>
+<details class="subsec" id="hdmi_sec"><summary>HDMI- und USB-Kameras</summary><div id="hdmicard">
+<details class="dcam" id="hdmi_cam" open>
+<summary><span class="dname" id="hdmi_name">HDMI-Eingang</span><span class="dright"><span class="dstate" id="hdmi_state"></span></span></summary>
+<div class="dbody">
+<label class="f">Quelle<select id="hdmi_source"><option value="hdmi">HDMI-Eingang</option><option value="usb">USB-Webcam</option></select></label>
+<div class="dsub muted" id="hdmi_signal"></div>
+<label class="chk"><input type="checkbox" id="hdmi_on"> Als Kamera senden</label>
+<details class="dsec" id="hdmi_vsec"><summary>Bild und Ton <span class="muted" id="hdmi_vsum"></span></summary>
+<div class="dgrid">
+<label class="f">Bildrate<select id="hdmi_fps"><option value="30">30 fps</option><option value="25">25 fps</option></select></label>
+<label class="f">Bitrate (Mbit/s)<input id="hdmi_br" type="number" min="1" max="20" step="0.5"></label>
+<label class="f">Ton<select id="hdmi_audio"><option value="hdmi">HDMI-Ton / Ton der Kamera</option><option value="usb">USB-Tonkarte (Mikrofon, Funkstrecke)</option><option value="analog">Analogeingang der Box</option><option value="none">ohne Ton</option></select></label>
+<label class="f" id="hdmi_fmtrow">Bildformat<select id="hdmi_fmt"><option value="auto">Automatisch (MJPEG zuerst)</option><option value="mjpeg">MJPEG (die Box kodiert mit der Bitrate neu)</option><option value="h264">H.264 (Strom der Kamera)</option></select></label>
+</div>
+<div class="actions"><button id="hdmi_save" type="button">Speichern</button></div>
+</details>
+<div id="hdmi_err" class="err"></div>
+</div>
+</details>
+<div class="ph" data-hlp>Das Bild wird in der Box zu einer normalen Kamera („HDMI“ oder „USB-Kamera“) und steht dann in „Bildaufbau“ wie alle anderen. USB-Webcam: eine Kamera, die sich als Webcam (UVC) meldet, zum Beispiel eine Action-Kamera im Webcam-Modus; die Box probiert die Bildformate selbst durch. Ungeprüft mit echter Hardware.</div>
+</div>
+</details>
+<details class="subsec" id="tw_sec"><summary>Akku-Warnung im Twitch-Chat (nur bei DJI) <span class="muted" id="tw_sum"></span></summary>
+<label class="chk"><input type="checkbox" id="tw_on"> Einschalten</label>
+<span class="muted" id="tw_acc2"></span>
+<div class="twbot" id="twb_row"><span class="muted" id="twb_t"></span><button type="button" id="twb_go" class="sec small">Bot-Konto anmelden</button><button type="button" id="twb_cancel" class="sec small" hidden>Abbrechen</button><button type="button" id="twb_out" class="sec small" hidden>Bot abmelden</button></div>
+<div id="twb_code" class="twcode" hidden><div class="twcode_txt"><div class="twcode_big" id="twb_big" translate="no"></div><a id="twb_link" href="#" target="_blank" rel="noopener">twitch.tv/activate</a></div></div>
+<div class="ph" data-hlp>Ein zweites Twitch-Konto (Bot) schreibt die Meldung, wenn du es anmeldest. Ohne Bot schreibt dein Hauptkonto. Beim Anmelden bei Twitch das Bot-Konto wählen, am besten in einem privaten Browserfenster. Ist der Chat nur für Follower oder Abonnenten, muss der Bot Moderator oder VIP sein.</div>
+<div id="tw_adv_box">
+<div class="twgrid">
+<label class="f sens">Kanal (Konto, auf dem gestreamt wird)<input id="tw_channel" maxlength="25" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+<label class="f sens" id="tw_login_l">Bot-Konto (Name)<input id="tw_login" maxlength="25" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+<label class="f" id="tw_token_l">Token des Bot-Kontos<input id="tw_token" type="password" maxlength="120" autocomplete="new-password"></label>
+</div>
+<div class="ph" data-hlp id="tw_manual_hint">Token mit dem Recht „chat:edit“, wie bei NOALBS. Er muss zum Bot-Konto gehören. Einfacher: im Bereich „Chat“ mit Twitch anmelden.</div>
+</div>
+<div class="twrow">
+<label class="f">Warnen bei (%)<input id="tw_thr" type="number" min="1" max="50" step="1"></label>
+<label class="f grow">Nachricht ({Kamera} und {Prozent} werden ersetzt)<input id="tw_msg" maxlength="300" autocomplete="off"></label>
+</div>
+<label class="chk"><input type="checkbox" id="tw_live"> Nur während der Sendung</label>
+<div class="actions"><button id="tw_save" type="button">Speichern</button><button id="tw_test" type="button" class="sec" disabled>Testnachricht senden</button></div>
+<div id="tw_status" class="ph" role="status"></div>
+<div id="tw_err" class="err"></div>
+</details>
+<details class="subsec" id="sa_sec"><summary>Systemwarnungen im Twitch-Chat <span class="muted" id="sa_sum"></span></summary>
+<label class="chk"><input type="checkbox" id="sa_on"> Einschalten</label>
+<div class="sarows">
+<label class="chk"><input type="checkbox" id="sa_t_on"> Temperatur ab <input id="sa_t" type="number" min="40" max="100" step="1" aria-label="Temperatur in Grad"> °C</label>
+<label class="chk"><input type="checkbox" id="sa_c_on"> CPU-Last ab <input id="sa_c" type="number" min="20" max="100" step="1" aria-label="CPU-Last in Prozent"> %</label>
+<label class="chk"><input type="checkbox" id="sa_r_on"> RAM ab <input id="sa_r" type="number" min="20" max="100" step="1" aria-label="Arbeitsspeicher in Prozent"> %</label>
+</div>
+<div class="sarows">
+<label class="sacd">Pause <input id="sa_cd" type="number" min="1" max="120" step="1" aria-label="Pause in Minuten"> Min.</label>
+<label class="chk"><input type="checkbox" id="sa_rec"> „Wieder normal“ melden</label>
+<label class="chk"><input type="checkbox" id="sa_live"> Nur während der Sendung</label>
+</div>
+<details class="subsec" id="sa_txt"><summary>Texte</summary>
+<div class="twrow">
+<label class="f grow">Warnung ({Name}, {Wert} und {Grenze} werden ersetzt)<input id="sa_msg_a" maxlength="300" autocomplete="off"></label>
+<label class="f grow">Wieder normal<input id="sa_msg_o" maxlength="300" autocomplete="off"></label>
+</div>
+</details>
+<div class="ph" data-hlp>Meldet über denselben Twitch-Zugang wie die Akku-Warnung (Anmeldung im Bereich „Chat“ oder Bot-Konto oben). Eine Warnung kommt, wenn der Wert etwa 30 Sekunden lang die Grenze erreicht; bleibt er darüber, folgt nach jeder Pause eine Erinnerung. „Wieder normal“ kommt, wenn er die Grenze klar unterschreitet.</div>
+<div class="actions"><button id="sa_save" type="button">Speichern</button><button id="sa_test" type="button" class="sec" disabled>Testnachricht senden</button></div>
+<div id="sa_status" class="ph" role="status"></div>
+<div id="sa_err" class="err"></div>
+</details>
+</details>

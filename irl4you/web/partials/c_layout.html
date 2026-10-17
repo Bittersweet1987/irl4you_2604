@@ -1,0 +1,60 @@
+<details class="card wide" id="c_layout"><summary><span class="sumh">Optionen</span></summary>
+<div class="ph" style="margin-top:0">Hier legen Sie fest, welche Menüpunkte angezeigt werden (Haken weg = ausgeblendet). Ausgeblendet wird nur die Anzeige, an den Einstellungen ändert sich nichts. Die Reihenfolge der Hauptmenüs und das Design legen Sie darunter fest. Es gibt zwei Ansichten, Desktop und Mobil, mit je eigener Auswahl. Sie sind auf der Box gespeichert und gelten für alle Geräte.</div>
+<div id="view_ctl" class="viewctl">
+<div id="view_now" class="ph" role="status"></div>
+<div class="row" style="justify-content:flex-start;gap:6px;flex-wrap:wrap"><label for="view_mode">Ansicht dieses Geräts:</label>
+<select id="view_mode" aria-label="Ansicht dieses Geräts"><option value="auto">Automatisch (nach Fensterbreite)</option><option value="desktop">Immer Desktop</option><option value="mobile">Immer Mobil</option></select></div>
+<div class="ph">Automatisch: bis 620 Pixel Breite (Handy, schmales Fenster) gilt Mobil, sonst Desktop. Diese Wahl gilt nur für dieses Gerät.</div>
+<div class="sech">Einstellungen bearbeiten für</div>
+<div class="vseg" role="group" aria-label="Ansicht bearbeiten"><button type="button" id="vw_desktop" aria-pressed="true">Desktop</button><button type="button" id="vw_mobile" aria-pressed="false">Mobil</button></div>
+<div class="actions"><button type="button" id="vw_copy" class="sec">Von Mobil übernehmen</button></div>
+<div id="vw_msg" class="ph" role="status"></div>
+</div>
+<details class="subsec" id="opt_uipw"><summary>Passwort der Oberfläche</summary>
+<form id="uipw_form" class="wform" autocomplete="off">
+<label class="muted">Bisheriges Passwort<input id="uipw_old" type="password" autocomplete="current-password" required></label>
+<label class="muted">Neues Passwort (mindestens 10 Zeichen)<input id="uipw_new" type="password" minlength="10" maxlength="72" autocomplete="new-password" required></label>
+<label class="muted">Neues Passwort wiederholen<input id="uipw_new2" type="password" minlength="10" maxlength="72" autocomplete="new-password" required></label>
+<div class="actions"><button type="submit">Passwort ändern</button></div>
+</form>
+<div id="uipw_msg" class="ph" role="status"></div>
+</details>
+<details class="subsec" id="opt_design"><summary>Design</summary>
+<div class="ph" style="margin-top:0">Wählen Sie das Aussehen der Oberfläche für die oben gewählte Ansicht (Desktop oder Mobil). Hell oder dunkel stellen Sie wie bisher oben in der Kopfleiste ein, das gilt nur für diesen Browser.</div>
+<div id="design_list" class="designs" role="radiogroup" aria-label="Design"></div>
+</details>
+<details class="subsec" id="opt_menus"><summary>Menüpunkte anzeigen</summary>
+<div id="lay_list" class="optlist"></div>
+<div class="actions"><button type="button" id="lay_showall" class="sec">Alle einblenden</button></div>
+</details>
+<details class="subsec" id="opt_order"><summary>Reihenfolge der Hauptmenüs</summary>
+<div id="ord_list" class="optlist"></div>
+<div class="actions"><button type="button" id="lay_reset" class="sec">Reihenfolge zurücksetzen</button></div>
+</details>
+<details class="subsec" id="opt_netaddr"><summary>Feste Zusatzadresse (LAN)</summary>
+<div class="ph" style="margin-top:0">Neben der Adresse vom Router (DHCP) bekommt die Box eine feste, zum Beispiel wenn sie am selben Router hängt wie andere Geräte. Die feste Adresse gehört zur MAC-Adresse der gewählten Netzkarte. Voraussetzung ist ein getrennter Adressraum: Sie darf sich nicht mit dem Netz einer anderen Netzkarte überschneiden, kein anderes Gerät darf sie benutzen, und sie sollte außerhalb des DHCP-Bereichs deines Routers liegen. Das gilt für die ganze Box, nicht nur für dieses Gerät.</div>
+<label class="chk"><input type="checkbox" id="na_on"> Feste Zusatzadresse verwenden</label>
+<div class="row" style="justify-content:flex-start;gap:6px;flex-wrap:wrap"><select id="na_card" aria-label="Netzkarte"></select><input id="na_addr" type="text" inputmode="decimal" maxlength="15" placeholder="z. B. 192.168.1.50" aria-label="IP-Adresse" autocomplete="off" style="width:11em"><span>/</span><input id="na_prefix" type="number" min="8" max="30" value="24" aria-label="Netzlänge" style="width:4.5em"></div>
+<label class="chk" id="na_ack_row"><input type="checkbox" id="na_ack"> Ich bin einverstanden, dass die Änderung am Netzwerk der Box auf meine eigene Verantwortung erfolgt.</label>
+<div class="actions"><button type="button" id="na_save">Speichern</button></div>
+<div id="na_info" class="ph" role="status"></div>
+<div id="na_err" class="err"></div>
+</details>
+<details class="subsec" id="c_report"><summary>Problem melden / Wunsch äußern</summary>
+<div class="ph" style="margin-top:0">Bereitet auf GitHub ein fertig ausgefülltes Formular vor (Titel und Beschreibung sind schon eingetragen). Du meldest dich dort mit deinem eigenen GitHub-Konto an und klickst auf „Submit new issue“. Die Box sendet selbst nichts.</div>
+<label class="logopt"><input type="radio" name="rp_kind" value="issue" checked>
+<b>Problem</b> (ISSUE): Titel ist Pflicht, die Beschreibung ist freiwillig. Du bekommst eine Support-Nummer.</label>
+<label class="logopt"><input type="radio" name="rp_kind" value="feature">
+<b>Wunsch</b> (FEATURE): Titel und Beschreibung sind Pflicht. Du bekommst ebenfalls eine Nummer.</label>
+<input id="rp_title" type="text" maxlength="100" placeholder="Titel" aria-label="Titel" autocomplete="off">
+<textarea id="rp_desc" rows="5" maxlength="2000" placeholder="Beschreibung" aria-label="Beschreibung"></textarea>
+<label class="logopt" id="rp_logrow"><input type="checkbox" id="rp_log"> Bereinigtes Protokoll mitnehmen (wird als Datei geladen, die du auf GitHub anhängst; ohne Passwörter, WLAN-Namen, Adressen und Schlüssel)</label>
+<div class="actions"><button id="rp_go" type="button">Formular vorbereiten</button>
+<span id="rp_msg" class="muted"></span></div>
+<div id="rp_out" class="ph" hidden></div>
+<div class="sech">Meine Fälle</div>
+<div class="ph" style="margin-top:0">Deine Support-Nummern mit Datum. „Erledigt“ gilt nur hier auf der Box; das Issue auf GitHub schließt du selbst (oder der Entwickler anhand der Nummer).</div>
+<div id="rp_cases"></div>
+<div class="ph"><a id="rp_issues" href="https://github.com/IRL4YOU/irl4you-pip/issues" target="_blank" rel="noopener noreferrer">Alle Issues auf GitHub ansehen</a></div>
+</details>
+</details>

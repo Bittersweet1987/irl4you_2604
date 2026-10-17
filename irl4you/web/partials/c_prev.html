@@ -1,0 +1,13 @@
+<details class="card wide" id="c_prev"><summary><span class="sumh">Vorschau</span><span class="prevctl"><button type="button" id="prev_set" class="sec small prevset" hidden aria-label="Einstellung zeigen" aria-expanded="false">⚙</button><button type="button" id="prev_btn" class="sec small">Start</button><button type="button" class="helpbtn" id="prev_help_btn" aria-label="Erklärung zeigen" aria-expanded="false">i</button></span></summary>
+<div id="prev_help" class="ph" hidden>Zeigt das fertig gemischte Bild so, wie es gerade gesendet wird, in kleiner Auflösung: also auch, wohin die Kameras gerade zeigen und wie die Bilder angeordnet sind. Es sind 30 Bilder pro Sekunde in 640 × 360 als Video, rund 1,7 Mbit/s zum Browser, über das Netz, in dem er angemeldet ist. Die Vorschau endet nach 10 Minuten, beim Zuklappen der Karte, beim Schließen der Seite und wenn die Sendung endet. Sie kostet die Box etwa die Hälfte eines der vier kleinen Prozessorkerne, solange sie läuft; die Sendung selbst bleibt unberührt. Mit dem Häkchen darunter entfällt die Grenze von 10 Minuten: Die Vorschau startet dann in diesem Browser von selbst wieder, sobald die Seite sichtbar ist und die Box sendet.</div>
+<label class="prevkeep"><input type="checkbox" id="prev_always"> Mir ist bewusst, dass die Vorschau Rechenleistung kostet. Ich möchte sie in diesem Browser dauerhaft eingeschaltet lassen.</label>
+<div id="pa_box">
+<div class="autolbl" id="pa_lbl"><label class="chk" id="pa_row"><input type="checkbox" id="pa_ext"> Vorschau auch von außen erlauben (verbraucht Upload)</label>
+<button type="button" class="helpbtn" id="pa_help_btn" aria-label="Erklärung zeigen" aria-expanded="false">i</button></div>
+<div class="ph" id="pa_help" hidden>Jede Vorschau braucht rund 1,7 Mbit/s Upload, den die Sendung braucht. Von außen (Tailscale, öffentlicher Link) ist die Vorschau deshalb aus. Mit dem Haken geht sie von außen nur klein (320 Pixel, 10 Bilder pro Sekunde, etwa 0,3 Mbit/s) und für einen Zuschauer zugleich. Im Heimnetz und im WLAN der Box bleibt alles wie es ist.</div>
+<div id="pa_err" class="err"></div>
+</div>
+<div id="prev_msg" class="ph" role="status"></div>
+<div class="actions" style="margin:6px 0 0"><button type="button" id="prev_live" class="livebtn" hidden>Live gehen</button></div>
+<div id="prev_box" hidden><video id="prev_vid" muted playsinline autoplay hidden aria-label="Vorschau des Sendebilds"></video><img id="prev_img" alt="Vorschau des Sendebilds" hidden></div>
+</details>

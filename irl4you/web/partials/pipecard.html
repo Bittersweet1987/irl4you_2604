@@ -1,0 +1,62 @@
+<details class="card wide" id="pipecard" open><summary><span class="sumh">Bildaufbau: Kameras, Bild-in-Bild, Positionen</span></summary>
+<div class="ph" style="margin-top:0">Wie das gesendete Bild aufgebaut ist: Hauptbild und bis zu drei kleine Bilder (Bild-in-Bild) mit Position, Größe und Verzögerung. Die kleinen Bilder lassen sich unten in der Vorschau verschieben. Ohne gespeicherten Bildaufbau kann nicht gesendet werden.</div>
+<div class="add">
+<label class="muted">Art<select id="p_type" style="width:100%"><option value="single">Eine Kamera</option><option value="pip">Bild-in-Bild</option></select></label>
+<label class="muted piponly">Ton von<select id="p_audio" style="width:100%"><option value="main">Hauptbild</option><option value="pip">Kleinem Bild 1</option><option value="pip2">Kleinem Bild 2</option><option value="pip3">Kleinem Bild 3</option></select></label>
+</div>
+<div class="camcols">
+<div class="camcol">
+<h3>Hauptbild</h3>
+<label class="muted">Kamera<select id="p_main" style="width:100%"></select></label>
+<div class="muted fixed piponly">Ecke: ganzes Bild</div>
+<label class="muted piponly dl" title="Das Hauptbild wartet samt Ton vor dem Einblenden. 0 = aus."><span>Verzögerung: <b id="v_delay">0</b> ms</span>
+<span class="dlrow"><input id="p_delay" type="range" min="0" max="3000" step="10"><input id="n_delay" type="number" min="0" max="3000" step="10"></span></label>
+</div>
+<div class="camcol piponly">
+<h3>Kleines Bild 1</h3>
+<label class="muted">Kamera<select id="p_pip" style="width:100%"></select></label>
+<label class="muted">Ecke<select id="p_corner" style="width:100%"></select></label>
+<label class="muted" title="Skalierung dieses kleinen Bildes in Prozent des Hauptbildes (1 bis 100; 100 = so groß wie das Hauptbild). Sehr große Bilder brauchen mehr Rechenleistung.">Skalierung (%)<input id="p_size1" type="number" min="1" max="100" step="1" style="width:100%"></label>
+<label class="muted dl" title="Zusätzliche Wartezeit nur für das erste kleine Bild."><span>Verzögerung: <b id="v_delay1">0</b> ms</span>
+<span class="dlrow"><input id="p_delay1" type="range" min="0" max="3000" step="10"><input id="n_delay1" type="number" min="0" max="3000" step="10"></span></label>
+<details class="pvs" data-k="1"></details>
+</div>
+<div class="camcol piponly">
+<h3>Kleines Bild 2 <span class="opt">(optional)</span></h3>
+<label class="muted">Kamera<select id="p_pip2" style="width:100%"></select></label>
+<label class="muted">Ecke<select id="p_corner2" style="width:100%"></select></label>
+<label class="muted" title="Skalierung dieses kleinen Bildes in Prozent des Hauptbildes (1 bis 100; 100 = so groß wie das Hauptbild). Sehr große Bilder brauchen mehr Rechenleistung.">Skalierung (%)<input id="p_size2" type="number" min="1" max="100" step="1" style="width:100%"></label>
+<label class="muted dl" id="dl2" title="Zusätzliche Wartezeit nur für das zweite kleine Bild."><span>Verzögerung: <b id="v_delay2">0</b> ms</span>
+<span class="dlrow"><input id="p_delay2" type="range" min="0" max="3000" step="10"><input id="n_delay2" type="number" min="0" max="3000" step="10"></span></label>
+<details class="pvs" data-k="2"></details>
+</div>
+<div class="camcol piponly">
+<h3>Kleines Bild 3 <span class="opt">(optional)</span></h3>
+<label class="muted">Kamera<select id="p_pip3" style="width:100%"></select></label>
+<label class="muted">Ecke<select id="p_corner3" style="width:100%"></select></label>
+<label class="muted" title="Skalierung dieses kleinen Bildes in Prozent des Hauptbildes (1 bis 100; 100 = so groß wie das Hauptbild). Sehr große Bilder brauchen mehr Rechenleistung.">Skalierung (%)<input id="p_size3" type="number" min="1" max="100" step="1" style="width:100%"></label>
+<label class="muted dl" id="dl3" title="Zusätzliche Wartezeit nur für das dritte kleine Bild."><span>Verzögerung: <b id="v_delay3">0</b> ms</span>
+<span class="dlrow"><input id="p_delay3" type="range" min="0" max="3000" step="10"><input id="n_delay3" type="number" min="0" max="3000" step="10"></span></label>
+<details class="pvs" data-k="3"></details>
+</div>
+</div>
+<div id="dl_warn" class="ph" role="note" hidden style="color:var(--warn)">Mit „Alle Kameras immer bereit“ werden Verzögerungen über 750 ms auf 750 ms begrenzt. Größere Werte ließen das Hauptbild ruckeln.</div>
+<div class="piponly pvwrap"><div class="sech">Vorschau: kleine Bilder verschieben</div><div id="pvbox" class="pvbox"></div><div id="pvnote" class="ph"></div></div>
+<details class="subsec" id="pipe_switch"><summary>Umschalten und Tausch der Kameras</summary>
+<label class="muted" style="display:block;margin-top:12px"><input type="checkbox" id="p_auto" checked> Automatisch umschalten, wenn eine Kamera ausfällt (nach 5 s ohne Signal; zurück nach 60 s stabilem Signal)</label>
+<label class="muted piponly" style="display:block;margin-top:12px">Hauptbild tauschen ohne Unterbrechung (experimentell) <select id="p_swap" style="width:auto;margin-left:6px" title="Der Tausch läuft dann, ohne den Encoder neu zu starten: der Empfänger bekommt weiter Daten. Dafür dekodiert die Box jede Kamera der Gruppe zweimal (groß und klein).">
+<option value="0">aus (Encoder startet neu, etwa 5 s ohne Bild)</option>
+<option value="2">Hauptbild und erstes kleines Bild</option>
+<option value="4">alle Kameras (mehr Rechenlast)</option></select></label>
+<label class="muted piponly" style="display:block;margin-top:12px"><input type="checkbox" id="p_always"> Alle Kameras immer bereit (Beta): Kameras können jederzeit dazukommen, ausfallen und zurückkehren, ohne dass die Sendung neu startet. Fällt die Hauptkamera aus, übernimmt die nächste. Ohne Kamera sendet die Box Schwarz mit Stille. Dafür dekodiert die Box jede Kamera zweimal (mehr Rechenlast).</label>
+</details>
+<details class="subsec piponly" id="pipe_facecam"><summary>Facecam</summary>
+<div class="ph">Wählen Sie das kleine Bild, dessen Kamera die Facecam ist. Der Ton bleibt dann bei dieser Kamera, auch wenn das Hauptbild wechselt (auch wenn die Facecam selbst zum Hauptbild getauscht wird). Mit „Keine Facecam“ folgt der Ton wie bisher immer dem Hauptbild. Die Tonquelle lässt sich jederzeit in der Fußleiste von Hand ändern; beim nächsten Tausch des Hauptbilds geht der Ton wieder zur Facecam. Die Wahl gilt sofort, ohne „Bildaufbau speichern“.</div>
+<div id="fc_btns" class="fcbtns"></div>
+<div id="fc_msg" class="ph" role="status"></div>
+</details>
+<div class="actions"><button id="p_save" type="button">Bildaufbau speichern</button><span class="muted" style="margin-left:.75rem">Läuft gerade eine Übertragung, wird sie bei einer Änderung kurz neu gestartet.</span></div>
+<div id="pipeerr" class="err"></div>
+<div id="pipeinfo" class="ph"></div>
+<details class="sens"><summary class="muted">Technische Beschreibung ansehen (für die Fehlersuche)</summary><pre id="pipeprev"></pre></details>
+</details>

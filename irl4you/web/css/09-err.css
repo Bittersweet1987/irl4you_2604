@@ -1,0 +1,354 @@
+.err.okmsg {
+  color: var(--ok);
+}
+.err.okmsg::before {
+  content: "\2713  ";
+}
+html[data-design] {
+  -webkit-text-size-adjust: 100%;
+}
+html[data-design] :is(button, input, select, summary, a):focus-visible {
+  outline: 3px solid var(--focus, var(--accent));
+  outline-offset: 2px;
+}
+:where(html[data-design]) :is(button, select, input) {
+  transition:
+    background-color 0.15s,
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+@media (prefers-reduced-motion: reduce) {
+  :where(html[data-design]) * {
+    transition: none !important;
+  }
+}
+html[data-design="klar"][data-theme="light"],
+html[data-design="klar"]:not([data-theme]) {
+  --bg: #f4f6fb;
+  --card: #ffffff;
+  --text: #172033;
+  --muted: #566177;
+  --line: #dde3ee;
+  --ctl: #7a849a;
+  --accent: #2457d6;
+  --bar: #2457d6;
+  --blue: #2457d6;
+  --ok: #12803d;
+  --warn: #b45309;
+  --crit: #c62828;
+  --onbar: #ffffff;
+  --onwarn: #ffffff;
+  --onok: #ffffff;
+  --oncrit: #ffffff;
+  --shade: rgba(23, 32, 51, 0.1);
+  --focus: #2457d6;
+  --r: 18px;
+  color-scheme: light;
+}
+html[data-design="klar"][data-theme="dark"] {
+  --bg: #0e1420;
+  --card: #171f2e;
+  --text: #eef2fa;
+  --muted: #aab5c9;
+  --line: #2b364b;
+  --ctl: #6a7992;
+  --accent: #7aa2ff;
+  --bar: #7aa2ff;
+  --blue: #7aa2ff;
+  --ok: #4cd07d;
+  --warn: #f5b04c;
+  --crit: #ff7b72;
+  --onbar: #0b1220;
+  --onwarn: #1a1203;
+  --onok: #06210f;
+  --oncrit: #2a0a08;
+  --shade: rgba(0, 0, 0, 0.35);
+  --focus: #9db9ff;
+  --r: 18px;
+  color-scheme: dark;
+}
+:where(html[data-design="klar"]) body {
+  font:
+    16px/1.55 system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    "Helvetica Neue",
+    sans-serif;
+  letter-spacing: 0.005em;
+}
+:where(html[data-design="klar"]) header {
+  border: 0;
+  border-radius: var(--r);
+  box-shadow:
+    0 1px 2px var(--shade),
+    0 8px 24px var(--shade);
+  background: color-mix(in srgb, var(--card) 88%, transparent);
+  -webkit-backdrop-filter: saturate(1.4) blur(12px);
+  backdrop-filter: saturate(1.4) blur(12px);
+}
+:where(html[data-design="klar"]) h1 {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+:where(html[data-design="klar"]) main {
+  gap: 16px;
+  padding: 20px 16px;
+}
+:where(html[data-design="klar"]) .card {
+  border: 0;
+  border-radius: var(--r);
+  padding: 20px;
+  box-shadow:
+    0 1px 2px var(--shade),
+    0 6px 20px var(--shade);
+}
+:where(html[data-design="klar"]) details.card > summary {
+  min-height: 44px;
+}
+:where(html[data-design="klar"]) details.card > summary .sumh,
+:where(html[data-design="klar"]) .sech,
+:where(html[data-design="klar"]) .subsec > summary,
+:where(html[data-design="klar"]) .card h2 {
+  font-size: 17px;
+  font-weight: 650;
+  text-transform: none;
+  letter-spacing: -0.005em;
+  color: var(--text);
+}
+:where(html[data-design="klar"]) .sech {
+  margin: 22px 0 8px;
+}
+:where(html[data-design="klar"]) details.card > summary .sumh::before,
+:where(html[data-design="klar"]) .subsec > summary::before {
+  content: "";
+  display: inline-block;
+  flex: none;
+  width: 0.5em;
+  height: 0.5em;
+  margin: 0 0.7em 0.12em 0;
+  border-right: 2px solid var(--muted);
+  border-bottom: 2px solid var(--muted);
+  transform: rotate(-45deg);
+  transition: transform 0.15s;
+}
+:where(html[data-design="klar"]) details.card[open] > summary .sumh::before,
+:where(html[data-design="klar"]) .subsec[open] > summary::before,
+:where(html[data-design="klar"]) #swcard[open] > summary .sumh::before,
+:where(html[data-design="klar"]) #updcard[open] > summary .sumh::before {
+  content: "";
+  transform: rotate(45deg);
+}
+:where(html[data-design="klar"]) .subsec > summary {
+  margin: 18px 0 8px;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  font-size: 16px;
+  padding: 12px 2px 0;
+  border-top: 1px solid var(--line);
+}
+:where(html[data-design="klar"]) .ph {
+  font-size: 14px;
+  line-height: 1.55;
+  max-width: 68ch;
+}
+:where(html[data-design="klar"]) .big {
+  font-size: 30px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+:where(html[data-design="klar"]) .unit {
+  font-size: 14px;
+}
+:where(html[data-design="klar"]) :is(input, select, button) {
+  min-height: 44px;
+  font-size: 16px;
+  border-radius: 12px;
+}
+:where(html[data-design="klar"]) :is(input, select) {
+  background: var(--bg);
+  border: 1.5px solid var(--ctl);
+  padding: 10px 14px;
+}
+:where(html[data-design="klar"]) input:focus,
+:where(html[data-design="klar"]) select:focus {
+  outline: 3px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  border-color: var(--accent);
+}
+:where(html[data-design="klar"]) button {
+  background: var(--bar);
+  color: var(--onbar);
+  font-weight: 600;
+  border-radius: 999px;
+  padding: 10px 20px;
+}
+:where(html[data-design="klar"]) button:hover:not(:disabled) {
+  filter: brightness(1.07);
+}
+:where(html[data-design="klar"]) button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+:where(html[data-design="klar"]) button:disabled {
+  opacity: 0.5;
+}
+html[data-design] .seg button.on:disabled {
+  opacity: 1;
+}
+:where(html[data-design="klar"]) button.sec {
+  border: 1.5px solid var(--ctl);
+  font-weight: 550;
+}
+:where(html[data-design="klar"]) button.sec:hover:not(:disabled) {
+  border-color: var(--accent);
+  filter: none;
+}
+:where(html[data-design="klar"]) button.warnbtn {
+  color: var(--onwarn);
+}
+:where(html[data-design="klar"]) .dangerbtn {
+  color: var(--oncrit);
+}
+:where(html[data-design="klar"]) button.small,
+:where(html[data-design="klar"]) header .hdr button,
+:where(html[data-design="klar"]) #lang_sel {
+  min-height: 36px;
+  font-size: 14px;
+  padding: 6px 14px;
+  border-radius: 10px;
+}
+:where(html[data-design="klar"]) header .hdr button.sec {
+  border-color: var(--ctl);
+}
+:where(html[data-design="klar"]) button.mv,
+:where(html[data-design="klar"]) button.del {
+  min-height: 36px;
+  min-width: 40px;
+  padding: 6px 12px;
+  font-size: 14px;
+  border-color: var(--ctl);
+}
+:where(html[data-design="klar"]) .livebtn:not(.on):not(.busy) {
+  background: var(--ok);
+  border-color: var(--ok);
+  color: var(--onok);
+}
+:where(html[data-design="klar"]) .livebtn.busy,
+:where(html[data-design="klar"]) .badge.attn,
+:where(html[data-design="klar"]) .badge.demo,
+:where(html[data-design="klar"]) header .hdr > .badge.demo {
+  color: var(--onwarn);
+}
+:where(html[data-design="klar"]) .seg button {
+  min-height: 40px;
+  border-radius: 999px;
+  padding: 8px 16px;
+  font-size: 15px;
+  border-color: var(--ctl);
+}
+:where(html[data-design="klar"]) .seg button.on {
+  color: var(--onbar);
+  border-color: var(--bar);
+}
+:where(html[data-design="klar"]) :is(.ibtn, .helpbtn)[aria-expanded="true"],
+:where(html[data-design="klar"]) #pb_awake[aria-pressed="true"],
+:where(html[data-design="klar"]) #rcard #r_loginlink.btnlink,
+:where(html[data-design="klar"]) .evchip {
+  color: var(--onbar);
+}
+:where(html[data-design="klar"]) #r_apps a.btnlink {
+  border-color: var(--ctl);
+}
+:where(html[data-design="klar"]) .hsw.on {
+  color: var(--onok);
+}
+:where(html[data-design="klar"]) .statbox,
+:where(html[data-design="klar"]) .camcol,
+:where(html[data-design="klar"]) .wstat,
+:where(html[data-design="klar"]) .wrow,
+:where(html[data-design="klar"]) .chatopts,
+:where(html[data-design="klar"]) #sw_notes {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--bg) 60%, var(--card));
+}
+:where(html[data-design="klar"]) .statbox {
+  padding: 14px 16px 16px;
+}
+:where(html[data-design="klar"]) .bar {
+  height: 10px;
+  border-radius: 99px;
+  background: color-mix(in srgb, var(--line) 70%, transparent);
+}
+:where(html[data-design="klar"]) .bar > i {
+  border-radius: 99px;
+}
+:where(html[data-design="klar"]) .badge {
+  font-size: 13px;
+  padding: 4px 10px;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--accent);
+  font-weight: 600;
+}
+:where(html[data-design="klar"]) .badge.attn,
+:where(html[data-design="klar"]) .badge.demo {
+  background: var(--warn);
+}
+:where(html[data-design="klar"]) .alert {
+  padding: 12px 14px;
+  border-radius: 12px;
+  font-size: 15px;
+  background: color-mix(in srgb, var(--warn) 10%, var(--card));
+}
+:where(html[data-design="klar"]) .alert.ok {
+  background: color-mix(in srgb, var(--ok) 9%, var(--card));
+}
+:where(html[data-design="klar"]) .alert.crit {
+  background: color-mix(in srgb, var(--crit) 9%, var(--card));
+}
+:where(html[data-design="klar"]) #mfoot {
+  border: 0;
+  border-radius: 22px;
+  box-shadow:
+    0 -1px 0 var(--shade),
+    0 10px 30px var(--shade),
+    0 0 0 8px var(--bg);
+}
+:where(html[data-design="klar"]) .mf-live {
+  border-radius: 16px;
+  min-height: 56px;
+  font-size: 18px;
+  color: var(--onok);
+}
+:where(html[data-design="klar"]) .mf-live.busy {
+  color: var(--onwarn);
+}
+:where(html[data-design="klar"]) .mf-t {
+  border-radius: 16px;
+  border-width: 1.5px;
+  border-color: var(--ctl);
+  min-height: 56px;
+  background: var(--card);
+}
+:where(html[data-design="klar"]) .optrow,
+:where(html[data-design="klar"]) .ordrow {
+  min-height: 44px;
+  padding: 6px 2px;
+}
+:where(html[data-design="klar"]) :is(.autolbl, .camnet, .batt, .wsec, .wuse, .progline) {
+  font-size: 15px;
+}
+@media (max-width: 620px) {
+  :where(html[data-design="klar"]) .card {
+    padding: 16px;
+  }
+  :where(html[data-design="klar"]) main {
+    padding: 8px 8px 16px;
+    gap: 12px;
+  }
+  :where(html[data-design="klar"]) header .hdr :is(button, select) {
+    padding: 6px 9px;
+    min-height: 34px;
+  }
+}

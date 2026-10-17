@@ -9,6 +9,7 @@ import urllib.request
 from .auth import Auth
 from .cameras import label_bluetooth
 from .common import WEB_DIR, iface_ips, read
+from .webfiles import static_file
 
 
 PHONE_FRAME = """<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>IRL4YOU BOX</title>
@@ -36,6 +37,9 @@ class GetRoutes:
             return self.reply(200, self.swupdate.progress_public())
         if not self.authed():
             return self.reply(401, {"error": "nicht angemeldet"})
+        sf = static_file(path)
+        if sf:
+            return self.send_bytes(200, sf[0], sf[1])
         if path == "/modem.js":
             body = read(os.path.join(WEB_DIR, "modem.js"), "")
             return self.send_bytes(200, body.encode(), "application/javascript; charset=utf-8")

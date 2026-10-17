@@ -1,0 +1,371 @@
+html[data-design="kompakt"][data-theme="dark"],
+html[data-design="kompakt"]:not([data-theme]) {
+  --bg: #0b0f14;
+  --card: #121821;
+  --text: #e6ebf2;
+  --muted: #9aa7b8;
+  --line: #263142;
+  --ctl: #5b6b82;
+  --accent: #37c8e0;
+  --bar: #37c8e0;
+  --blue: #5aa2ff;
+  --ok: #3ddc84;
+  --warn: #f2b134;
+  --crit: #ff6159;
+  --onbar: #06151a;
+  --onwarn: #1a1203;
+  --onok: #06210f;
+  --oncrit: #2a0a08;
+  --shade: rgba(0, 0, 0, 0.4);
+  --focus: #ffd24a;
+  --r: 6px;
+  color-scheme: dark;
+}
+html[data-design="kompakt"][data-theme="light"] {
+  --bg: #e9edf2;
+  --card: #ffffff;
+  --text: #111827;
+  --muted: #4b5668;
+  --line: #c9d1dc;
+  --ctl: #7b8798;
+  --accent: #0a6a85;
+  --bar: #0a7f9d;
+  --blue: #1d4ed8;
+  --ok: #127a3c;
+  --warn: #a86100;
+  --crit: #c0281f;
+  --onbar: #ffffff;
+  --onwarn: #ffffff;
+  --onok: #ffffff;
+  --oncrit: #ffffff;
+  --shade: rgba(17, 24, 39, 0.12);
+  --focus: #b45309;
+  --r: 6px;
+  color-scheme: light;
+}
+:where(html[data-design="kompakt"]) body {
+  font:
+    14px/1.38 ui-sans-serif,
+    system-ui,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+:where(html[data-design="kompakt"]) header {
+  border-radius: var(--r);
+  padding: 6px 12px;
+  max-width: min(1280px, calc(100% - 24px));
+  width: calc(100% - 24px);
+}
+:where(html[data-design="kompakt"]) h1 {
+  font-size: 15px;
+  letter-spacing: 0.04em;
+}
+:where(html[data-design="kompakt"]) main {
+  max-width: 1280px;
+  gap: 10px;
+  padding: 10px 12px 20px;
+}
+:where(html[data-design="kompakt"]) .card {
+  border-radius: var(--r);
+  padding: 10px 12px;
+}
+:where(html[data-design="kompakt"]) details.card[open] > summary {
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--line);
+}
+:where(html[data-design="kompakt"]) details.card > summary .sumh,
+:where(html[data-design="kompakt"]) .sech,
+:where(html[data-design="kompakt"]) .subsec > summary,
+:where(html[data-design="kompakt"]) .card h2 {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+}
+:where(html[data-design="kompakt"]) .sech {
+  margin: 12px 0 4px;
+}
+:where(html[data-design="kompakt"]) .subsec > summary {
+  margin: 10px 0 4px;
+  padding: 4px 0;
+}
+:where(html[data-design="kompakt"]) .ph {
+  font-size: 12.5px;
+  line-height: 1.45;
+  max-width: 90ch;
+}
+:where(html[data-design="kompakt"]) .big {
+  font-size: 24px;
+  font-weight: 600;
+}
+:where(html[data-design="kompakt"]) .row {
+  padding: 2px 0;
+}
+:where(html[data-design="kompakt"]) :is(input, select, button) {
+  min-height: 34px;
+  padding: 6px 9px;
+  border-radius: var(--r);
+}
+:where(html[data-design="kompakt"]) :is(input, select) {
+  border-color: var(--ctl);
+}
+:where(html[data-design="kompakt"]) button {
+  background: var(--bar);
+  color: var(--onbar);
+  font-weight: 600;
+}
+:where(html[data-design="kompakt"]) button.sec,
+:where(html[data-design="kompakt"]) header .hdr button {
+  border-color: var(--ctl);
+}
+:where(html[data-design="kompakt"]) button.warnbtn {
+  color: var(--onwarn);
+}
+:where(html[data-design="kompakt"]) .dangerbtn {
+  color: var(--oncrit);
+}
+:where(html[data-design="kompakt"]) button.mv,
+:where(html[data-design="kompakt"]) button.del {
+  min-height: 30px;
+  min-width: 32px;
+  padding: 3px 8px;
+  border-color: var(--ctl);
+}
+:where(html[data-design="kompakt"]) .livebtn:not(.on):not(.busy) {
+  background: var(--ok);
+  border-color: var(--ok);
+  color: var(--onok);
+}
+:where(html[data-design="kompakt"]) .livebtn.busy,
+:where(html[data-design="kompakt"]) .badge.attn,
+:where(html[data-design="kompakt"]) .badge.demo,
+:where(html[data-design="kompakt"]) header .hdr > .badge.demo {
+  color: var(--onwarn);
+}
+:where(html[data-design="kompakt"]) .seg button {
+  min-height: 32px;
+  border-radius: var(--r);
+  padding: 4px 10px;
+  font-size: 13px;
+  border-color: var(--ctl);
+}
+:where(html[data-design="kompakt"]) .seg button.on {
+  color: var(--onbar);
+  border-color: var(--bar);
+}
+:where(html[data-design="kompakt"]) :is(.ibtn, .helpbtn)[aria-expanded="true"],
+:where(html[data-design="kompakt"]) #pb_awake[aria-pressed="true"],
+:where(html[data-design="kompakt"]) #rcard #r_loginlink.btnlink,
+:where(html[data-design="kompakt"]) .evchip {
+  color: var(--onbar);
+}
+:where(html[data-design="kompakt"]) #r_apps a.btnlink {
+  border-color: var(--ctl);
+}
+:where(html[data-design="kompakt"]) .hsw.on {
+  color: var(--onok);
+}
+:where(html[data-design="kompakt"]) .statbox,
+:where(html[data-design="kompakt"]) .camcol,
+:where(html[data-design="kompakt"]) .wstat,
+:where(html[data-design="kompakt"]) .wrow,
+:where(html[data-design="kompakt"]) .chatopts,
+:where(html[data-design="kompakt"]) #sw_notes {
+  border-radius: var(--r);
+  padding: 8px 10px;
+}
+:where(html[data-design="kompakt"]) .statgrid {
+  gap: 8px;
+}
+:where(html[data-design="kompakt"]) .badge {
+  border-radius: 4px;
+  font-size: 11.5px;
+  padding: 2px 7px;
+  font-weight: 600;
+}
+:where(html[data-design="kompakt"]) .badge.attn,
+:where(html[data-design="kompakt"]) .badge.demo {
+  background: var(--warn);
+}
+:where(html[data-design="kompakt"]) .bar {
+  height: 6px;
+  border-radius: 2px;
+}
+:where(html[data-design="kompakt"]) .bar > i {
+  border-radius: 2px;
+}
+:where(html[data-design="kompakt"]) .alert {
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-size: 13px;
+}
+:where(html[data-design="kompakt"]) #mfoot {
+  border-radius: 10px;
+}
+:where(html[data-design="kompakt"]) .mf-live {
+  border-radius: 8px;
+  color: var(--onok);
+}
+:where(html[data-design="kompakt"]) .mf-live.busy {
+  color: var(--onwarn);
+}
+:where(html[data-design="kompakt"]) .mf-t {
+  border-radius: 8px;
+  border-color: var(--ctl);
+}
+:where(html[data-design="kompakt"]) .optrow,
+:where(html[data-design="kompakt"]) .ordrow {
+  padding: 2px 0;
+}
+@media (min-width: 1100px) {
+  html[data-design="kompakt"] main > details.card:is(#rcard, #swcard, #updcard, #c_logs, #c_bk, #c_dev, #c_power, #c_layout) {
+    grid-column: auto;
+  }
+  html[data-design="kompakt"] main {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 620px) {
+  :where(html[data-design="kompakt"]) main {
+    padding: 6px 6px 14px;
+    gap: 8px;
+  }
+  :where(html[data-design="kompakt"]) .card {
+    padding: 9px 10px;
+  }
+  :where(html[data-design="kompakt"]) :is(button, input, select) {
+    min-height: 40px;
+  }
+}
+html[data-design] :is(.ibtn, .helpbtn) {
+  min-height: 0;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border-radius: 50%;
+  font-size: 14px;
+  line-height: 24px;
+}
+html[data-design="kompakt"] :is(.ibtn, .helpbtn) {
+  width: 22px;
+  height: 22px;
+  font-size: 13px;
+  line-height: 20px;
+}
+html[data-design] .swinfo {
+  min-height: 0;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border-radius: 50%;
+  font-size: 14px;
+  line-height: 24px;
+}
+html[data-design="kompakt"] .swinfo {
+  width: 22px;
+  height: 22px;
+  font-size: 13px;
+  line-height: 20px;
+}
+html[data-design="klar"] :is(input[type="checkbox"], input[type="radio"]) {
+  width: 22px;
+  height: 22px;
+  min-height: 0;
+  padding: 0;
+  accent-color: var(--accent);
+}
+html[data-design="kompakt"] :is(input[type="checkbox"], input[type="radio"]) {
+  width: 16px;
+  height: 16px;
+  min-height: 0;
+  padding: 0;
+  accent-color: var(--accent);
+}
+html[data-design="kompakt-std"][data-theme="dark"],
+html[data-design="kompakt-std"]:not([data-theme]) {
+  --bg: #0f172a;
+  --card: #1e293b;
+  --text: #f8fafc;
+  --muted: #a8b4c7;
+  --line: #50647f;
+  --ctl: #50647f;
+  --accent: #06b6d4;
+  --bar: #06b6d4;
+  --blue: #3b82f6;
+  --ok: #22c55e;
+  --warn: #f59e0b;
+  --crit: #ef4444;
+  --onbar: #0f172a;
+  --onwarn: #0f172a;
+  --onok: #06210f;
+  --oncrit: #ffffff;
+  --shade: rgba(2, 6, 23, 0.45);
+  --focus: #ffd24a;
+  --r: 6px;
+  color-scheme: dark;
+}
+html[data-design="kompakt-std"][data-theme="light"] {
+  --bg: #f1f5f9;
+  --card: #ffffff;
+  --text: #0f172a;
+  --muted: #475569;
+  --line: #cbd5e1;
+  --ctl: #94a3b8;
+  --accent: #0e7490;
+  --bar: #0891b2;
+  --blue: #2563eb;
+  --ok: #16a34a;
+  --warn: #d97706;
+  --crit: #dc2626;
+  --onbar: #0f172a;
+  --onwarn: #0f172a;
+  --onok: #06210f;
+  --oncrit: #ffffff;
+  --shade: rgba(15, 23, 42, 0.16);
+  --focus: #b45309;
+  --r: 6px;
+  color-scheme: light;
+}
+:where(html[data-design="kompakt-std"]) body {
+  font:
+    14px/1.38 ui-sans-serif,
+    system-ui,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+:where(html[data-design="kompakt-std"]) header {
+  border-radius: var(--r);
+  padding: 6px 12px;
+  max-width: min(1280px, calc(100% - 24px));
+  width: calc(100% - 24px);
+}
+:where(html[data-design="kompakt-std"]) h1 {
+  font-size: 15px;
+  letter-spacing: 0.04em;
+}
+:where(html[data-design="kompakt-std"]) main {
+  max-width: 1280px;
+  gap: 10px;
+  padding: 10px 12px 20px;
+}
+:where(html[data-design="kompakt-std"]) .card {
+  border-radius: var(--r);
+  padding: 10px 12px;
+}
+:where(html[data-design="kompakt-std"]) details.card[open] > summary {
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--line);
+}
+:where(html[data-design="kompakt-std"]) details.card > summary .sumh,
+:where(html[data-design="kompakt-std"]) .sech,
+:where(html[data-design="kompakt-std"]) .subsec > summary,
+:where(html[data-design="kompakt-std"]) .card h2 {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+}

@@ -1,0 +1,362 @@
+:where(html[data-design="kompakt-std"]) .sech {
+  margin: 12px 0 4px;
+}
+:where(html[data-design="kompakt-std"]) .subsec > summary {
+  margin: 10px 0 4px;
+  padding: 4px 0;
+}
+:where(html[data-design="kompakt-std"]) .ph {
+  font-size: 12.5px;
+  line-height: 1.45;
+  max-width: 90ch;
+}
+:where(html[data-design="kompakt-std"]) .big {
+  font-size: 24px;
+  font-weight: 600;
+}
+:where(html[data-design="kompakt-std"]) .row {
+  padding: 2px 0;
+}
+:where(html[data-design="kompakt-std"]) :is(input, select, button) {
+  min-height: 34px;
+  padding: 6px 9px;
+  border-radius: var(--r);
+}
+:where(html[data-design="kompakt-std"]) :is(input, select) {
+  border-color: var(--ctl);
+}
+:where(html[data-design="kompakt-std"]) button {
+  background: var(--bar);
+  color: var(--onbar);
+  font-weight: 600;
+}
+:where(html[data-design="kompakt-std"]) button.sec,
+:where(html[data-design="kompakt-std"]) header .hdr button {
+  border-color: var(--ctl);
+}
+:where(html[data-design="kompakt-std"]) button.warnbtn {
+  color: var(--onwarn);
+}
+:where(html[data-design="kompakt-std"]) .dangerbtn {
+  color: var(--oncrit);
+}
+:where(html[data-design="kompakt-std"]) button.mv,
+:where(html[data-design="kompakt-std"]) button.del {
+  min-height: 30px;
+  min-width: 32px;
+  padding: 3px 8px;
+  border-color: var(--ctl);
+}
+:where(html[data-design="kompakt-std"]) .livebtn.busy,
+:where(html[data-design="kompakt-std"]) .badge.attn,
+:where(html[data-design="kompakt-std"]) .badge.demo,
+:where(html[data-design="kompakt-std"]) header .hdr > .badge.demo {
+  color: var(--onwarn);
+}
+:where(html[data-design="kompakt-std"]) .seg button {
+  min-height: 32px;
+  border-radius: var(--r);
+  padding: 4px 10px;
+  font-size: 13px;
+  border-color: var(--ctl);
+}
+:where(html[data-design="kompakt-std"]) .seg button.on {
+  color: var(--onbar);
+  border-color: var(--bar);
+}
+:where(html[data-design="kompakt-std"]) :is(.ibtn, .helpbtn)[aria-expanded="true"],
+:where(html[data-design="kompakt-std"]) #pb_awake[aria-pressed="true"],
+:where(html[data-design="kompakt-std"]) #rcard #r_loginlink.btnlink,
+:where(html[data-design="kompakt-std"]) .evchip {
+  color: var(--onbar);
+}
+:where(html[data-design="kompakt-std"]) #r_apps a.btnlink {
+  border-color: var(--ctl);
+}
+:where(html[data-design="kompakt-std"]) .hsw.on {
+  color: var(--onok);
+}
+:where(html[data-design="kompakt-std"]) .statbox,
+:where(html[data-design="kompakt-std"]) .camcol,
+:where(html[data-design="kompakt-std"]) .wstat,
+:where(html[data-design="kompakt-std"]) .wrow,
+:where(html[data-design="kompakt-std"]) .chatopts,
+:where(html[data-design="kompakt-std"]) #sw_notes {
+  border-radius: var(--r);
+  padding: 8px 10px;
+}
+:where(html[data-design="kompakt-std"]) .statgrid {
+  gap: 8px;
+}
+:where(html[data-design="kompakt-std"]) .badge {
+  border-radius: 4px;
+  font-size: 11.5px;
+  padding: 2px 7px;
+  font-weight: 600;
+}
+:where(html[data-design="kompakt-std"]) .badge.attn,
+:where(html[data-design="kompakt-std"]) .badge.demo {
+  background: var(--warn);
+}
+:where(html[data-design="kompakt-std"]) .bar {
+  height: 6px;
+  border-radius: 2px;
+}
+:where(html[data-design="kompakt-std"]) .bar > i {
+  border-radius: 2px;
+}
+:where(html[data-design="kompakt-std"]) .alert {
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-size: 13px;
+}
+:where(html[data-design="kompakt-std"]) #mfoot {
+  border-radius: 10px;
+}
+:where(html[data-design="kompakt-std"]) .mf-live {
+  border-radius: 8px;
+  color: var(--onok);
+}
+:where(html[data-design="kompakt-std"]) .mf-live.busy {
+  color: var(--onwarn);
+}
+:where(html[data-design="kompakt-std"]) .mf-t {
+  border-radius: 8px;
+  border-color: var(--ctl);
+}
+:where(html[data-design="kompakt-std"]) .optrow,
+:where(html[data-design="kompakt-std"]) .ordrow {
+  padding: 2px 0;
+}
+@media (min-width: 1100px) {
+  html[data-design="kompakt-std"] main > details.card:is(#rcard, #swcard, #updcard, #c_logs, #c_bk, #c_dev, #c_power, #c_layout) {
+    grid-column: auto;
+  }
+  html[data-design="kompakt-std"] main {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 620px) {
+  :where(html[data-design="kompakt-std"]) main {
+    padding: 6px 6px 14px;
+    gap: 8px;
+  }
+  :where(html[data-design="kompakt-std"]) .card {
+    padding: 9px 10px;
+  }
+  :where(html[data-design="kompakt-std"]) :is(button, input, select) {
+    min-height: 40px;
+  }
+}
+html[data-design="kompakt-std"] :is(.ibtn, .helpbtn) {
+  width: 22px;
+  height: 22px;
+  font-size: 13px;
+  line-height: 20px;
+}
+html[data-design="kompakt-std"] .swinfo {
+  width: 22px;
+  height: 22px;
+  font-size: 13px;
+  line-height: 20px;
+}
+html[data-design="kompakt-std"] :is(input[type="checkbox"], input[type="radio"]) {
+  width: 16px;
+  height: 16px;
+  min-height: 0;
+  padding: 0;
+  accent-color: var(--accent);
+}
+html[data-design="kontrast"][data-theme="dark"],
+html[data-design="kontrast"]:not([data-theme]) {
+  --bg: #000000;
+  --card: #0b0b0b;
+  --text: #ffffff;
+  --muted: #e6e6e6;
+  --line: #ffffff;
+  --ctl: #ffffff;
+  --accent: #ffe600;
+  --bar: #ffe600;
+  --blue: #7cc0ff;
+  --ok: #3dff8a;
+  --warn: #ffb300;
+  --crit: #ff6b5e;
+  --onbar: #000000;
+  --onwarn: #000000;
+  --onok: #000000;
+  --oncrit: #000000;
+  --shade: rgba(255, 255, 255, 0.18);
+  --focus: #00e5ff;
+  --r: 8px;
+  color-scheme: dark;
+}
+html[data-design="kontrast"][data-theme="light"] {
+  --bg: #ffffff;
+  --card: #ffffff;
+  --text: #000000;
+  --muted: #1a1a1a;
+  --line: #000000;
+  --ctl: #000000;
+  --accent: #0033cc;
+  --bar: #0033cc;
+  --blue: #0033cc;
+  --ok: #005a26;
+  --warn: #7a4200;
+  --crit: #a60014;
+  --onbar: #ffffff;
+  --onwarn: #ffffff;
+  --onok: #ffffff;
+  --oncrit: #ffffff;
+  --shade: rgba(0, 0, 0, 0.25);
+  --focus: #d95f00;
+  --r: 8px;
+  color-scheme: light;
+}
+html[data-design="kontrast"] body {
+  font:
+    18px/1.5 ui-sans-serif,
+    system-ui,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
+}
+html[data-design="kontrast"] header {
+  border: 3px solid var(--line);
+  border-radius: var(--r);
+  padding: 10px 14px;
+}
+html[data-design="kontrast"] h1 {
+  font-size: 20px;
+  letter-spacing: 0.02em;
+}
+html[data-design="kontrast"] main {
+  max-width: 1000px;
+  gap: 16px;
+  padding: 14px 14px 28px;
+}
+html[data-design="kontrast"] .card {
+  border: 3px solid var(--line);
+  border-radius: var(--r);
+  padding: 16px;
+}
+html[data-design="kontrast"] details.card[open] > summary {
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 3px solid var(--line);
+}
+html[data-design="kontrast"] details.card > summary .sumh,
+html[data-design="kontrast"] .sech,
+html[data-design="kontrast"] .subsec > summary,
+html[data-design="kontrast"] .card h2 {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+html[data-design="kontrast"] .sech {
+  margin: 16px 0 6px;
+}
+html[data-design="kontrast"] .ph {
+  font-size: 16px;
+  line-height: 1.55;
+}
+html[data-design="kontrast"] .big {
+  font-size: 34px;
+  font-weight: 800;
+}
+html[data-design="kontrast"] .row {
+  padding: 6px 0;
+}
+html[data-design="kontrast"] :is(input, select, button) {
+  min-height: 56px;
+  padding: 10px 14px;
+  border-radius: var(--r);
+  border: 3px solid var(--ctl);
+  font-size: 18px;
+}
+html[data-design="kontrast"] :is(input, select) {
+  background: var(--bg);
+  color: var(--text);
+}
+html[data-design="kontrast"] button {
+  background: var(--bar);
+  color: var(--onbar);
+  font-weight: 800;
+}
+html[data-design="kontrast"] button.sec,
+html[data-design="kontrast"] header .hdr button {
+  background: var(--card);
+  color: var(--text);
+  border-color: var(--ctl);
+  font-weight: 700;
+}
+html[data-design="kontrast"] button.warnbtn {
+  background: var(--warn);
+  color: var(--onwarn);
+}
+html[data-design="kontrast"] .dangerbtn {
+  background: var(--crit);
+  color: var(--oncrit);
+  border-color: var(--text);
+}
+html[data-design="kontrast"] button.mv,
+html[data-design="kontrast"] button.del {
+  min-height: 48px;
+  min-width: 48px;
+}
+html[data-design="kontrast"] .livebtn {
+  font-size: 18px;
+  padding: 8px 18px;
+  min-height: 48px;
+  border-width: 3px;
+}
+html[data-design="kontrast"] .livebtn:not(.on):not(.busy) {
+  background: var(--ok);
+  border-color: var(--text);
+  color: var(--onok);
+}
+html[data-design="kontrast"] .livebtn.on {
+  background: var(--crit);
+  border-color: var(--text);
+  color: var(--oncrit);
+}
+html[data-design="kontrast"] .livebtn.busy {
+  background: var(--warn);
+  border-color: var(--text);
+  color: var(--onwarn);
+}
+html[data-design="kontrast"] .seg button {
+  min-height: 52px;
+  font-size: 17px;
+  border: 3px solid var(--ctl);
+  color: var(--text);
+  font-weight: 700;
+}
+html[data-design="kontrast"] .seg button.on {
+  background: var(--bar);
+  color: var(--onbar);
+  border-color: var(--text);
+}
+html[data-design="kontrast"] :is(.ibtn, .helpbtn) {
+  width: 38px;
+  height: 38px;
+  min-height: 0;
+  padding: 0;
+  font-size: 20px;
+  line-height: 1;
+  border: 3px solid var(--ctl);
+  color: var(--text);
+  background: var(--card);
+}
+html[data-design="kontrast"] :is(.ibtn, .helpbtn)[aria-expanded="true"],
+html[data-design="kontrast"] #pb_awake[aria-pressed="true"] {
+  background: var(--bar);
+  color: var(--onbar);
+  border-color: var(--text);
+}
+html[data-design="kontrast"] :is(input[type="checkbox"], input[type="radio"]) {
+  width: 30px;
+  height: 30px;
+  min-height: 0;
+  padding: 0;
+  accent-color: var(--accent);
+}
