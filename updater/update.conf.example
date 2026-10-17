@@ -1,0 +1,15 @@
+# /etc/irl4you/update.conf  (Besitzer root, chmod 644)
+# Nur diese Datei legt fest, woher die Box Updates holt. Die Oberfläche kann sie nicht ändern.
+[update]
+repo = Bittersweet1987/irl4you_2604
+# stable: nur Releases, beta: auch Vorabversionen (Release als "Pre-release" markiert)
+channel = stable
+# Optional, nur bei privatem Repository: Datei mit einem GitHub-Schlüssel (fine-grained, nur "Contents: read"),
+# Besitzer root, chmod 600. Fehlt die Datei, fragt die Box ohne Schlüssel (öffentliches Repository).
+token_file = /etc/irl4you/update-token
+# true: der Timer installiert neue Versionen selbst (nie während einer Sendung). false: nur melden.
+auto_install = false
+# Ablage der Versionen und Verweise
+root = /opt/irl4you
+extra_link = /opt/pipbox
+keep = 3

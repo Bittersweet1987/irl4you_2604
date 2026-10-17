@@ -1,0 +1,9 @@
+[Unit]
+Description=Auslöser für den IRL4YOU Update-Helfer
+
+[Path]
+PathExists=/var/lib/pipbox/swupdate-request
+Unit=irl4you-update.service
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,9 @@
+#!/bin/sh
+# Gesundheitsprüfung nach dem Umschalten (Rückgabe 0 = gut, sonst wird zurückgerollt).
+# Die Dienste aus "health_units" im Manifest prüft der Helfer schon selbst.
+set -eu
+cd "$IRL4YOU_RELEASE_DIR"
+if [ -f install/health.sh ]; then
+    exec sh install/health.sh
+fi
+exit 0
