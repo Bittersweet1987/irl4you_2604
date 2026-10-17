@@ -166,53 +166,7 @@ html[data-design="kompakt-std"] :is(input[type="checkbox"], input[type="radio"])
   min-height: 0;
   padding: 0;
   accent-color: var(--accent);
-}
-html[data-design="kontrast"][data-theme="dark"],
-html[data-design="kontrast"]:not([data-theme]) {
-  --bg: #000000;
-  --card: #0b0b0b;
-  --text: #ffffff;
-  --muted: #e6e6e6;
-  --line: #ffffff;
-  --ctl: #ffffff;
-  --accent: #ffe600;
-  --bar: #ffe600;
-  --blue: #7cc0ff;
-  --ok: #3dff8a;
-  --warn: #ffb300;
-  --crit: #ff6b5e;
-  --onbar: #000000;
-  --onwarn: #000000;
-  --onok: #000000;
-  --oncrit: #000000;
-  --shade: rgba(255, 255, 255, 0.18);
-  --focus: #00e5ff;
-  --r: 8px;
-  color-scheme: dark;
-}
-html[data-design="kontrast"][data-theme="light"] {
-  --bg: #ffffff;
-  --card: #ffffff;
-  --text: #000000;
-  --muted: #1a1a1a;
-  --line: #000000;
-  --ctl: #000000;
-  --accent: #0033cc;
-  --bar: #0033cc;
-  --blue: #0033cc;
-  --ok: #005a26;
-  --warn: #7a4200;
-  --crit: #a60014;
-  --onbar: #ffffff;
-  --onwarn: #ffffff;
-  --onok: #ffffff;
-  --oncrit: #ffffff;
-  --shade: rgba(0, 0, 0, 0.25);
-  --focus: #d95f00;
-  --r: 8px;
-  color-scheme: light;
-}
-html[data-design="kontrast"] body {
+}html[data-design="kontrast"] body {
   font:
     18px/1.5 ui-sans-serif,
     system-ui,

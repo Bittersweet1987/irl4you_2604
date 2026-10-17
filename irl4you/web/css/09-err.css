@@ -21,53 +21,7 @@ html[data-design] :is(button, input, select, summary, a):focus-visible {
   :where(html[data-design]) * {
     transition: none !important;
   }
-}
-html[data-design="klar"][data-theme="light"],
-html[data-design="klar"]:not([data-theme]) {
-  --bg: #f4f6fb;
-  --card: #ffffff;
-  --text: #172033;
-  --muted: #566177;
-  --line: #dde3ee;
-  --ctl: #7a849a;
-  --accent: #2457d6;
-  --bar: #2457d6;
-  --blue: #2457d6;
-  --ok: #12803d;
-  --warn: #b45309;
-  --crit: #c62828;
-  --onbar: #ffffff;
-  --onwarn: #ffffff;
-  --onok: #ffffff;
-  --oncrit: #ffffff;
-  --shade: rgba(23, 32, 51, 0.1);
-  --focus: #2457d6;
-  --r: 18px;
-  color-scheme: light;
-}
-html[data-design="klar"][data-theme="dark"] {
-  --bg: #0e1420;
-  --card: #171f2e;
-  --text: #eef2fa;
-  --muted: #aab5c9;
-  --line: #2b364b;
-  --ctl: #6a7992;
-  --accent: #7aa2ff;
-  --bar: #7aa2ff;
-  --blue: #7aa2ff;
-  --ok: #4cd07d;
-  --warn: #f5b04c;
-  --crit: #ff7b72;
-  --onbar: #0b1220;
-  --onwarn: #1a1203;
-  --onok: #06210f;
-  --oncrit: #2a0a08;
-  --shade: rgba(0, 0, 0, 0.35);
-  --focus: #9db9ff;
-  --r: 18px;
-  color-scheme: dark;
-}
-:where(html[data-design="klar"]) body {
+}:where(html[data-design="klar"]) body {
   font:
     16px/1.55 system-ui,
     -apple-system,

@@ -18,17 +18,17 @@ def _read(path):
 
 class DesignSystem(unittest.TestCase):
     def test_dateien_max_500_zeilen(self):
-        for p in glob.glob(os.path.join(CSS, "**", "*.css"), recursive=True):
+        for p in glob.glob(os.path.join(CSS, "*.css")):
             self.assertLessEqual(len(_read(p).splitlines()), 500, p)
 
     def test_tokens_enthalten_alle_farben(self):
-        t = _read(os.path.join(CSS, "tokens.css"))
+        t = _read(os.path.join(CSS, "00-ds-tokens.css"))
         for n in ["--c-" + c for c in COLOR_TOKENS] + ["--r-card", "--r-ctl", "--s-2", "--f-body", "--bw", "--ctl-h"]:
             self.assertIn(n + ":", t, n)
 
     def test_themes_vollstaendig(self):
         for d in DESIGNS:
-            s = _read(os.path.join(CSS, "themes", d + ".css"))
+            s = _read(os.path.join(CSS, "00-ds-theme-%s.css" % d))
             for mode in ("dark", "light"):
                 m = re.search(r'\[data-design="%s"\]\[data-theme="%s"\][^{]*\{([^}]*)\}' % (d, mode), s)
                 self.assertTrue(m, (d, mode))
@@ -36,8 +36,13 @@ class DesignSystem(unittest.TestCase):
                     k = "--c-" + n if n not in ("r-card", "r-ctl") else "--" + n
                     self.assertIn(k + ":", m.group(1), (d, mode, n))
 
+    def test_alle_ds_dateien_eingebunden(self):
+        index = _read(os.path.join(ROOT, "irl4you", "web", "index.html"))
+        for p in glob.glob(os.path.join(CSS, "00-ds-*.css")):
+            self.assertIn('/ui/css/%s"' % os.path.basename(p), index, p)
+
     def test_komponenten_ohne_farbwerte_nur_tokens(self):
-        for p in glob.glob(os.path.join(CSS, "komponenten", "*.css")):
+        for p in [os.path.join(CSS, "00-ds-%s.css" % c) for c in ("text", "card", "button", "form", "status")]:
             s = re.sub(r"/\*.*?\*/", "", _read(p), flags=re.S)
             self.assertFalse(re.search(r"#[0-9a-fA-F]{3,8}\b|rgba?\(", s), p)
             self.assertFalse(re.search(r"style=", s), p)
@@ -45,7 +50,7 @@ class DesignSystem(unittest.TestCase):
                 self.assertTrue(re.match(r"--(c|f|s|r|bw|shadow|ctl-h)", var), (p, var))
 
     def test_klassen_mit_praefix(self):
-        for p in glob.glob(os.path.join(CSS, "komponenten", "*.css")):
+        for p in [os.path.join(CSS, "00-ds-%s.css" % c) for c in ("text", "card", "button", "form", "status")]:
             s = re.sub(r"/\*.*?\*/", "", _read(p), flags=re.S)
             for sel in re.findall(r"([^{}]+)\{", s):
                 for c in re.findall(r"\.([\w-]+)", sel):

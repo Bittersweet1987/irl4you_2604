@@ -31,53 +31,7 @@ input[type="radio"] {
 html[data-design="cockpit"] :is(button, input, select, summary, a):focus-visible {
   outline: 3px solid var(--focus);
   outline-offset: 2px;
-}
-html[data-design="mischpult"][data-theme="dark"],
-html[data-design="mischpult"]:not([data-theme]) {
-  --bg: #16181b;
-  --card: #25282d;
-  --text: #ece7d8;
-  --muted: #a8a396;
-  --line: #0c0d0f;
-  --ctl: #6b7078;
-  --accent: #f2a900;
-  --bar: #f2a900;
-  --blue: #5ca8e8;
-  --ok: #35e06c;
-  --warn: #ffb21e;
-  --crit: #ff3b30;
-  --onbar: #1a1200;
-  --onwarn: #1a1200;
-  --onok: #04200d;
-  --oncrit: #250402;
-  --shade: rgba(0, 0, 0, 0.5);
-  --focus: #4dd0ff;
-  --r: 4px;
-  color-scheme: dark;
-}
-html[data-design="mischpult"][data-theme="light"] {
-  --bg: #c4c8cc;
-  --card: #e8eaed;
-  --text: #14161a;
-  --muted: #33373d;
-  --line: #4a4f56;
-  --ctl: #4a4f56;
-  --accent: #8a4b00;
-  --bar: #8a4b00;
-  --blue: #1d5fd1;
-  --ok: #0f7a3d;
-  --warn: #9a5a00;
-  --crit: #b3231f;
-  --onbar: #ffffff;
-  --onwarn: #ffffff;
-  --onok: #ffffff;
-  --oncrit: #ffffff;
-  --shade: rgba(0, 0, 0, 0.3);
-  --focus: #0b57d0;
-  --r: 4px;
-  color-scheme: light;
-}
-html[data-design="mischpult"] body {
+}html[data-design="mischpult"] body {
   font:
     14px/1.4 ui-sans-serif,
     system-ui,

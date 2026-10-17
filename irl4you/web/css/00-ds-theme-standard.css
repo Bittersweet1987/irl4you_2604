@@ -1,0 +1,16 @@
+/* Theme "standard": ohne data-design. Dunkel gilt aus 00-ds-tokens.css, hier nur die helle Variante. */
+:root[data-theme="light"] {
+  --c-bg: #f1f5f9;
+  --c-card: #ffffff;
+  --c-text: #0f172a;
+  --c-muted: #475569;
+  --c-line: #cbd5e1;
+  --c-accent: #0e7490;
+  --c-ok: #16a34a;
+  --c-warn: #d97706;
+  --c-crit: #dc2626;
+  --c-bar: #0891b2;
+  --c-blue: #2563eb;
+  --c-shade: rgba(15, 23, 42, 0.16);
+  color-scheme: light;
+}

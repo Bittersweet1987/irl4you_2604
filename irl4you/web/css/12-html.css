@@ -86,53 +86,7 @@ html[data-design="kontrast"] .mf-aud.muted {
 html[data-design="kontrast"] .mf-info {
   font-size: 28px;
   color: var(--text);
-}
-html[data-design="cockpit"][data-theme="dark"],
-html[data-design="cockpit"]:not([data-theme]) {
-  --bg: #05080b;
-  --card: #0b1218;
-  --text: #d8f3ff;
-  --muted: #7f9db0;
-  --line: #1c3a4d;
-  --ctl: #2f6a86;
-  --accent: #00e5ff;
-  --bar: #00e5ff;
-  --blue: #4aa8ff;
-  --ok: #27f58a;
-  --warn: #ffb020;
-  --crit: #ff4d4d;
-  --onbar: #021016;
-  --onwarn: #1a1000;
-  --onok: #021a0c;
-  --oncrit: #220404;
-  --shade: rgba(0, 229, 255, 0.12);
-  --focus: #ffea00;
-  --r: 4px;
-  color-scheme: dark;
-}
-html[data-design="cockpit"][data-theme="light"] {
-  --bg: #e4eaee;
-  --card: #ffffff;
-  --text: #0b2530;
-  --muted: #486370;
-  --line: #a9bcc7;
-  --ctl: #44687a;
-  --accent: #006c8a;
-  --bar: #007a9c;
-  --blue: #1d5fd1;
-  --ok: #0f7a3d;
-  --warn: #9a5a00;
-  --crit: #b3231f;
-  --onbar: #ffffff;
-  --onwarn: #ffffff;
-  --onok: #ffffff;
-  --oncrit: #ffffff;
-  --shade: rgba(0, 40, 60, 0.12);
-  --focus: #b45309;
-  --r: 4px;
-  color-scheme: light;
-}
-html[data-design="cockpit"] body {
+}html[data-design="cockpit"] body {
   font:
     14px/1.35 ui-sans-serif,
     system-ui,
