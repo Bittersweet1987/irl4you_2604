@@ -544,7 +544,7 @@ class TestInstallation(unittest.TestCase):
     def test_dateigroesse_max_500_zeilen(self):
         """Regel von Marco (17.10.2026): kein Spaghetti-Code, möglichst höchstens 500 Zeilen je Datei. Das Paket webui/ hält sie ein (server.py ist nur der Einstieg)."""
         zu_gross = []
-        for d in ("webui",):
+        for d in ("webui", "twitch"):
             for f in sorted(os.listdir(os.path.join(IRL, d))):
                 if f.endswith(".py"):
                     n = len(open(os.path.join(IRL, d, f), encoding="utf-8").read().splitlines())
