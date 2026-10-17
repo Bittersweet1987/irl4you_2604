@@ -1,0 +1,23 @@
+#!/bin/sh
+# Nach jeder Kernel-Installation: unkomprimiertes Image nach /boot/Image, DTBs nach /boot/dtb (so erwartet es der U-Boot)
+ver="$1"
+[ -f "/boot/vmlinuz-$ver" ] || exit 0
+if [ "$(head -c2 "/boot/vmlinuz-$ver" | od -An -tx1 | tr -d ' ')" = "1f8b" ]; then
+    gzip -dc "/boot/vmlinuz-$ver" > /boot/Image.new
+else
+    cp "/boot/vmlinuz-$ver" /boot/Image.new
+fi
+mv -f /boot/Image.new /boot/Image
+if [ -d "/usr/lib/linux-image-$ver" ]; then
+    rm -rf /boot/dtb.new; mkdir -p /boot/dtb.new
+    cp -r "/usr/lib/linux-image-$ver/." /boot/dtb.new/
+    rm -rf /boot/dtb; mv /boot/dtb.new /boot/dtb
+fi
+# HDMI-Eingang einschalten: im DTB der Orange Pi 5 Plus steht der Empfänger auf "disabled" (ROCK 5B+ hat ihn schon an)
+if command -v fdtput >/dev/null 2>&1; then
+    for f in /boot/dtb/rockchip/rk3588-orangepi-5-plus.dtb /boot/dtb/rockchip/rk3588-rock-5b-plus.dtb; do
+        [ -f "$f" ] || continue
+        fdtput -t s "$f" /hdmirx-controller@fdee0000 status okay 2>/dev/null || true
+    done
+fi
+exit 0

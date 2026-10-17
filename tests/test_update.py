@@ -546,6 +546,25 @@ class TestToken(Base):
         self.assertTrue(all(r[2] is None for r in self.gh.requests))
 
 
+class TestShippedScripts(unittest.TestCase):
+    def test_syntax_and_layout(self):
+        for p in ("irl4you/install/system-install.sh", "irl4you/install/system-base-fixes.sh", "irl4you/install/zz-irl4you-boot",
+                  "release/hooks/install", "release/hooks/health"):
+            subprocess.run(["sh", "-n", os.path.join(REPO, p)], check=True)
+        with open(os.path.join(REPO, "irl4you/install/system-install.sh")) as f:
+            text = f.read()
+        self.assertIn("system-base-fixes.sh", text)
+        self.assertIn("debs/*.deb", text)
+
+    def test_version_has_changelog(self):
+        with open(os.path.join(REPO, "VERSION")) as f:
+            v = f.read().strip()
+        U.vkey(v)
+        out = subprocess.run([sys.executable, os.path.join(REPO, "tools", "release-notes.py"), v, os.path.join(REPO, "CHANGELOG.md")],
+                             capture_output=True, text=True, check=True).stdout
+        self.assertNotEqual(out.strip(), "IRL4YOU %s" % v)
+
+
 class TestBuildScript(Base):
     def test_build_release_is_installable(self):
         src = os.path.join(self.tmp, "src")
