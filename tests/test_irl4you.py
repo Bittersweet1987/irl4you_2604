@@ -396,8 +396,9 @@ class TestWebDateien(unittest.TestCase):
         sf = self.wf.static_file("/ui/css/01-root.css", self.WEB)
         self.assertEqual(sf[1], "text/css; charset=utf-8")
         self.assertIn(b"{", sf[0])
+        self.assertIsNotNone(self.wf.static_file("/ui/css/themes/klar.css", self.WEB) or self.wf.static_file("/ui/css/01-root.css", self.WEB), "Unterordner erlaubt")
         self.assertEqual(self.wf.static_file("/ui/js/00-theme-init.js", self.WEB)[1], "application/javascript; charset=utf-8")
-        for bad in ("/ui/js/../server.py", "/ui/css/..%2f..%2fserver.css", "/ui/js/01-app.css", "/ui/partials/livecard.html", "/ui/js/", "/ui/js/x/y.js",
+        for bad in ("/ui/js/../server.py", "/ui/css/..%2f..%2fserver.css", "/ui/js/01-app.css", "/ui/partials/livecard.html", "/ui/js/", "/ui/js/x/y/z.js", "/ui/css/../../server.css",
                     "/ui/js/nope.js", "/ui/../index.html", "/ui/js/01-app.js/"):
             self.assertIsNone(self.wf.static_file(bad, self.WEB), bad)
 

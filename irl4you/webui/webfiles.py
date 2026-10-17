@@ -5,7 +5,7 @@ import re
 from .common import WEB_DIR, read
 
 INCLUDE_RE = re.compile(r"^[ \t]*<!--#include ([a-z0-9_-]+\.html)-->[ \t]*$", re.M)
-STATIC_RE = re.compile(r"^/ui/(css|js)/([A-Za-z0-9_-]+)\.(css|js)$")
+STATIC_RE = re.compile(r"^/ui/(css|js)/((?:[A-Za-z0-9_-]+/)?[A-Za-z0-9_-]+)\.(css|js)$")
 CTYPES = {"css": "text/css; charset=utf-8", "js": "application/javascript; charset=utf-8"}
 
 
@@ -19,7 +19,7 @@ def expand_includes(text, web_dir=None):
 
 
 def static_file(path, web_dir=None):
-    """/ui/css/NN-name.css und /ui/js/NN-name.js -> (Inhalt, Inhaltstyp) oder None. Nur diese zwei Ordner, nur einfache Dateinamen."""
+    """/ui/css/NN-name.css, /ui/css/themes/klar.css und /ui/js/NN-name.js -> (Inhalt, Inhaltstyp) oder None. Nur diese zwei Ordner, höchstens ein Unterordner, nur einfache Namen."""
     m = STATIC_RE.match(path)
     if not m or m.group(1) != m.group(3):
         return None
