@@ -3,7 +3,7 @@
 Versionsschema: x.y.z, angezeigt als vx.y.z. x gibt Marco vor (0 = Alpha). y steigt nur, wenn Marco ein Release ausruft (dann wird VERSION auf "x.y" geändert). z ist die Zahl der Commits seit dem letzten Release und wird vom Updater beim Installieren aus GitHub gezählt (VERSION enthält nur "x.y"). Die Box folgt weiterhin den Commits von main; die Nummer ist nur der Anzeigename.
 
 ## 0.1
-- Neues Versionsschema (vorher 2.0.0-rc.x), erstes Release 0.1.
+- Neues Versionsschema (vorher 2.0.0-rc.x), erstes Release 0.1. Der Updater zählt die dritte Stelle selbst, sobald VERSION nur "x.y" enthält.
 
 ## 2.0.0-rc.5
 - Oberfläche aufgeteilt: server.py (7300 Zeilen) ist nur noch der Einstieg, die Teile liegen im Paket webui/ (jede Datei höchstens 500 Zeilen). Keine Funktionsänderung.
