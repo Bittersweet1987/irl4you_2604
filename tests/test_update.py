@@ -235,6 +235,7 @@ class TestCheck(Base):
         self.assertEqual(s["state"], "idle")
         self.assertEqual(s["notes"], "Neu: Updates")
         self.assertEqual([r["version"] for r in s["releases"]], ["2.0.1", "2.0.0"])
+        self.assertEqual([r["notes"] for r in s["releases"]], ["Neu: Updates", ""])
 
     def test_beta_channel(self):
         self.gh.add("2.0.0")
@@ -409,6 +410,25 @@ class TestUnsafePackages(Base):
             ti.linkname = "server.py"
             return ti, None
         self.attempt(f)
+
+
+class TestDebs(Base):
+    def deb(self, name="irl4you-encoder_1.0_arm64.deb"):
+        def f():
+            ti = tarfile.TarInfo("./debs/" + name)
+            ti.size = 3
+            return ti, b"deb"
+        return f
+
+    def test_debs_allowed(self):
+        self.gh.add("2.0.0", pkg=make_pkg("2.0.0", extra=[self.deb()]))
+        self.assertTrue(self.u.install())
+        self.assertTrue(os.path.isfile(os.path.join(self.overrides["root"], "current", "debs", "irl4you-encoder_1.0_arm64.deb")))
+
+    def test_other_files_in_debs_refused(self):
+        self.gh.add("2.0.0", pkg=make_pkg("2.0.0", extra=[self.deb("evil.sh")]))
+        self.assertEqual(self.u.run("install"), 2)
+        self.assertIn("nur .deb", self.status()["message"])
 
 
 class TestRollbackSwitch(Base):

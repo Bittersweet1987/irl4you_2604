@@ -407,6 +407,14 @@ class Updater:
             v = m.get(key, [])
             if not isinstance(v, list) or not all(isinstance(u, str) and re.match(r"^[A-Za-z0-9@_.:-]{1,80}$", u) for u in v):
                 raise Refuse("Ungültige Angabe %s im Manifest" % key)
+        debs = os.path.join(tree, "debs")
+        if os.path.lexists(debs):
+            if os.path.islink(debs) or not os.path.isdir(debs):
+                raise Refuse("debs im Paket ist kein Ordner")
+            for n in os.listdir(debs):
+                p = os.path.join(debs, n)
+                if not n.endswith(".deb") or os.path.islink(p) or not os.path.isfile(p):
+                    raise Refuse("In debs/ sind nur .deb-Dateien erlaubt: %r" % (n[:40],))
         try:
             with open(os.path.join(tree, "VERSION"), encoding="utf-8") as f:
                 if f.read().strip() != want_version:
@@ -536,8 +544,8 @@ class Updater:
         avail = bool(latest and (cur is None or is_newer(latest, cur)))
         self.status(state="idle", step="", version=cur, latest=latest, available=avail, checked=int(self.now()),
                     notes=rels[0]["notes"][:4000] if avail else "",
-                    releases=[{"version": r["version"], "published": r["published"], "prerelease": r["prerelease"]}
-                              for r in rels[:15]],
+                    releases=[{"version": r["version"], "published": r["published"], "prerelease": r["prerelease"],
+                               "notes": r["notes"][:4000]} for r in rels[:15]],
                     message=("Version %s ist verfügbar." % latest) if avail else "IRL4YOU ist aktuell.")
         return latest, avail
 

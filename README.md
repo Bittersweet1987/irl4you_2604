@@ -36,6 +36,8 @@ Eine Marke mit Bindestrich (`v2.1.0-beta.1`) wird Vorabversion und nur von Boxen
 - `hooks/install`: richtet Systemteile ein (Update-Helfer, Dienste, dann `install/system-install.sh` von IRL4YOU). Läuft
   nach dem Umschalten mit `IRL4YOU_ACTION=install|switch|rollback` und muss mehrfach laufen dürfen.
 - `hooks/health`: zusätzliche Prüfung nach dem Umschalten (ruft `install/health.sh` auf, wenn vorhanden).
+- `debs/` (optional): eigene .deb-Pakete (Encoder, SRTLA, MPP …), die `install/system-install.sh` einspielt (z. B. `apt-get install ./debs/*.deb`).
+  Erlaubt sind dort nur Dateien `*.deb`.
 - `updater/`: der Update-Helfer selbst, damit er mit jeder Version aktualisiert wird.
 
 ## Was die Box macht
@@ -91,6 +93,9 @@ ln -sfn /opt/irl4you/releases/$v /opt/irl4you/current
 IRL4YOU_ACTION=install IRL4YOU_VERSION=$v IRL4YOU_ROOT=/opt/irl4you IRL4YOU_RELEASE_DIR=/opt/irl4you/releases/$v \
   sh /opt/irl4you/releases/$v/hooks/install
 ```
+
+`/opt/irl4you/venv` (Python-Umgebung für bleak) liegt neben `releases/` und wird vom Update-Helfer nicht angefasst. Das Ubuntu-Systemupdate
+(apt, `pipbox-update.py`) bleibt getrennt bestehen.
 
 Wichtig: Einstellungen und Laufzeitdaten dürfen nicht unter `/opt/pipbox` liegen, sondern unter `/var/lib/pipbox` o. ä.,
 weil jede Version ihren eigenen Ordner hat.
