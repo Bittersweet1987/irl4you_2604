@@ -73,7 +73,7 @@ DEFAULTS = {
     "busy_units": "pipbox-send.service",
     "systemctl": "systemctl",
     "hook_timeout": "900",
-    "health_timeout": "60",
+    "health_timeout": "120",                        # so lange dürfen die Dienste aus health_units zum Starten brauchen
     "ci_grace_minutes": "10",                       # ohne jede Prüfung gilt ein Commit nach so langer Zeit als "keine CI vorhanden"
     "allow_insecure_api": "false",                  # nur für Tests: http:// statt https:// erlauben
 }

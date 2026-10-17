@@ -265,6 +265,11 @@ class TestConfig(unittest.TestCase):
             with self.assertRaises(U.Refuse):
                 U.Config(path=None, overrides={k: v})
 
+    def test_defaults_leave_room_for_slow_health_checks(self):
+        c = U.Config(path=None)
+        self.assertGreaterEqual(c.health_timeout, 120)      # health.sh der Oberfläche braucht im schlechtesten Fall ~54 s
+        self.assertGreaterEqual(c.hook_timeout, 300)
+
     def test_file(self):
         with tempfile.NamedTemporaryFile("w", suffix=".conf", delete=False) as f:
             f.write("[update]\nrepo = foo/bar\nbranch = dev\nauto_install = true\nrequire_ci = false\n")
@@ -420,6 +425,14 @@ class TestInstall(Base):
         self.gh.add(manifest={"health_units": ["pipbox.service", "gibt-es-nicht.service"]})
         self.assertFalse(self.u.install())
         self.assertEqual(self.status()["state"], "failed")
+
+    def test_slow_health_hook_is_not_cut_off_by_health_timeout(self):
+        c = self.gh.add(files=repo_files(irl={"irl4you/hooks_dummy": "x"}))
+        files = repo_files()
+        files["release/hooks/health"] = "#!/bin/sh\nsleep 3\nexit 0\n"
+        self.gh.commits[0]["files"] = files
+        self.assertTrue(self.make(health_timeout="1").install())
+        self.assertEqual(self.u.active_id(), self.rid(c))
 
     def test_hook_failure_still_rolls_back_without_units(self):
         self.set_units([], known=[])
