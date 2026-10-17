@@ -55,5 +55,13 @@ if [ -f "$conf" ] && ! grep -q 'usb-storage.quirks=' "$conf"; then
     sed -i '/^[[:space:]]*APPEND /s/$/ usb-storage.quirks=0x2537:0x1066:u,0x2537:0x1068:u/' "$conf"; changed=1
 fi
 
+# 7. Status-LEDs: gruen = Box laeuft, blau = Herzschlag (Dienst irl4you-leds, setzt die LEDs bei jedem Start)
+install -D -m 755 "$HERE/leds/irl4you-leds.sh" /usr/libexec/irl4you/irl4you-leds.sh
+if ! cmp -s "$HERE/leds/irl4you-leds.service" /etc/systemd/system/irl4you-leds.service; then
+    install -m 644 "$HERE/leds/irl4you-leds.service" /etc/systemd/system/irl4you-leds.service
+    systemctl daemon-reload; systemctl enable irl4you-leds.service >/dev/null 2>&1 || true
+fi
+/usr/libexec/irl4you/irl4you-leds.sh || true
+
 [ "$changed" = 1 ] && echo "system-base-fixes: Änderungen angewendet (Neustart empfohlen)" || echo "system-base-fixes: nichts zu tun"
 exit 0

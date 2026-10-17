@@ -1,0 +1,11 @@
+[Unit]
+Description=IRL4YOU BOX Status-LEDs
+After=sysinit.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/irl4you/irl4you-leds.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
