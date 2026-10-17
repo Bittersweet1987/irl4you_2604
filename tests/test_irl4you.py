@@ -315,6 +315,8 @@ class TestDispatcher(unittest.TestCase):
         for tool in ("logger", "flock"):
             with open(os.path.join(self.dir, tool), "w", newline="\n") as f:
                 f.write("#!/bin/sh\nexit 0\n")
+        for tool in ("ip", "logger", "flock"):
+            os.chmod(os.path.join(self.dir, tool), 0o755)      # unter Linux sonst nicht ausführbar
 
     def tearDown(self):
         shutil.rmtree(self.dir, ignore_errors=True)
