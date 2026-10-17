@@ -105,7 +105,7 @@ class SendControl:
                 for k in sorted(set(keys)):
                     if live.get(k) != "live":
                         r.append(f"Kamera {k} sendet gerade nicht")
-        if cfg.get("type") == "pip" and not os.path.exists("/opt/pipbox/gst/libgstpbpip.so"):
+        if cfg.get("type") == "pip" and not os.path.exists("/opt/irl4you/gst/libgstpbpip.so"):
             r.append("Bild-in-Bild: der Überlagerungs-Baustein ist noch nicht installiert")
         return r
 

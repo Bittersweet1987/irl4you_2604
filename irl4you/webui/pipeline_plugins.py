@@ -15,7 +15,7 @@ PIP_CORNERS = ("oben links", "oben rechts", "unten links", "unten rechts", "unte
 FREE = 5
 
 
-PLUGIN_SO = "/opt/pipbox/gst/libgstpbpip.so"
+PLUGIN_SO = "/opt/irl4you/gst/libgstpbpip.so"
 
 
 SEND_STATUS = "/run/pipbox-send/status.json"

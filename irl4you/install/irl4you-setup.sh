@@ -57,13 +57,19 @@ fi
 "$VENV/bin/python3" -c "import bleak, dbus_fast" || { echo "FEHLER: bleak fehlt in $VENV (Internet?)" >&2; exit 1; }
 
 step baustein
-# Bild-in-Bild-Baustein: wird in den Ordner dieser Version gebaut (jede Version hat ihren eigenen), nur wenn er fehlt oder der Quelltext neuer ist
-if [ -f "$HERE/gst-src/gstpbpip.c" ]; then
-  mkdir -p "$HERE/gst"
-  if [ ! -f "$HERE/gst/libgstpbpip.so" ] || ! cmp -s "$HERE/gst-src/gstpbpip.c" "$HERE/gst/.gstpbpip.c" 2>/dev/null; then
-    if PBOUT="$HERE/gst" sh "$HERE/gst-src/build.sh"; then cp "$HERE/gst-src/gstpbpip.c" "$HERE/gst/.gstpbpip.c"; else
-      echo "WARNUNG: Der PiP-Baustein konnte nicht gebaut werden; Bild-in-Bild bleibt gesperrt."; fi
-  fi
+# Bild-in-Bild-Baustein: kommt als Paket irl4you-pbpip (debs/, gebaut mit build/09-pbpip.sh) nach /opt/irl4you/gst und gilt für alle Versionen.
+# Fehlt er, bleibt Bild-in-Bild gesperrt (alles andere läuft).
+[ -f /opt/irl4you/gst/libgstpbpip.so ] || echo "WARNUNG: /opt/irl4you/gst/libgstpbpip.so fehlt (Paket irl4you-pbpip in debs/): Bild-in-Bild bleibt gesperrt." >&2
+
+step mdns
+# irl4you.local: avahi soll nur die IPv4-Adresse melden. Die Oberfläche lauscht nur auf IPv4; meldet avahi auch IPv6, probiert Windows IPv6 zuerst und
+# läuft in den Zeitablauf (Browser fallen zurück, PowerShell nicht). Betrifft nur die Namensankündigung im lokalen Netz, keine bestehende Verbindung.
+AV=/etc/avahi/avahi-daemon.conf
+if [ -f "$AV" ] && ! grep -Eq '^use-ipv6=no' "$AV"; then
+  if grep -Eq '^[#[:space:]]*use-ipv6=' "$AV"; then sed -i 's/^[#[:space:]]*use-ipv6=.*/use-ipv6=no/' "$AV"
+  elif grep -q '^\[server\]' "$AV"; then sed -i '/^\[server\]/a use-ipv6=no' "$AV"
+  else { echo "[server]"; echo "use-ipv6=no"; } >> "$AV"; fi
+  if now && systemctl is-active --quiet avahi-daemon.service; then systemctl restart avahi-daemon.service || true; fi
 fi
 
 step netz
@@ -111,8 +117,13 @@ if [ "$SRS_OK" = 1 ]; then
     [ -e "$f" ] && { rm -f "$f"; old_rtmp=1; }
   done
   install -d /etc/irl4you
-  cmp -s "$HERE/install/srs/srs.conf" /etc/irl4you/srs.conf 2>/dev/null || srs_changed=1
-  install -m 644 "$HERE/install/srs/srs.conf" /etc/irl4you/srs.conf
+  # Neue SRS-Konfiguration nur übernehmen, wenn SRS sie annimmt (sonst bliebe der RTMP-Eingang nach dem Neustart tot)
+  if /usr/bin/irl4you-srs -t -c "$HERE/install/srs/srs.conf" >/dev/null 2>&1 || [ ! -f /etc/irl4you/srs.conf ]; then
+    cmp -s "$HERE/install/srs/srs.conf" /etc/irl4you/srs.conf 2>/dev/null || srs_changed=1
+    install -m 644 "$HERE/install/srs/srs.conf" /etc/irl4you/srs.conf
+  else
+    echo "WARNUNG: SRS lehnt install/srs/srs.conf ab; die bisherige Konfiguration bleibt." >&2
+  fi
   install -m 644 "$HERE/install/nginx/99-irl4you-rtmps.conf" /etc/nginx/modules-enabled/99-irl4you-rtmps.conf
 else
   echo "WARNUNG: /usr/bin/irl4you-srs fehlt (Paket irl4you-srs in debs/): der RTMP-Eingang bleibt, wie er ist." >&2

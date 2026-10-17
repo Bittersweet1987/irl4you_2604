@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 HERE=$(cd "$(dirname "$0")" && pwd)
-OUT=${PBOUT:-/opt/pipbox/gst}
+OUT=${PBOUT:-/opt/irl4you/gst}
 B=/var/tmp/pbbuild
 R=$B/root
 mkdir -p "$B/debs" "$R" "$OUT"

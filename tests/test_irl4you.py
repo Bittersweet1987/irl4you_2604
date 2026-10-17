@@ -540,7 +540,9 @@ class TestInstallation(unittest.TestCase):
         for f in ("server.py", "pipbox_send.py", "index.html"):
             self.assertNotRegex(self.sh, r'install -m [0-9]+ "[$]HERE/%s"' % f, "irl4you-setup.sh darf keine Programmdateien kopieren: " + f)
         self.assertNotIn('"$OPT/venv', self.sh, "venv liegt gemeinsam für alle Versionen unter /opt/irl4you/venv")
-        self.assertIn("PBOUT=", self.sh, "PiP-Baustein wird in den Ordner der Version gebaut")
+        self.assertIn("/opt/irl4you/gst/libgstpbpip.so", self.sh, "PiP-Baustein kommt als Paket nach /opt/irl4you/gst (gilt für alle Versionen)")
+        self.assertNotIn("/opt/pipbox/gst", open(os.path.join(IRL, "pipbox_send.py"), encoding="utf-8").read())
+        self.assertIn("use-ipv6=no", self.sh, "avahi meldet nur IPv4 (die Oberfläche lauscht nur auf IPv4)")
         self.assertFalse(os.path.exists(os.path.join(IRL, "pipbox-swupdate.py")))
         self.assertFalse(os.path.exists(os.path.join(INSTALL, "pipbox-swupdate.path")))
 

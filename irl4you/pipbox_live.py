@@ -38,7 +38,7 @@ def supported():
     return os.access(BIN, os.X_OK)
 
 
-PLUGIN_SO = os.environ.get("PIPBOX_PLUGIN", "/opt/pipbox/gst/libgstpbpip.so")
+PLUGIN_SO = os.environ.get("PIPBOX_PLUGIN", "/opt/irl4you/gst/libgstpbpip.so")
 _FRM = {"mtime": None, "ok": False}
 FRAME_BUILT = False
 
