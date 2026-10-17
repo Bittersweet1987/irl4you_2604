@@ -2734,15 +2734,6 @@ def installed_versions():
         if f.get("Package") in KEY_PACKAGES and "installed" in f.get("Status", "") and "not-installed" not in f.get("Status", ""):
             res[f["Package"]] = f.get("Version", "?")
     _TTL["dpkg"] = (sig, dict(res))
-    return res
-
-
-VERSION_RE = re.compile(r"^\d{1,3}\.\d{1,3}\.\d{1,3}(-[a-z0-9.]{1,16})?$")
-
-
-def vkey(v):
-    core, _, pre = v.partition("-")
-    return tuple(int(x) for x in core.split(".")), (1, ()) if not pre else (0, tuple(pre.split(".")))
 
 
 class Remote:

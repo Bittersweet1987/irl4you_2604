@@ -1,5 +1,10 @@
 # Änderungen
 
+Versionsschema: 0.x.y, angezeigt als v0.x.y. Erste Stelle gibt Marco vor (0 = Alpha), zweite Stelle steigt bei großen/neuen Funktionen, dritte bei Fehlerbehebungen. Die Box folgt weiterhin den Commits von main; die Nummer ist nur der Anzeigename.
+
+## 0.1.0
+- Neues Versionsschema (vorher 2.0.0-rc.x). Sonst unverändert gegenüber 2.0.0-rc.4.
+
 ## 2.0.0-rc.4
 - Feste Kartennamen (eth0, eth1) nach MAC nur noch als systemd-.link-Dateien, die beim nächsten Start gelten. Im laufenden Betrieb (Update) wird keine Karte mehr umbenannt, keine Netzwerkverbindung verändert. Behebt den Netzausfall beim Einspielen von rc.2.
 - Prüfung nach dem Update: War vorher eine Standardroute da, muss sie nachher wieder da sein, sonst wird zurückgerollt.

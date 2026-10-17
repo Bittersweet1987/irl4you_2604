@@ -351,6 +351,16 @@ class TestInstall(Base):
         self.assertEqual(self.on_disk(), sorted(self.rid(c) for c in cs[1:]))
         self.assertEqual(self.hooks()[-1], "install 2.0.3 prev=%s" % self.rid(cs[2]))
 
+    def test_wechsel_auf_kleinere_versionsnummer(self):
+        """Umstellung 2.0.0-rc.4 -> 0.1.0: massgeblich ist die Commit-Reihenfolge, nicht die Versionsnummer."""
+        self.gh.add("2.0.0-rc.4")
+        self.assertTrue(self.u.install())
+        c = self.gh.add("0.1.0")
+        self.assertEqual(self.u.run("install"), 0)
+        self.assertEqual(self.u.active_id(), self.rid(c))
+        self.assertEqual(self.status()["version"], "0.1.0 (%s)" % c["sha"][:7])
+        self.assertEqual(self.hooks()[-1].split()[:2], ["install", "0.1.0"])
+
     def test_not_newer(self):
         self.gh.add()
         self.u.install()
