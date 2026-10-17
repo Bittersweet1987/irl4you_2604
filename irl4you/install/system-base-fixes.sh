@@ -48,5 +48,12 @@ fi
 # 5. Systempartition auf die ganze Karte vergrößern (einmalig)
 sh "$HERE/grow-rootfs.sh" || true
 
+# 6. Boot-Parameter fuer USB-Platten mit Problemen im UAS-Modus (Marcos Platte 2537:1066/1068): usb-storage statt uas verwenden.
+#    Nur ergaenzen, wenn der Parameter fehlt; die Zeile in extlinux.conf wird sonst nicht angefasst.
+conf=/boot/extlinux/extlinux.conf
+if [ -f "$conf" ] && ! grep -q 'usb-storage.quirks=' "$conf"; then
+    sed -i '/^[[:space:]]*APPEND /s/$/ usb-storage.quirks=0x2537:0x1066:u,0x2537:0x1068:u/' "$conf"; changed=1
+fi
+
 [ "$changed" = 1 ] && echo "system-base-fixes: Änderungen angewendet (Neustart empfohlen)" || echo "system-base-fixes: nichts zu tun"
 exit 0

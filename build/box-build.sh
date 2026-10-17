@@ -3,6 +3,7 @@
 # Nichts davon wird ins System installiert. Aufruf: box-build.sh <encoder|srtla|srs|pbpip|rtw88|aic8800|alle>
 # Reihenfolge der Auslieferung: bauen -> testen -> .deb nach irl4you/debs/ committen -> per irl4you-update installieren.
 set -euo pipefail
+HERE=$(cd "$(dirname "$0")" && pwd)   # vor dem cd merken: Aufruf mit relativem Pfad bleibt gueltig
 B=${B:-/var/tmp/irl4you-build}
 KVER=$(uname -r)
 PIP_REPO=${PIP_REPO:-https://github.com/Bittersweet1987/irl4you-pip.git}
@@ -75,12 +76,12 @@ build_srs() {
 build_pbpip() {
     log "irl4you-pbpip (Bild-in-Bild-Baustein)"
     apt-get install -y -q --no-install-recommends gcc pkgconf libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev >/dev/null
-    local src; src="$(cd "$(dirname "$0")/.." && pwd)/irl4you/gst-src/gstpbpip.c"
+    local src="$HERE/../irl4you/gst-src/gstpbpip.c"
     test -f "$src" || { echo "FEHLER: $src fehlt"; exit 1; }
     rm -rf "$B/pbpip-st"; mkdir -p "$B/pbpip-st/opt/irl4you/gst"
     gcc -O2 -Wall -fPIC -shared -DPACKAGE=\"irl4you\" "$src" -o "$B/pbpip-st/opt/irl4you/gst/libgstpbpip.so"         $(pkg-config --cflags --libs gstreamer-video-1.0 gstreamer-base-1.0 gstreamer-1.0)
     GST_PLUGIN_PATH="$B/pbpip-st/opt/irl4you/gst" gst-inspect-1.0 pbpip | head -4
-    mkdeb irl4you-pbpip "1.0.$(date +%Y%m%d)" "$B/pbpip-st" "libgstreamer1.0-0, libgstreamer-plugins-base1.0-0, libc6" "Bild-in-Bild-Baustein fuer IRL4YOU (eigene Entwicklung), nach /opt/irl4you/gst"
+    mkdeb irl4you-pbpip "1.0.$(date +%Y%m%d).${PKG_REV:-1}" "$B/pbpip-st" "libgstreamer1.0-0, libgstreamer-plugins-base1.0-0, libc6" "Bild-in-Bild-Baustein fuer IRL4YOU (eigene Entwicklung), nach /opt/irl4you/gst"
 }
 
 case "${1:-alle}" in
@@ -88,8 +89,8 @@ case "${1:-alle}" in
     srtla)   build_srtla ;;
     srs)     build_srs ;;
     pbpip)   build_pbpip ;;
-    rtw88)   bash "$(dirname "$0")/10-rtw88.sh" ;;
-    aic8800) bash "$(dirname "$0")/11-aic8800.sh" ;;
+    rtw88)   bash "$HERE/10-rtw88.sh" ;;
+    aic8800) bash "$HERE/11-aic8800.sh" ;;
     alle)    build_srtla; build_encoder; build_srs; build_pbpip ;;
     *) echo "Aufruf: $0 encoder|srtla|srs|pbpip|rtw88|aic8800|alle"; exit 2 ;;
 esac
