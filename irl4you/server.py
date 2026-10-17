@@ -3663,7 +3663,7 @@ class Wifi:
             cards = []
             for iface, ip, ssid, usb in (("wlan0", "10.0.0.5", "Demo-Hotspot", "0bda:c811"), ("wlan1", "", "", "2357:011e")):
                 c = {"iface": iface, "ip": ip, "camera_net": False, "up": bool(ip), "ssid": ssid, "signal": 80 if ip else None,
-                     "name": "802.11ac NIC", "vendor": "Realtek", "usb_id": usb, "driver": "rtl8821cu", "ap": True, "band24": True, "band5": True}
+                     "name": "802.11ac NIC", "vendor": "Realtek", "usb_id": usb, "driver": "rtw_8821cu", "ap": True, "band24": True, "band5": True}
                 h = self.fake_hs.get(iface)
                 if h and h.get("running", True):
                     c.update(ip="10.42.0.1", ssid="", signal=None, up=True)

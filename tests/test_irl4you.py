@@ -259,7 +259,16 @@ class TestTonquellen(unittest.TestCase):
             self.hd.clean_settings({"audio": "mikro"})
 
 
+def _sh():
+    for c in (shutil.which("sh"), r"C:\Program Files\Git\bin\sh.exe", "/bin/sh"):
+        if c and os.path.exists(c):
+            return c
+    return None
+
+
 class TestKartennamen(unittest.TestCase):
+    """Feste Kartennamen nach MAC: nur Dateien (.link), nie im laufenden Betrieb umbenennen (Testbox war am 17.10.2026 deshalb 10 Minuten weg)."""
+
     def setUp(self):
         self.nn = load_script("pipbox-netnames.py", "pipbox_netnames")
 
@@ -270,33 +279,75 @@ class TestKartennamen(unittest.TestCase):
         m2 = self.nn.initial_map(cards, {})
         self.assertEqual(m2, {"c0:74:2b:ff:53:58": "eth0", "c0:74:2b:ff:53:59": "eth1"}, "ohne Vorwissen nach Bus-Lage")
 
-    def test_getauschte_namen_zurueck(self):
-        cards = {"eth0": ("aa:00:00:00:00:02", "/b"), "eth1": ("aa:00:00:00:00:01", "/a")}
-        steps = self.nn.plan(cards, {"aa:00:00:00:00:01": "eth0", "aa:00:00:00:00:02": "eth1"})
-        names = dict((m, n) for n, (m, _p) in cards.items())
-        for old, new in steps:      # Ablauf nachspielen: nie zwei Karten mit gleichem Namen
-            mac = next(m for m, n in names.items() if n == old)
-            self.assertNotIn(new, names.values())
-            names[mac] = new
-        self.assertEqual(names, {"aa:00:00:00:00:01": "eth0", "aa:00:00:00:00:02": "eth1"})
-        self.assertEqual(self.nn.plan({"eth0": ("aa:00:00:00:00:01", "/a")}, {"aa:00:00:00:00:01": "eth0"}), [])
+    def test_link_dateien(self):
+        d = tempfile.mkdtemp()
+        try:
+            m = {"c0:74:2b:ff:53:58": "eth0", "c0:74:2b:ff:53:59": "eth1"}
+            written, removed = self.nn.write_links(m, d)
+            self.assertEqual(sorted(written), ["10-irl4you-eth0.link", "10-irl4you-eth1.link"])
+            text = open(os.path.join(d, "10-irl4you-eth0.link")).read()
+            self.assertIn("MACAddress=c0:74:2b:ff:53:58", text)
+            self.assertIn("Name=eth0", text)
+            self.assertEqual(self.nn.write_links(m, d), ([], []), "zweiter Lauf ändert nichts")
+            open(os.path.join(d, "50-fremd.link"), "w").write("[Match]\n")
+            written, removed = self.nn.write_links({"c0:74:2b:ff:53:58": "eth0"}, d)
+            self.assertEqual(removed, ["10-irl4you-eth1.link"])
+            self.assertTrue(os.path.exists(os.path.join(d, "50-fremd.link")), "fremde .link-Dateien bleiben")
+        finally:
+            shutil.rmtree(d)
 
-    def test_fremde_karte_weicht(self):
-        cards = {"eth0": ("bb:00:00:00:00:09", "/usb"), "eth1": ("aa:00:00:00:00:01", "/a")}
-        names = dict((m, n) for n, (m, _p) in cards.items())
-        for old, new in self.nn.plan(cards, {"aa:00:00:00:00:01": "eth0"}):
-            mac = next(m for m, n in names.items() if n == old)
-            self.assertNotIn(new, names.values())
-            names[mac] = new
-        self.assertEqual(names["aa:00:00:00:00:01"], "eth0")
-        self.assertRegex(names["bb:00:00:00:00:09"], r"^eth\d$")
+    def test_kein_umbenennen_im_betrieb(self):
+        for rel in ("pipbox-netnames.py", "install/irl4you-setup.sh", "install/system-install.sh", "install/install-2604.sh"):
+            src = open(os.path.join(IRL, rel), encoding="utf-8").read()
+            code = "\n".join(l for l in src.splitlines() if not l.lstrip().startswith("#"))
+            for bad in ("ip link set", "subprocess", "systemctl restart NetworkManager", "nmcli connection add", "nmcli con add"):
+                self.assertNotIn(bad, code, "%s: %r verändert im Betrieb das Netz" % (rel, bad))
+        self.assertFalse(os.path.exists(os.path.join(INSTALL, "pipbox-netnames.service")), "kein Dienst, der beim Start oder im Betrieb umbenennt")
+        setup = open(os.path.join(INSTALL, "irl4you-setup.sh"), encoding="utf-8").read()
+        self.assertNotIn("disable --now", setup, "ifplugd/networking nicht im Betrieb anhalten")
+        self.assertIn("netnames.py", setup)
 
 
-def _sh():
-    for c in (shutil.which("sh"), r"C:\Program Files\Git\bin\sh.exe", "/bin/sh"):
-        if c and os.path.exists(c):
-            return c
-    return None
+class TestNetzPruefung(unittest.TestCase):
+    """install/net-check.sh: nach dem Update muss die Standardroute wieder da sein, wenn es vorher eine gab."""
+
+    def setUp(self):
+        self.sh = _sh()
+        if not self.sh:
+            self.skipTest("keine POSIX-Shell")
+        self.dir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        shutil.rmtree(self.dir, ignore_errors=True)
+
+    def run_check(self, before, route, addr):
+        d = self.dir.replace("\\", "/")
+        state = os.path.join(self.dir, "before")
+        if before is not None:
+            open(state, "w").write("%s\n" % before)
+        with open(os.path.join(self.dir, "ip"), "w", newline="\n") as f:
+            f.write("#!/bin/sh\ncase \"$*\" in\n  \"-4 route show default\") %s;;\n  \"-4 -o addr show scope global\") %s;;\nesac\nexit 0\n" % (
+                "echo 'default via 192.168.1.1 dev eth0'" if route else "true", "echo '2: eth0 inet 192.168.1.5/24'" if addr else "true"))
+        os.chmod(os.path.join(self.dir, "ip"), 0o755)
+        e = dict(os.environ, PATH=d + os.pathsep + os.environ.get("PATH", ""), IRL4YOU_NET_STATE=state.replace("\\", "/"), IRL4YOU_NET_WAIT="0")
+        return subprocess.run([self.sh, os.path.join(INSTALL, "net-check.sh")], env=e, capture_output=True, text=True, timeout=30).returncode
+
+    def test_netz_da(self):
+        self.assertEqual(self.run_check(1, True, True), 0)
+
+    def test_netz_weg_rollback(self):
+        self.assertEqual(self.run_check(1, False, False), 1)
+        self.assertEqual(self.run_check(1, True, False), 1, "Route ohne Adresse zählt nicht")
+
+    def test_vorher_kein_netz_kein_rollback(self):
+        self.assertEqual(self.run_check(0, False, False), 0)
+        self.assertEqual(self.run_check(None, False, False), 0)
+
+    def test_hooks_verbinden(self):
+        self.assertIn("net-check.sh", open(os.path.join(INSTALL, "health.sh"), encoding="utf-8").read())
+        sysinst = open(os.path.join(INSTALL, "system-install.sh"), encoding="utf-8").read()
+        self.assertIn("/run/irl4you-net-before", sysinst)
+        self.assertLess(sysinst.index("/run/irl4you-net-before"), sysinst.index("sh install/system-base-fixes.sh"), "Netz merken, bevor etwas geändert wird")
 
 
 class TestDispatcher(unittest.TestCase):
@@ -398,7 +449,7 @@ class TestInstallation(unittest.TestCase):
 
     def test_skripte_lf_und_syntax(self):
         sh = _sh()
-        for rel in ("install/install-2604.sh", "install/system-install.sh", "install/irl4you-setup.sh", "install/system-base-fixes.sh", "install/zz-irl4you-boot", "install/health.sh", "install/net/pipbox-source-routing", "install/net/pipbox-fallback-route"):
+        for rel in ("install/install-2604.sh", "install/system-install.sh", "install/irl4you-setup.sh", "install/system-base-fixes.sh", "install/zz-irl4you-boot", "install/health.sh", "install/net-check.sh", "install/net/pipbox-source-routing", "install/net/pipbox-fallback-route"):
             p = os.path.join(IRL, rel)
             self.assertNotIn(b"\r\n", open(p, "rb").read(), "CRLF in " + rel)
             if sh:

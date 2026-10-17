@@ -72,27 +72,17 @@ for f in pipbox-source-routing pipbox-fallback-route; do
 done
 install -d /etc/iproute2/rt_tables.d
 python3 "$OPT/pipbox-netaddr.py" --refresh || true
-# feste Kartennamen: Zuordnung jetzt anlegen (aus den zuletzt gesehenen Namen), angewendet beim nächsten Booten vor NetworkManager
-[ -f /etc/pipbox/netnames.json ] || { [ "$CHROOT" = 1 ] || python3 "$OPT/pipbox-netnames.py" || true; }
-# LAN-Profile je Karte, an die MAC gebunden (der Name kann sich unter ifupdown-Zeiten verschoben haben)
-# (im chroot läuft kein NetworkManager: die Profile entstehen dann beim ersten Start automatisch)
-if now && [ -f /etc/pipbox/netnames.json ] && command -v nmcli >/dev/null; then
-  python3 - <<'PY' || true
-import json, subprocess
-m = json.load(open("/etc/pipbox/netnames.json"))
-have = subprocess.run(["nmcli", "-t", "-f", "NAME", "connection", "show"], capture_output=True, text=True).stdout.split("\n")
-for mac, name in sorted(m.items(), key=lambda x: x[1]):
-    con = "irl4you-" + name
-    if con in have:
-        continue
-    r = subprocess.run(["nmcli", "connection", "add", "type", "ethernet", "con-name", con, "802-3-ethernet.mac-address", mac,
-                        "connection.autoconnect", "yes", "ipv4.method", "auto", "ipv6.method", "auto"], capture_output=True, text=True)
-    print("LAN-Profil", con, "angelegt" if r.returncode == 0 else "nicht angelegt: " + r.stderr.strip()[:120])
-PY
+# Feste Kartennamen nach MAC: nur Dateien schreiben (/etc/pipbox/netnames.json, /etc/systemd/network/10-irl4you-*.link). Sie gelten beim nächsten Start.
+# NIE im laufenden Betrieb umbenennen: das trennt die Karte, DHCP bricht ab und die Box ist nicht mehr erreichbar.
+if now; then python3 "$OPT/pipbox-netnames.py" || true; fi      # im chroot nicht: dort sind es die Karten des Bau-Rechners
+# Reste der ersten Fassung (Dienst, der im Betrieb umbenannte) entfernen
+if [ -e /etc/systemd/system/pipbox-netnames.service ]; then
+  systemctl disable pipbox-netnames.service 2>/dev/null || true
+  rm -f /etc/systemd/system/pipbox-netnames.service /etc/systemd/system/sysinit.target.wants/pipbox-netnames.service
 fi
-# ifupdown und ifplugd übernehmen die LAN-Karten nicht mehr
+# ifupdown und ifplugd übernehmen die LAN-Karten nicht mehr (nur ausschalten, nicht jetzt anhalten: sonst könnte die Verbindung abreißen)
 for u in ifplugd.service networking.service; do
-  if now; then systemctl disable --now "$u" 2>/dev/null || true; else systemctl disable "$u" 2>/dev/null || true; fi
+  systemctl disable "$u" 2>/dev/null || true
 done
 
 step udev
@@ -143,7 +133,7 @@ done
 rm -f /etc/systemd/system/pipbox-swupdate.service /etc/systemd/system/pipbox-swupdate.path
 mkdir -p /etc/systemd/system/tailscaled.service.d
 [ -f "$HERE/install/tailscaled-pipbox-order.conf" ] && install -m 644 "$HERE/install/tailscaled-pipbox-order.conf" /etc/systemd/system/tailscaled.service.d/pipbox-order.conf
-UNITS="pipbox.service pipbox-dji.service pipbox-hdmi.service pipbox-health.service pipbox-arp.service pipbox-netnames.service
+UNITS="pipbox.service pipbox-dji.service pipbox-hdmi.service pipbox-health.service pipbox-arp.service
   pipbox-update.path pipbox-send-ctl.path pipbox-remote.path pipbox-remote-heal.timer pipbox-wifi.path
   pipbox-power.path pipbox-logmode.path pipbox-netaddr.path pipbox-logs.path pipbox-ssh.path pipbox-btdriver.timer pipbox-btdriver.path
   pipbox-wlandriver.timer pipbox-btchip.path pipbox-btchip.service pipbox-logrotate.timer pipbox-preview.socket

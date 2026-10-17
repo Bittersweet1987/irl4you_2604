@@ -8,6 +8,10 @@ set -eu
 cd "$IRL4YOU_RELEASE_DIR"
 export DEBIAN_FRONTEND=noninteractive
 
+# 0. Netz vor dem Update merken: install/health.sh verlangt danach wieder eine Standardroute, wenn es vorher eine gab (sonst Rollback).
+#    Dieses Skript verändert im laufenden Betrieb nie Netzwerkkarten, Adressen oder Routen.
+if ip -4 route show default 2>/dev/null | grep -q .; then echo 1 > /run/irl4you-net-before; else echo 0 > /run/irl4you-net-before; fi
+
 # 1. Werkzeug für den Boot-Hook (fdtput/fdtget), falls es im Grundsystem fehlt
 command -v fdtput >/dev/null 2>&1 || apt-get install -y --no-install-recommends device-tree-compiler || true
 

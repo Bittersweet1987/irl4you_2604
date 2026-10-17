@@ -1,5 +1,9 @@
 # Änderungen
 
+## 2.0.0-rc.4
+- Feste Kartennamen (eth0, eth1) nach MAC nur noch als systemd-.link-Dateien, die beim nächsten Start gelten. Im laufenden Betrieb (Update) wird keine Karte mehr umbenannt, keine Netzwerkverbindung verändert. Behebt den Netzausfall beim Einspielen von rc.2.
+- Prüfung nach dem Update: War vorher eine Standardroute da, muss sie nachher wieder da sein, sonst wird zurückgerollt.
+
 ## 2.0.0-rc.3
 - RTMP-Eingang ist jetzt SRS 6 (H.264 und H.265 über RTMP) statt nginx-rtmp; RTMPS bleibt über nginx (nur TLS). Die Statistik auf Port 1936 hat das alte Format.
 - bleak/dbus-fast mit festen Versionen, nur installiert wenn etwas fehlt (Update bricht ohne Internet nicht mehr ab).
