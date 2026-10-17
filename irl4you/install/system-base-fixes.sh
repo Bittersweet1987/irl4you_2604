@@ -24,6 +24,14 @@ if [ "$(fdtget /boot/dtb/rockchip/rk3588-orangepi-5-plus.dtb /hdmirx-controller@
     "$hook" "$(uname -r)"; changed=1   # DTB wird beim nächsten Start gelesen (Neustart nötig)
 fi
 
+# 2b. udev-Regel: /dev/hdmirx zeigt auf den HDMI-Eingang (Treiber-Name stream_hdmirx)
+rules=/etc/udev/rules.d/81-irl4you-hdmirx.rules
+if ! cmp -s "$HERE/udev/81-irl4you-hdmirx.rules" "$rules" 2>/dev/null; then
+    install -D -m644 "$HERE/udev/81-irl4you-hdmirx.rules" "$rules"; changed=1
+    udevadm control --reload 2>/dev/null || true
+    udevadm trigger --subsystem-match=video4linux --action=add 2>/dev/null || true
+fi
+
 # 3. Deutsche Tastatur, Sprache und Zeitzone als Standard (nur wenn noch nichts gesetzt ist)
 [ -f /etc/default/keyboard ] || { printf 'XKBMODEL="pc105"\nXKBLAYOUT="de"\nXKBVARIANT=""\nXKBOPTIONS=""\nBACKSPACE="guess"\n' > /etc/default/keyboard; changed=1; }
 [ -f /etc/default/locale ] || { printf 'LANG=de_DE.UTF-8\nLANGUAGE=de_DE:de\n' > /etc/default/locale; changed=1; }
