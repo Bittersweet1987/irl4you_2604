@@ -709,7 +709,7 @@ class TestRtmpEingang(unittest.TestCase):
     def test_umstellung_nur_mit_srs(self):
         sh = open(os.path.join(INSTALL, "irl4you-setup.sh"), encoding="utf-8").read()
         self.assertIn("[ -x /usr/bin/irl4you-srs ] && SRS_OK=1", sh)
-        i = sh.index("99-irl4you-rtmps.conf /etc/nginx/modules-enabled")
+        i = sh.index("install/nginx/99-irl4you-rtmps.conf")
         self.assertGreater(i, sh.index('if [ "$SRS_OK" = 1 ]; then'), "RTMPS-Konfiguration nur zusammen mit SRS (sonst zwei listen 1934)")
 
     def test_konfiguration(self):
