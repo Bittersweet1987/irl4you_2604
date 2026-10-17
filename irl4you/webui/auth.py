@@ -35,7 +35,6 @@ class Auth:
         self.demo = bool(demo)
         self.dir = state_dir
         self.path = os.path.join(state_dir, "auth.json")
-        self.code_path = os.path.join(state_dir, "setup-code")
         self.sessions = {}
         self.store_path = os.path.join(state_dir, "sessions.json")
         self.fails = {}
@@ -48,24 +47,9 @@ class Auth:
                 self.cfg = json.load(f)
         except (OSError, ValueError):
             pass
-        self.setup_code = None
         if self.demo and not self.bela_hash():
             salt = secrets.token_bytes(16)
             self.cfg = {"salt": salt.hex(), "hash": self._hash(self.DEMO_PASSWORD, salt).hex()}
-            try:
-                os.remove(self.code_path)
-            except OSError:
-                pass
-        elif not self.cfg and not self.bela_hash() and not self.bela_pending():
-            self.setup_code = secrets.token_urlsafe(6)
-            fd = os.open(self.code_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
-            with os.fdopen(fd, "w") as f:
-                f.write(self.setup_code + "\n")
-        else:
-            try:
-                os.remove(self.code_path)
-            except OSError:
-                pass
 
     def _cred(self):
         h = self.bela_hash() or ("demo" if self.demo else (self.cfg or {}).get("hash")) or ""
@@ -151,6 +135,10 @@ class Auth:
     def configured(self):
         return bool(self.cfg) or self.mode == "belabox"
 
+    @property
+    def setup_needed(self):
+        return not self.configured and self.mode == "own"
+
     @staticmethod
     def _hash(pw, salt):
         return hashlib.pbkdf2_hmac("sha256", pw.encode(), salt, 300000, dklen=32)
@@ -203,27 +191,22 @@ class Auth:
 
     WAITING_MSG = "Auf der BELABOX ist noch kein Passwort gesetzt. Bitte zuerst in der BELABOX-Oberfläche eines festlegen."
 
-    def set_password(self, code, pw, ip):
-        if self.mode == "belabox-wartet":
-            raise ValueError(self.WAITING_MSG)
-        if self.configured or not self.setup_code:
-            raise ValueError("Passwort ist schon gesetzt")
-        if not self.check_password(ip, lambda: hmac.compare_digest(code or "", self.setup_code)):
-            raise ValueError("Setup-Code falsch")
-        if len(pw or "") < 10:
-            raise ValueError("Passwort: mindestens 10 Zeichen")
-        salt = secrets.token_bytes(16)
-        self.cfg = {"salt": salt.hex(), "hash": self._hash(pw, salt).hex()}
-        tmp = self.path + ".tmp"
-        fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
-        with os.fdopen(fd, "w") as f:
-            json.dump(self.cfg, f)
-        os.replace(tmp, self.path)
-        self.setup_code = None
-        try:
-            os.remove(self.code_path)
-        except OSError:
-            pass
+    def set_password(self, pw, ip):
+        with self.lock:
+            if self.mode == "belabox-wartet":
+                raise ValueError(self.WAITING_MSG)
+            if not self.setup_needed:
+                raise ValueError("Passwort ist schon gesetzt")
+            if len(pw or "") < 10:
+                raise ValueError("Passwort: mindestens 10 Zeichen")
+            salt = secrets.token_bytes(16)
+            cfg = {"salt": salt.hex(), "hash": self._hash(pw, salt).hex()}
+            tmp = self.path + ".tmp"
+            fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+            with os.fdopen(fd, "w") as f:
+                json.dump(cfg, f)
+            os.replace(tmp, self.path)
+            self.cfg = cfg
 
     def change_password(self, old, new, ip):
         if self.mode != "own" or self.demo:

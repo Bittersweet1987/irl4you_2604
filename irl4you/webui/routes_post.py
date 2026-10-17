@@ -19,10 +19,9 @@ class PostRoutes:
         try:
             d = self.read_json(SettingsTransfer.MAX_BODY if path.startswith("/api/settings/") and self.authed() else 4096)
             if path == "/api/setup":
-                self.auth.set_password(d.get("code"), d.get("password"), self.ip())
-                rem = d.get("remember") is True
-                tok = self.auth.login(d.get("password"), self.ip(), rem)
-                return self.reply(200, {"ok": True}, self.cookie(tok, REMEMBER_SECONDS if rem else SESSION_SECONDS))
+                self.auth.set_password(d.get("password"), self.ip())
+                tok = self.auth.login(d.get("password"), self.ip(), False)
+                return self.reply(200, {"ok": True}, self.cookie(tok, SESSION_SECONDS))
             if path == "/api/login":
                 rem = d.get("remember") is True
                 tok = self.auth.login(d.get("password"), self.ip(), rem)

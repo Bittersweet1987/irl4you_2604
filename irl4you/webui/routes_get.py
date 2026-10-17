@@ -29,7 +29,7 @@ class GetRoutes:
                 return self.send_bytes(200, PHONE_FRAME.encode("utf-8"), "text/html; charset=utf-8")
             return self.page("index.html" if self.authed() else "login.html")
         if path == "/api/auth":
-            out = {"configured": self.auth.configured, "mode": self.auth.mode, "authed": self.authed()}
+            out = {"configured": self.auth.configured, "mode": self.auth.mode, "authed": self.authed(), "setup": self.auth.setup_needed}
             if self.auth.mode == "demo":
                 out["demo_password"] = Auth.DEMO_PASSWORD
             return self.reply(200, out)
