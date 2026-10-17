@@ -31,7 +31,7 @@ CLOCK_JUMP_S = 120
 PROBE_PATH = "/api/auth"
 HOSTNAME = "irl4you-box"
 MODES = ("install", "login", "down", "serve_on", "serve_off", "funnel_on", "funnel_off", "stats_on", "stats_off", "logout")
-CODENAMES = ("jammy", "noble", "focal")
+CODENAMES = ("resolute", "noble", "jammy", "focal")
 KEY_URL = "https://pkgs.tailscale.com/stable/ubuntu/{}.noarmor.gpg"
 LIST_URL = "https://pkgs.tailscale.com/stable/ubuntu/{}.tailscale-keyring.list"
 KEYRING = "/usr/share/keyrings/tailscale-archive-keyring.gpg"
@@ -109,7 +109,7 @@ def do_install():
         return
     cn = codename()
     if cn not in CODENAMES:
-        raise RuntimeError(f"Dieses System ({cn or '?'}) wird nicht unterstützt (Ubuntu 22.04/24.04).")
+        raise RuntimeError(f"Dieses System ({cn or '?'}) wird nicht unterstützt (Ubuntu 22.04, 24.04 und 26.04).")
     status(state="working", step="Lade die Paketquelle von tailscale.com", message="")
     key = get(KEY_URL.format(cn), 20000)
     lst = get(LIST_URL.format(cn), 2000).decode()

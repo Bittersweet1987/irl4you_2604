@@ -1,5 +1,10 @@
 # Änderungen
 
+## 2.0.0-rc.3
+- RTMP-Eingang ist jetzt SRS 6 (H.264 und H.265 über RTMP) statt nginx-rtmp; RTMPS bleibt über nginx (nur TLS). Die Statistik auf Port 1936 hat das alte Format.
+- bleak/dbus-fast mit festen Versionen, nur installiert wenn etwas fehlt (Update bricht ohne Internet nicht mehr ab).
+- Tailscale-Einrichtung erkennt Ubuntu 26.04 (resolute).
+
 ## 2.0.0-rc.2
 - Programmstand von IRL4YOU für 26.04 (ohne BELABOX): eigene Sendekette (`irl4you-encoder`, `irl4you-srtla`), Mobilfunk-Modems mit APN, Roaming und Netzwahl, eigenes Passwort der Oberfläche (der bisherige Hash wird übernommen), Oberfläche auch auf Port 80, Ton von USB-Karte oder Analogeingang.
 - Netzwerk über NetworkManager: Quell-Routing je Karte, Ausweichroute, feste Kartennamen nach MAC; udev-Regeln und nginx-RTMP von IRL4YOU.

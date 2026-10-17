@@ -1,0 +1,3 @@
+# Feste Versionen für die Python-Umgebung /opt/irl4you/venv (DJI-Bluetooth). Ändern nur bewusst per Commit, getestet mit dem DJI-Dienst.
+bleak==3.0.2
+dbus-fast==5.2.0

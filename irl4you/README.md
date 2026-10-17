@@ -8,6 +8,8 @@ Gepflegt wird er lokal in `Belabox-2604\irl4you\`, getestet (`tests/test_irl4you
 - `install/system-install.sh`: wird von `hooks/install` aufgerufen. Reihenfolge: `system-base-fixes.sh` (NetworkManager, Kernel-Hook, HDMI-Eingang, Tastatur/Sprache),
   eigene Pakete aus `debs/`, dann `irl4you-setup.sh` (Pakete aus Ubuntu, Benutzer, venv `/opt/irl4you/venv` für bleak, PiP-Baustein, NetworkManager-Hooks,
   udev, nginx-RTMP, Dienste). Kopiert **keine** Programmdateien, mehrfach lauffähig.
+- RTMP-Eingang: `irl4you-srs` (SRS 6, H.264 und H.265; Paket aus `debs/`, gebaut mit `build/08-srs.sh`), Konfiguration `install/srs/srs.conf`, RTMPS über nginx (nur TLS, `install/nginx/`), Statistik auf Port 1936 im alten Format von `pipbox-rtmpstat.py` (aus der API von SRS).
+- `install/requirements.txt`: feste Versionen von bleak und dbus-fast für die Umgebung `/opt/irl4you/venv`.
 - `install/*.service|path|timer|socket`, `install/net/`, `install/udev/`, `install/nginx/`: Dienste und Systemdateien.
 - `install/health.sh`: nach dem Umschalten antwortet die Oberfläche auf Port 8780 und 80.
 - `install/install-2604.sh [--chroot] [--migrate-from DIR]`: Erstinstallation im Checkout (Daten der alten 22.04-Box übernehmen, Stand als erste Version einrichten).

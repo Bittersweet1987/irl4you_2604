@@ -1,0 +1,21 @@
+[Unit]
+Description=IRL4YOU BOX RTMP-Eingang (SRS 6: H.264 und H.265)
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/irl4you-srs -c /etc/irl4you/srs.conf
+Restart=always
+RestartSec=2
+DynamicUser=yes
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+LimitNOFILE=8192
+
+[Install]
+WantedBy=multi-user.target

@@ -398,7 +398,7 @@ class TestInstallation(unittest.TestCase):
 
     def test_skripte_lf_und_syntax(self):
         sh = _sh()
-        for rel in ("install/install-2604.sh", "install/system-install.sh", "install/irl4you-setup.sh", "install/system-base-fixes.sh", "install/zz-irl4you-boot", "install/health.sh", "install/net/pipbox-source-routing", "install/net/pipbox-fallback-route", "pipbox-nginx-guard.sh"):
+        for rel in ("install/install-2604.sh", "install/system-install.sh", "install/irl4you-setup.sh", "install/system-base-fixes.sh", "install/zz-irl4you-boot", "install/health.sh", "install/net/pipbox-source-routing", "install/net/pipbox-fallback-route"):
             p = os.path.join(IRL, rel)
             self.assertNotIn(b"\r\n", open(p, "rb").read(), "CRLF in " + rel)
             if sh:
@@ -419,6 +419,18 @@ class TestInstallation(unittest.TestCase):
         self.assertIn("PBOUT=", self.sh, "PiP-Baustein wird in den Ordner der Version gebaut")
         self.assertFalse(os.path.exists(os.path.join(IRL, "pipbox-swupdate.py")))
         self.assertFalse(os.path.exists(os.path.join(INSTALL, "pipbox-swupdate.path")))
+
+    def test_bleak_feste_versionen(self):
+        req = open(os.path.join(INSTALL, "requirements.txt"), encoding="utf-8").read()
+        self.assertRegex(req, r"(?m)^bleak==[0-9.]+$")
+        self.assertRegex(req, r"(?m)^dbus-fast==[0-9.]+$")
+        self.assertNotIn("--upgrade", self.sh, "kein pip --upgrade bei jedem Update (ohne Internet bräche das Update ab)")
+        self.assertIn("-r \"$HERE/install/requirements.txt\"", self.sh)
+        self.assertIn(".requirements.sha256", self.sh, "nur installieren, wenn die Datei sich ändert oder etwas fehlt")
+
+    def test_tailscale_resolute(self):
+        rem = load_script("pipbox-remote.py", "pipbox_remote_t")
+        self.assertIn("resolute", rem.CODENAMES)
 
     def test_python_shebang_lf(self):
         """Ausführbare Python-Dateien mit CRLF starten unter Linux nicht (/usr/bin/env: 'python3\\r')."""
@@ -598,6 +610,118 @@ class TestSendekette(unittest.TestCase):
             src = open(os.path.join(IRL, f), encoding="utf-8").read()
             for old in ("srtla_send", "/opt/pipbox/bin/belacoder", "belacoder-stats", "SRTLA_LAT_MARGIN_MS"):
                 self.assertNotIn(old, src, "%s ruft noch %s" % (f, old))
+
+
+class TestRtmpEingang(unittest.TestCase):
+    """SRS als RTMP-Eingang: die Statistik-Seite (Port 1936) im Format des früheren nginx-rtmp, damit alle Leser unverändert bleiben."""
+
+    def setUp(self):
+        self.st = load_script("pipbox-rtmpstat.py", "pipbox_rtmpstat")
+        self.server = irl("server")
+        self.live = irl("pipbox_live")
+        self.t = [100.0]
+        self.meter = self.st.Meter(clock=lambda: self.t[0])
+
+    def srs(self, frames, nbytes, publishing=True, name="handy"):
+        return [{"id": "x", "name": name, "app": "publish", "live_ms": 5000, "clients": 2 if publishing else 1, "frames": frames, "recv_bytes": nbytes,
+                 "publish": {"active": publishing}, "video": {"codec": "H265", "profile": "Main", "level": "4.1", "width": 1920, "height": 1080},
+                 "audio": {"codec": "AAC", "sample_rate": 48000, "channels": 2}},
+                {"name": "fremd", "app": "live", "publish": {"active": True}}, {"name": "../x", "app": "publish"}]
+
+    def xml(self, frames, nbytes, **kw):
+        return self.st.build_xml(self.srs(frames, nbytes, **kw), self.meter)
+
+    def test_messung_und_felder(self):
+        import xml.etree.ElementTree as ET
+        self.xml(0, 0)
+        self.t[0] += 3.0
+        root = ET.fromstring(self.xml(90, 3_000_000))      # 30 Bilder/s, 8 Mbit/s
+        st = root.find(".//stream")
+        self.assertEqual(st.findtext("name"), "handy")
+        self.assertIsNotNone(st.find("publishing"))
+        self.assertEqual(st.findtext("meta/video/frame_rate"), "30")
+        self.assertEqual((st.findtext("meta/video/width"), st.findtext("meta/video/height"), st.findtext("meta/video/codec")), ("1920", "1080", "H265"))
+        self.assertEqual(int(st.findtext("bw_in")), 8_000_000)
+        self.assertEqual(int(st.findtext("bw_video")) + int(st.findtext("bw_audio")), 8_000_000)
+        self.assertEqual(st.findtext("nclients"), "1", "der Sender zählt nicht als Zuschauer")
+        self.assertEqual(len(root.findall(".//stream")), 1, "fremde Applikation und ungültiger Name bleiben draußen")
+        self.assertEqual(root.findtext(".//application/name"), "publish")
+
+    def test_leere_liste_hat_applikation(self):
+        import xml.etree.ElementTree as ET
+        root = ET.fromstring(self.st.build_xml([], self.meter))
+        self.assertEqual([a.findtext("name") for a in root.iter("application")], ["publish"])
+
+    def test_leser_von_irl4you(self):
+        import xml.etree.ElementTree as ET
+        self.xml(0, 0)
+        self.t[0] += 3.0
+        text = self.xml(90, 3_000_000)
+        # Kameraliste der Oberfläche
+        cs = object.__new__(self.server.CameraStore)
+        cs.app, cs.stat_url = "publish", "x"
+        import io
+        old = self.server.urllib.request.urlopen
+        self.server.urllib.request.urlopen = lambda *a, **k: io.BytesIO(text.encode())
+        try:
+            live = cs._live_read()
+        finally:
+            self.server.urllib.request.urlopen = old
+        self.assertEqual((live["handy"]["w"], live["handy"]["h"], live["handy"]["fps"]), (1920, 1080, 30.0))
+        self.assertAlmostEqual(live["handy"]["mbit"], 8.0, places=1)
+        # Sendekette und Kamera-Zweige
+        self.assertEqual(self.live.parse_rtmp_stats(text), {"handy": {"w": 1920, "h": 1080, "audio": True}})
+        # DJI- und HDMI-Dienst lesen mit regulären Ausdrücken
+        for name in ("dji_daemon", "hdmi_daemon"):
+            mod = irl(name)
+            old = mod.urllib.request.urlopen
+            mod.urllib.request.urlopen = lambda *a, **k: io.BytesIO(text.encode())
+            try:
+                self.assertTrue(mod.rtmp_publishing("handy"), name)
+                self.assertFalse(mod.rtmp_publishing("andere"), name)
+            finally:
+                mod.urllib.request.urlopen = old
+        mod = irl("dji_daemon")
+        old = mod.urllib.request.urlopen
+        mod.urllib.request.urlopen = lambda *a, **k: io.BytesIO(text.encode())
+        try:
+            self.assertEqual(mod.rtmp_video_kbps("handy"), 7872)
+        finally:
+            mod.urllib.request.urlopen = old
+        # Protokoll-Bündel
+        logs = load_script("pipbox-logs.py", "pipbox_logs_t")
+        self.assertIn("handy", logs.rtmp_inputs(text))
+        ET.fromstring(text)
+
+    def test_kein_sender_nur_zuschauer(self):
+        self.xml(0, 0, publishing=False)
+        self.t[0] += 3.0
+        text = self.xml(0, 0, publishing=False)
+        self.assertNotIn("<publishing/>", text)
+
+    def test_zaehler_zurueckgesetzt(self):
+        self.xml(900, 9_000_000)
+        self.t[0] += 3.0
+        text = self.xml(30, 100_000)             # Sender neu verbunden: Zähler fangen von vorn an
+        self.assertNotIn("frame_rate>-", text)
+        self.assertNotIn("<bw_in>-", text)
+
+    def test_umstellung_nur_mit_srs(self):
+        sh = open(os.path.join(INSTALL, "irl4you-setup.sh"), encoding="utf-8").read()
+        self.assertIn("[ -x /usr/bin/irl4you-srs ] && SRS_OK=1", sh)
+        i = sh.index("99-irl4you-rtmps.conf /etc/nginx/modules-enabled")
+        self.assertGreater(i, sh.index('if [ "$SRS_OK" = 1 ]; then'), "RTMPS-Konfiguration nur zusammen mit SRS (sonst zwei listen 1934)")
+
+    def test_konfiguration(self):
+        srs = open(os.path.join(INSTALL, "srs", "srs.conf"), encoding="utf-8").read()
+        for k in ("listen              1935;", "gop_cache       off;", "normal_timeout      15000;", "127.0.0.1:1985", "[app]/[stream].ts"):
+            self.assertIn(k, srs)
+        ng = open(os.path.join(INSTALL, "nginx", "99-irl4you-rtmps.conf"), encoding="utf-8").read()
+        self.assertIn("proxy_pass 127.0.0.1:1935", ng)
+        self.assertNotIn("rtmp {", ng)
+        unit = open(os.path.join(INSTALL, "irl4you-srs.service"), encoding="utf-8").read()
+        self.assertIn("-c /etc/irl4you/srs.conf", unit)
+        self.assertNotIn("libnginx-mod-rtmp", open(os.path.join(INSTALL, "irl4you-setup.sh"), encoding="utf-8").read().split("step pakete")[1].split("step ")[0])
 
 
 if __name__ == "__main__":

@@ -1,0 +1,19 @@
+[Unit]
+Description=IRL4YOU BOX Statistik des RTMP-Eingangs (Port 1936, Format wie früher)
+After=irl4you-srs.service
+Wants=irl4you-srs.service
+
+[Service]
+ExecStart=/usr/bin/python3 /opt/pipbox/pipbox-rtmpstat.py --listen 0.0.0.0:1936
+Restart=always
+RestartSec=2
+DynamicUser=yes
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+
+[Install]
+WantedBy=multi-user.target
