@@ -1,0 +1,8 @@
+{
+  "name": "irl4you",
+  "version": "@VERSION@",
+  "min_updater": 1,
+  "restart": ["pipbox.service"],
+  "health_units": ["pipbox.service"],
+  "reboot": false
+}

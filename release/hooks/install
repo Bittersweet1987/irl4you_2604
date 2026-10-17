@@ -1,0 +1,24 @@
+#!/bin/sh
+# Wird vom Update-Helfer als root ausgeführt, NACHDEM /opt/irl4you/current (und /opt/pipbox) auf diese Version zeigt.
+# IRL4YOU_ACTION: install | switch | rollback   (rollback: diese Version wird wieder aktiv, weil die neue nicht lief)
+# Die Programmdateien liegen schon an ihrem Platz. Hier werden nur Systemteile eingerichtet (Dienste, Regeln, Pakete).
+# Muss mehrfach hintereinander laufen dürfen, ohne Schaden (idempotent).
+set -eu
+cd "$IRL4YOU_RELEASE_DIR"
+
+# 1. Update-Helfer selbst (neuer Helfer kommt mit jedem Paket)
+install -D -m 755 updater/irl4you_update.py /usr/local/sbin/irl4you-update.new
+mv -f /usr/local/sbin/irl4you-update.new /usr/local/sbin/irl4you-update
+for u in updater/systemd/*; do
+    install -m 644 "$u" /etc/systemd/system/
+done
+[ -e /etc/irl4you/update.conf ] || install -D -m 644 updater/update.conf.example /etc/irl4you/update.conf
+
+# 2. Systemteile von IRL4YOU (Dienste, nginx, udev, eigene .deb-Pakete). Das Skript liefert IRL4YOU selbst mit.
+if [ -f install/system-install.sh ]; then
+    sh install/system-install.sh
+fi
+
+systemctl daemon-reload
+systemctl enable --quiet irl4you-update.path irl4you-update-auto.timer || true
+systemctl start irl4you-update.path irl4you-update-auto.timer || true

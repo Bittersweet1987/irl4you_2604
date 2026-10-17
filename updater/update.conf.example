@@ -1,0 +1,17 @@
+# /etc/irl4you/update.conf  (Besitzer root, chmod 644)
+# Nur diese Datei legt fest, woher die Box Updates holt. Die Oberfläche kann sie nicht ändern.
+# Die Box folgt den Commits des Zweigs (kein Release nötig): ein neuer Commit auf main ist das nächste Update.
+[update]
+repo = Bittersweet1987/irl4you_2604
+branch = main
+# true: nur Commits, deren Prüfungen (GitHub Actions) grün sind. Läuft eine Prüfung noch, wartet die Box.
+require_ci = true
+# Optional, nur bei privatem Repository: Datei mit einem GitHub-Schlüssel (fine-grained, nur "Contents: read"
+# und "Checks: read"), Besitzer root, chmod 600. Fehlt die Datei, fragt die Box ohne Schlüssel (öffentliches Repository).
+token_file = /etc/irl4you/update-token
+# true: der Timer installiert neue Stände selbst (nie während einer Sendung). false: nur melden.
+auto_install = false
+# Ablage der Versionen und Verweise
+root = /opt/irl4you
+extra_link = /opt/pipbox
+keep = 3

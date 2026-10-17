@@ -1,0 +1,10 @@
+[Unit]
+Description=IRL4YOU Update (Anfrage der Oberfläche)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/irl4you-update request
+TimeoutStartSec=1h
+Nice=5
