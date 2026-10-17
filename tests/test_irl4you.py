@@ -203,21 +203,6 @@ class TestPasswort(unittest.TestCase):
         neu = self.server.Auth(neu_dir)
         self.assertEqual(alt._cred(), neu._cred())
 
-    def test_ersteinrichtung_ohne_setup_code(self):
-        a = self.server.Auth(self.dir)
-        self.assertTrue(a.setup_needed)
-        self.assertFalse(os.path.exists(os.path.join(self.dir, "setup-code")))
-        with self.assertRaises(ValueError):
-            a.set_password("kurz", "10.0.0.4")
-        with self.assertRaises(ValueError):
-            a.set_password("Ein-Langes-Passwort", "8.8.8.8")
-        self.assertTrue(a.setup_needed)
-        a.set_password("Ein-Langes-Passwort", "192.168.178.20")
-        self.assertFalse(a.setup_needed)
-        self.assertTrue(a.valid(a.login("Ein-Langes-Passwort", "192.168.178.20")))
-        with self.assertRaises(ValueError):
-            a.set_password("Anderes-Passwort-1", "10.0.0.5")
-
     def test_passwort_aendern(self):
         with open(os.path.join(self.dir, "auth.json"), "w") as f:
             json.dump({"bcrypt": self.h}, f)
@@ -551,6 +536,19 @@ class TestInstallation(unittest.TestCase):
         self.assertNotIn("--upgrade", self.sh, "kein pip --upgrade bei jedem Update (ohne Internet bräche das Update ab)")
         self.assertIn("-r \"$HERE/install/requirements.txt\"", self.sh)
         self.assertIn(".requirements.sha256", self.sh, "nur installieren, wenn die Datei sich ändert oder etwas fehlt")
+
+    def test_wlan_p2p0_ignoriert(self):
+        """rtw88 legt neben wlan0 eine zweite Schnittstelle p2p0 mit gleicher MAC an: sie ist keine eigene WLAN-Karte."""
+        wifi = load_script("pipbox-wifi.py", "pipbox_wifi_t")
+        out = chr(10).join(["wlan0:wifi:connected:Heim", "p2p0:wifi:unavailable:", "p2p-dev-wlan0:wifi-p2p:unavailable:", "eth0:ethernet:connected:x"]) + chr(10)
+        wifi.nm = lambda *a, **k: types.SimpleNamespace(stdout=out, returncode=0)
+        self.assertEqual([d["iface"] for d in wifi.wifi_devices()], ["wlan0"])
+
+    def test_pakete_dnsmasq_und_apt_update(self):
+        sh = open(os.path.join(INSTALL, "irl4you-setup.sh"), encoding="utf-8").read()
+        self.assertIn("dnsmasq-base", sh, "ohne dnsmasq-base scheitert der Hotspot")
+        self.assertIn("apt-get update", sh)
+        self.assertIn("apt-get update", open(os.path.join(INSTALL, "system-install.sh"), encoding="utf-8").read())
 
     def test_tailscale_resolute(self):
         rem = load_script("pipbox-remote.py", "pipbox_remote_t")

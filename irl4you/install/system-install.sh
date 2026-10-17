@@ -12,6 +12,9 @@ export DEBIAN_FRONTEND=noninteractive
 #    Dieses Skript verändert im laufenden Betrieb nie Netzwerkkarten, Adressen oder Routen.
 if ip -4 route show default 2>/dev/null | grep -q .; then echo 1 > /run/irl4you-net-before; else echo 0 > /run/irl4you-net-before; fi
 
+# Im Image sind die Paketlisten gelöscht: ohne sie scheitert jede Paketinstallation unten. Ohne Internet nur eine Warnung (alles, was schon da ist, läuft weiter).
+ls /var/lib/apt/lists/*_Packages* >/dev/null 2>&1 || apt-get update || echo "WARNUNG: apt-get update ging nicht (Internet?)" >&2
+
 # 1. Werkzeug für den Boot-Hook (fdtput/fdtget), falls es im Grundsystem fehlt
 command -v fdtput >/dev/null 2>&1 || apt-get install -y --no-install-recommends device-tree-compiler || true
 

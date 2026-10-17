@@ -65,7 +65,7 @@ def wifi_devices():
     devs = []
     for line in r.stdout.splitlines():
         p = split_terse(line)
-        if len(p) >= 4 and p[1] == "wifi":
+        if len(p) >= 4 and p[1] == "wifi" and not p[0].startswith("p2p"):      # rtw88 legt neben wlan0 eine zweite Schnittstelle p2p0 mit gleicher MAC an
             devs.append({"iface": p[0], "state": p[2], "connection": p[3]})
     return devs
 
