@@ -1,0 +1,3 @@
+# HDMI-Eingang der Box als festes Geraet /dev/hdmirx (IRL4YOU hdmi_daemon und die Sende-Pipelines erwarten diesen Namen).
+# Der Treiber rk_hdmirx meldet das Video-Geraet unter dem Namen "stream_hdmirx" (Orange Pi 5 Plus und ROCK 5B Plus).
+SUBSYSTEM=="video4linux", ATTR{name}=="stream_hdmirx", SYMLINK+="hdmirx"
