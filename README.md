@@ -23,9 +23,18 @@ Die Box ruft diese Dienste von Dritten auf. Sie gehören ihren Betreibern; Nutzu
 - **Ubuntu-Paketquellen und PyPI**: Systempakete und Python-Bibliotheken bei Installation und Updates.
 - **Moblin, Streamer.bot** (nur Links/Anbindung): Moblin-App und DJI-Ablauf nach [Moblin](https://github.com/eerimoq/moblin); die Apps selbst sind nicht enthalten.
 
-## Versionen
+## Danksagung
 
-Schema `vX.Y.Z`: X gibt Marco vor (0 = Alpha), Y steigt mit einem Release, Z zählt die Commits. Änderungen stehen in [CHANGELOG.md](CHANGELOG.md).
+Danke an die Entwickler, deren Arbeit die Box nutzt oder auf der sie aufbaut:
+
+- **[Moblin](https://github.com/eerimoq/moblin)** von Erik Moqvist: Vorlage für den Ablauf der DJI-Kopplung. Dazu [dji-remote](https://github.com/dimadesu/dji-remote) von dimadesu.
+- **[SRS](https://github.com/ossrs/srs)**: RTMP/SRT-Eingang.
+- **Rockchip** ([MPP](https://github.com/rockchip-linux/mpp), RGA, gstreamer-rockchip über [JeffyCN](https://github.com/JeffyCN/mirrors)): Hardware-Kodierung und Bildskalierung.
+- **[Armbian](https://github.com/armbian/linux-rockchip)**: Rockchip-Kernel. **[lwfinger](https://github.com/lwfinger/rtw88)** und **[shenmintao](https://github.com/shenmintao/aic8800d80)**: WLAN-Treiber.
+- **GStreamer, Ubuntu, NetworkManager, nginx, Python** und alle weiteren Open-Source-Projekte unter der Box.
+- **Twitch, BetterTTV, FrankerFaceZ, 7TV, Tailscale**: Dienste, die die Box nutzt.
+
+Alle Lizenzen der Fremdprojekte stehen in [NOTICE.md](NOTICE.md).
 
 ## Hinweis zu KI
 
@@ -33,4 +42,4 @@ Dieses Projekt wurde mit KI erstellt und wird von KI unterstützt (Claude von An
 
 ## Lizenz
 
-Der eigene Code steht unter [CC BY-ND 4.0](LICENSE): Nutzung auch kommerziell erlaubt, Änderungen nur nach Rückfrage bei Bittersweet1987, Ausnahme IRL4YOU ([ZUSATZERLAUBNIS.md](ZUSATZERLAUBNIS.md)). Drittprojekte behalten ihre Lizenzen, siehe [NOTICE.md](NOTICE.md).
+Der eigene Code steht unter [CC BY-ND 4.0](LICENSE): Nutzung auch kommerziell erlaubt, Änderungen nur nach Rückfrage bei Bittersweet1987 oder Akino01 (IRL4YOU), siehe [ZUSATZERLAUBNIS.md](ZUSATZERLAUBNIS.md). Drittprojekte behalten ihre Lizenzen, siehe [NOTICE.md](NOTICE.md).
