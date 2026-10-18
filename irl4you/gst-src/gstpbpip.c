@@ -2444,4 +2444,4 @@ static gboolean plugin_init(GstPlugin *plugin) {
 #endif
 GST_PLUGIN_DEFINE(GST_VERSION_MAJOR, GST_VERSION_MINOR, pbpip,
                   "IRL4YOU Bild-in-Bild: schreibt das kleine Bild in das Hauptbild",
-                  plugin_init, "0.1", "MIT/X11", "irl4you-pip", "https://github.com/IRL4YOU/irl4you-pip")
+                  plugin_init, "0.1", "MIT/X11", "irl4you-pip", "https://github.com/Bittersweet1987/irl4you_2604")

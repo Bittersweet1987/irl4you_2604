@@ -12,7 +12,7 @@
     win = 1800,
     nowAt = 0;
   const kind = () => document.querySelector('input[name="rp_kind"]:checked').value;
-  const NEW = "https://github.com/IRL4YOU/irl4you-pip/issues/new",
+  const NEW = "https://github.com/Bittersweet1987/irl4you_2604/issues/new",
     MAXURL = 7000,
     ALPH = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
   const newId = () => {
@@ -68,7 +68,7 @@
       t.translate = false;
       r.appendChild(t);
       const a = document.createElement("a");
-      a.href = (issues || "https://github.com/IRL4YOU/irl4you-pip/issues") + "?q=" + encodeURIComponent("is:issue " + c.id);
+      a.href = (issues || "https://github.com/Bittersweet1987/irl4you_2604/issues") + "?q=" + encodeURIComponent("is:issue " + c.id);
       a.target = "_blank";
       a.rel = "noopener noreferrer";
       a.textContent = "Auf GitHub suchen";
