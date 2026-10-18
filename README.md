@@ -27,6 +27,10 @@ Die Box ruft diese Dienste von Dritten auf. Sie gehören ihren Betreibern; Nutzu
 
 Schema `vX.Y.Z`: X gibt Marco vor (0 = Alpha), Y steigt mit einem Release, Z zählt die Commits. Änderungen stehen in [CHANGELOG.md](CHANGELOG.md).
 
+## Hinweis zu KI
+
+Dieses Projekt wurde mit KI erstellt und wird von KI unterstützt (Claude von Anthropic, im Auftrag und unter Aufsicht von Bittersweet1987). Code, Texte und Übersetzungen können davon stammen; sie sind nicht in jedem Fall von Menschen Zeile für Zeile geprüft. Bitte vor dem Einsatz im Livebetrieb selbst testen.
+
 ## Lizenz
 
 Der eigene Code steht unter [CC BY-ND 4.0](LICENSE): Nutzung auch kommerziell erlaubt, Änderungen nur nach Rückfrage bei Bittersweet1987, Ausnahme IRL4YOU ([ZUSATZERLAUBNIS.md](ZUSATZERLAUBNIS.md)). Drittprojekte behalten ihre Lizenzen, siehe [NOTICE.md](NOTICE.md).
