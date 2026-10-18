@@ -2,7 +2,7 @@
 
 Software für die IRL4YOU Box: ein kleiner Rechner (Orange Pi 5 Plus, Rock 5B+ ungetestet) für Livestreams aus dem Alltag. Die Box nimmt Kameras, HDMI und Handys auf, mischt sie (Bild-in-Bild), kodiert per Hardware und sendet gebündelt über mehrere Leitungen (Mobilfunk, WLAN, LAN) zu Twitch & Co.
 
-Entwickelt von [Bittersweet1987](https://discord.com/users/232451293040476160) und [Akino01 (IRL4YOU)](https://discord.com/users/523858990510243861).
+Entwickelt von [Bittersweet1987](https://discord.com/users/232451293040476160) und [Akinos01 (IRL4YOU)](https://discord.com/users/523858990510243861).
 
 Läuft auf Ubuntu 26.04 mit Rockchip-Kernel 6.1.
 
@@ -44,6 +44,6 @@ Dieses Projekt wurde mit KI erstellt und wird von KI unterstützt. Code, Texte u
 
 ## Lizenz
 
-Der eigene Code steht unter [CC BY-ND 4.0](LICENSE): Nutzung auch kommerziell erlaubt, Änderungen nur nach Rückfrage bei Bittersweet1987 oder Akino01 (IRL4YOU), siehe [ZUSATZERLAUBNIS.md](ZUSATZERLAUBNIS.md). Drittprojekte behalten ihre Lizenzen, siehe [NOTICE.md](NOTICE.md).
+Der eigene Code steht unter [CC BY-ND 4.0](LICENSE): Nutzung auch kommerziell erlaubt, Änderungen nur nach Rückfrage bei Bittersweet1987 oder Akinos01 (IRL4YOU), siehe [ZUSATZERLAUBNIS.md](ZUSATZERLAUBNIS.md). Drittprojekte behalten ihre Lizenzen, siehe [NOTICE.md](NOTICE.md).
 
-Anfragen zu Änderungen per Discord: [Bittersweet1987](https://discord.com/users/232451293040476160) oder [Akino01 (IRL4YOU)](https://discord.com/users/523858990510243861).
+Anfragen zu Änderungen per Discord: [Bittersweet1987](https://discord.com/users/232451293040476160) oder [Akinos01 (IRL4YOU)](https://discord.com/users/523858990510243861).
