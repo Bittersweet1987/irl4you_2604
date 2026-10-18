@@ -66,5 +66,13 @@ fi
 # 8. Automatische Sicherheitsupdates von Ubuntu (ohne Neustart, niedrige Prioritaet)
 sh "$HERE/auto-security-updates.sh" || true
 
+# 9. Takt der grossen Kerne deckeln (Firmware lehnt die pvtpll-Spannungsstufe ab; ab 1608 MHz harter Reset)
+install -D -m 755 "$HERE/cpucap/irl4you-cpucap.sh" /usr/libexec/irl4you/irl4you-cpucap.sh
+if ! cmp -s "$HERE/cpucap/irl4you-cpucap.service" /etc/systemd/system/irl4you-cpucap.service; then
+    install -m 644 "$HERE/cpucap/irl4you-cpucap.service" /etc/systemd/system/irl4you-cpucap.service
+    systemctl daemon-reload; systemctl enable irl4you-cpucap.service >/dev/null 2>&1 || true
+fi
+/usr/libexec/irl4you/irl4you-cpucap.sh || true
+
 [ "$changed" = 1 ] && echo "system-base-fixes: Änderungen angewendet (Neustart empfohlen)" || echo "system-base-fixes: nichts zu tun"
 exit 0

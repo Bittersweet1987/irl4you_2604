@@ -1,0 +1,11 @@
+[Unit]
+Description=IRL4YOU BOX Takt der grossen CPU-Kerne begrenzen (Firmware-Problem pvtpll)
+After=sysinit.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/irl4you/irl4you-cpucap.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
