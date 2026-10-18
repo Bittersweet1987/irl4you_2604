@@ -235,6 +235,20 @@ def hold_delays(delays, buffer, big_key=None, big_lead=None, uniform=False, shif
     return {k: max(int(v), floor_big if k == big_key else floor) for k, v in delays.items()}
 
 
+def venc_chain(q):
+    """Kodier-Teil der Pipeline. Standard: Hardware-Encoder (H.265). Steht in /etc/irl4you/encoder das Wort "x264", läuft stattdessen
+    der Software-Encoder (H.264), zum Eingrenzen von Abstürzen des Hardware-Encoders."""
+    try:
+        sw = open("/etc/irl4you/encoder").read().strip().lower() == "x264"
+    except OSError:
+        sw = False
+    if sw:
+        return ("x264enc name=venc tune=zerolatency speed-preset=ultrafast key-int-max=60 bitrate=12000 threads=4 !\n"
+                f"h264parse config-interval=-1 ! {q} ! mux")
+    return ("mpph265enc zero-copy-pkt=0 qp-min=1 qp-min-i=1 qp-max=51 gop=60 name=venc !\n"
+            f"h265parse config-interval=-1 ! {q} ! mux")
+
+
 def build(c, base=RTMP_BASE, frame=None):
     """Pipeline-Datei für irl4you-encoder: [main] mischt und kodiert, jede Kamera läuft in einem eigenen Abschnitt [cam N]."""
     global FRAME_BUILT
@@ -253,8 +267,7 @@ def build(c, base=RTMP_BASE, frame=None):
             f"video/x-raw,format=NV12,width={CANVAS_W},height={CANVAS_H},framerate={FPS}/1,colorimetry=bt709 !\n"
             + ("pbround name=rnd !\n" if frame else "")
             + "queue max-size-time=500000000 max-size-buffers=4 leaky=downstream !\n"
-            "mpph265enc zero-copy-pkt=0 qp-min=1 qp-min-i=1 qp-max=51 gop=60 name=venc !\n"
-            f"h265parse config-interval=-1 ! {q} ! mux.",
+            + venc_chain(q) + ".",
             f"input-selector name=audiosel ! volume name=avol ! opusenc bitrate=128000 ! opusparse ! {q} ! mux.",
             f"audiotestsrc is-live=true wave=silence ! capsfilter caps=\"{AUDIO_CAPS}\" ! queue ! audiosel.sink_0"]
     n = SLOTS
