@@ -2,6 +2,8 @@
 
 Software für die IRL4YOU Box: ein kleiner Rechner (Orange Pi 5 Plus, Rock 5B+ ungetestet) für Livestreams aus dem Alltag. Die Box nimmt Kameras, HDMI und Handys auf, mischt sie (Bild-in-Bild), kodiert per Hardware und sendet gebündelt über mehrere Leitungen (Mobilfunk, WLAN, LAN) zu Twitch & Co.
 
+Entwickelt von [Bittersweet1987](https://github.com/Bittersweet1987) und Akino01 (IRL4YOU).
+
 Läuft auf Ubuntu 26.04 mit Rockchip-Kernel 6.1.
 
 ## Wichtigste Teile
