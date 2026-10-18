@@ -937,7 +937,7 @@ class TestRtmpEingang(unittest.TestCase):
 
     def test_konfiguration(self):
         srs = open(os.path.join(INSTALL, "srs", "srs.conf"), encoding="utf-8").read()
-        for k in ("listen              1935;", "gop_cache       off;", "normal_timeout      15000;", "127.0.0.1:1985", "[app]/[stream].ts"):
+        for k in ("listen              1935;", "gop_cache       off;", "normal_timeout      15000;", "127.0.0.1:1985", "[app]/[stream].ts", "try_annexb_first    off;"):
             self.assertIn(k, srs)
         ng = open(os.path.join(INSTALL, "nginx", "99-irl4you-rtmps.conf"), encoding="utf-8").read()
         self.assertIn("proxy_pass 127.0.0.1:1935", ng)
