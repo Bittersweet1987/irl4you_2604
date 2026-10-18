@@ -1,8 +1,13 @@
 #!/bin/sh
 # Deckelt den Takt der großen Kerne (RK3588), solange die Firmware (BL31) die pvtpll-Spannungsstufe des Kernels
-# ablehnt: Ab 1608 MHz gibt es sonst einen harten Reset (Orange Pi 5 Plus, BL31 v1.45, Kernel 6.1.172).
+# ablehnt (BL31 v1.45): Ab 1608 MHz gibt es sonst einen harten Reset (Orange Pi 5 Plus, BL31 v1.45, Kernel 6.1.172).
 # Anderer Wert in /etc/irl4you/cpucap.conf: BIG_MAX_KHZ=<kHz>; 0 = kein Deckel.
 BIG_MAX_KHZ=1416000
+# Mit der neuen Firmware (BL31 v1.47, per irl4you-bootloader apply) lief der Takt unter Volllast bis 2208 MHz stabil (5 min, 67 °C);
+# bei 2304/2256 MHz gab es einen Reset. Ohne die neue Firmware gilt der niedrige Deckel.
+if [ -x /usr/local/sbin/irl4you-bootloader ] && /usr/local/sbin/irl4you-bootloader status 2>/dev/null | grep -q 'bl31-v1.47'; then
+    BIG_MAX_KHZ=2208000
+fi
 [ -f /etc/irl4you/cpucap.conf ] && . /etc/irl4you/cpucap.conf
 [ "$BIG_MAX_KHZ" = 0 ] && exit 0
 for p in /sys/devices/system/cpu/cpufreq/policy*; do
