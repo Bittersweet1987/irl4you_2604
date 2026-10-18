@@ -5,7 +5,7 @@
  * sent on to the SRTLA receiver over one of the uplinks; answers coming back on any
  * uplink go to the encoder. Wire format: see ../PROTOKOLL.md.
  *
- * Written from scratch for IRL4YOU (MIT licence).
+ * Written from scratch for IRL4YOU (licence: see LICENSE).
  */
 #define _GNU_SOURCE
 #include <arpa/inet.h>

@@ -1,15 +1,15 @@
 # Drittprojekte und Lizenzen
 
-IRL4YOU Box besteht aus eigenem Code (MIT-Lizenz, siehe `LICENSE`) und aus Programmen und Treibern anderer Projekte, die mit der Box ausgeliefert oder bei der Installation geladen werden. Diese Seite nennt, was wirklich verwendet wird. Keine Rechtsberatung.
+IRL4YOU Box besteht aus eigenem Code (CC BY-ND 4.0, siehe `LICENSE` und `ZUSATZERLAUBNIS.md`) und aus Programmen und Treibern anderer Projekte, die mit der Box ausgeliefert oder bei der Installation geladen werden. Diese Seite nennt, was wirklich verwendet wird. Keine Rechtsberatung.
 
 ## Quelltext in diesem Repository
 
 | Teil | Herkunft | Lizenz |
 |---|---|---|
-| Oberfläche, Dienste, Updater, Tests (`irl4you/`, `updater/`, `tests/`) | eigene Entwicklung | MIT |
-| Encoder `irl4you-encoder`, SRTLA-Sender `irl4you-srtla` | eigene Entwicklung (Clean-Room: SRTLA nur nach eigener Protokollbeschreibung) | MIT |
-| Bild-in-Bild-Baustein `irl4you/gst-src/` | eigene Entwicklung, lädt zur Laufzeit GStreamer (LGPL) | MIT |
-| DJI-Kopplung `irl4you/dji_daemon.py`, `dji.py` | Ablauf und Nachrichtenformat nach Moblin (siehe unten), DJI-Dienst von Bittersweet1987 | MIT |
+| Oberfläche, Dienste, Updater, Tests (`irl4you/`, `updater/`, `tests/`) | eigene Entwicklung | CC BY-ND 4.0 |
+| Encoder `irl4you-encoder`, SRTLA-Sender `irl4you-srtla` | eigene Entwicklung (Clean-Room: SRTLA nur nach eigener Protokollbeschreibung) | CC BY-ND 4.0 |
+| Bild-in-Bild-Baustein `irl4you/gst-src/` | eigene Entwicklung, lädt zur Laufzeit GStreamer (LGPL) | CC BY-ND 4.0 |
+| DJI-Kopplung `irl4you/dji_daemon.py`, `dji.py` | Ablauf und Nachrichtenformat nach Moblin (siehe unten), DJI-Dienst von Bittersweet1987 | CC BY-ND 4.0, Moblin-Ablauf unter MIT (Hinweis unten) |
 
 Aus BELABOX (belaUI, belacoder, srtla) wird **kein Quelltext, keine Datei und kein Programm** mehr verwendet. IRL4YOU Box ist kein Produkt von BELABOX, Radxa, Orange Pi, Rockchip oder DJI. Die Prozessnamen `belacoder` und `belaUI` kommen im Code nur noch vor, um die Reste einer alten Installation zu erkennen und beim Umzug das Anmeldepasswort (Hash) und den Benutzernamen zu übernehmen.
 
@@ -47,6 +47,7 @@ Der Chat lädt Emotes zur Laufzeit von Twitch, BetterTTV, FrankerFaceZ und 7TV. 
 
 ## Welche Lizenz gilt wo
 
-- **MIT**: der eigene Code dieses Repositorys.
+- **CC BY-ND 4.0**: der eigene Code dieses Repositorys (Nutzung auch kommerziell erlaubt, Änderungen nur nach Rückfrage bei Bittersweet1987, Ausnahme IRL4YOU; siehe `ZUSATZERLAUBNIS.md`). Frühere Versionen unter MIT bleiben MIT. Der Moblin-Hinweis oben bleibt bestehen.
+- **MIT** (Fremdcode): Moblin-Ablauf, SRS, bleak, dbus-fast.
 - **GPL-2.0**: Kernel und die beiden WLAN-Treiber. Die Pakete enthalten die gebauten Module; der Quelltext ist über die oben genannten Quellen und die Bauskripte in `build/` erreichbar.
 - **MIT, Apache-2.0, LGPL**: SRS, MPP und librga (MIT bzw. Apache-2.0), gstreamer-rockchip (LGPL) (siehe Tabelle).

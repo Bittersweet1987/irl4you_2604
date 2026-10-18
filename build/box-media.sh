@@ -13,7 +13,7 @@ log() { echo "[$(date +%H:%M:%S)] $*"; }
 
 # mkdeb NAME VERSION STAGING "Depends" "Beschreibung" ["Lizenz[|Quelle]"]; die Lizenz kommt nach /usr/share/doc/NAME/copyright (Texte: NOTICE.md im Repo)
 mkdeb() {
-    local name=$1 ver=$2 st=$3 deps=$4 desc=$5 lic=${6:-MIT|IRL4YOU}
+    local name=$1 ver=$2 st=$3 deps=$4 desc=$5 lic=${6:-CC-BY-ND-4.0|IRL4YOU}
     mkdir -p "$st/DEBIAN" "$st/usr/share/doc/$name"
     printf 'Paket: %s
 Lizenz: %s
