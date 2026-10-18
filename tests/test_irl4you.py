@@ -517,7 +517,7 @@ class TestInstallation(unittest.TestCase):
                 self.assertEqual(r.returncode, 0, rel + ": " + r.stderr)
 
     def test_keine_belabox_texte(self):
-        """Oberfläche, Meldungen und Übersetzungen sprechen nur von der IRL4YOU Box (Ausnahme: Danksagung im Fuß der Seite)."""
+        """Oberfläche, Meldungen und Übersetzungen sprechen nur von der IRL4YOU Box."""
         for base, _, files in os.walk(IRL):
             if "debs" in base.split(os.sep) or "__pycache__" in base:
                 continue
@@ -525,7 +525,6 @@ class TestInstallation(unittest.TestCase):
                 if not f.endswith((".py", ".js", ".html", ".json", ".css")):
                     continue
                 txt = open(os.path.join(base, f), encoding="utf-8").read()
-                txt = re.sub(r'"?Drittprojekte \(Moblin, BELABOX\)"?(: "[^"]*")?', "", txt)
                 self.assertNotIn("belabox", txt.lower(), os.path.join(base, f))
 
     def test_version_als_verweis(self):
