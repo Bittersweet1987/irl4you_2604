@@ -16,25 +16,25 @@
 #include <math.h>
 #include <stddef.h>
 
-#define TICK_UP_MS          1000    /* frühestens so oft erhöhen */
+#define TICK_UP_MS           250    /* frühestens so oft erhöhen */
 #define TICK_DOWN_MS         500    /* frühestens so oft leicht senken */
 #define HOLD_AFTER_JAM_MS   3000    /* nach Stau so lange nicht erhöhen */
 #define BASE_WINDOW_MS     30000    /* Minimum der Laufzeit wird nach dieser Zeit neu bestimmt */
 
-#define CALM_TOL_MS           15.0  /* ruhig: Laufzeit höchstens so viel über der Grundlinie … */
+#define CALM_TOL_MS           60.0  /* ruhig: Laufzeit höchstens so viel über der Grundlinie … */
 #define CALM_DEV_FACTOR        2.0  /* … oder so viele mittlere Abweichungen */
-#define RISE_TOL_MS           40.0  /* Anstieg: mehr als so viel über der Grundlinie … */
+#define RISE_TOL_MS          150.0  /* Anstieg: mehr als so viel über der Grundlinie … */
 #define RISE_DEV_FACTOR        3.0  /* … und mehr als so viele mittlere Abweichungen */
 #define JAM_TOL_MS            80.0  /* Stau: mehr als so viel über der Grundlinie … */
 #define JAM_LAT_FRACTION       0.2  /* … oder mehr als dieser Anteil der SRT-Latenz */
 #define JAM_BUF_FRACTION       0.4  /* Stau auch, wenn der Sendepuffer mehr als diesen Anteil der Latenz hält */
 #define CALM_BUF_MS          100.0  /* ruhig nur mit wenig im Puffer */
 #define BUF_GROW_MS         2000    /* Puffer wächst so lange stetig … */
-#define BUF_GROW_MIN_MS       50.0  /* … und dabei um mindestens so viel: wie Anstieg behandeln */
+#define BUF_GROW_MIN_MS      300.0  /* … und dabei um mindestens so viel: wie Anstieg behandeln */
 #define BUF_GROW_PAUSE_MS   1000    /* wächst er so lange nicht weiter, gilt das Wachsen als beendet */
 
-#define UP_STEP_KBPS            50
-#define UP_STEP_FRACTION      0.02
+#define UP_STEP_KBPS           100
+#define UP_STEP_FRACTION      0.04
 #define DOWN_STEP_FRACTION    0.05
 #define JAM_FACTOR            0.70
 

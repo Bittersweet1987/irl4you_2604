@@ -54,7 +54,7 @@ Messgrößen je 250 ms aus libsrt (`srt_bstats`): Laufzeit (RTT), Bytes im Sende
 - Stau wird am Einzelwert erkannt, Anstieg und Ruhe am geglätteten Mittel (so lösen normale Schwankungen kein Senken aus).
 - **Stau** (sofort bremsen auf 70 %): Sendepuffer > 40 % der Latenz-Laufzeit oder RTT > `rtt_base` + max(80 ms, Latenz/5).
 - **Anstieg** (sanft um 5 % senken, höchstens alle 500 ms): RTT > `rtt_base` + max(40 ms, 3·`rtt_dev`) oder Puffer wächst über 2 s.
-- **Ruhig** (erhöhen um max(50 kbit/s, 2 %) je Sekunde): RTT innerhalb `rtt_base` + max(15 ms, 2·`rtt_dev`) und Puffer klein.
+- **Ruhig** (erhöhen um max(100 kbit/s, 4 %) alle 250 ms, also von 300 auf 6000 kbit/s in etwa 15 s): RTT innerhalb `rtt_base` + max(15 ms, 2·`rtt_dev`) und Puffer klein.
 - Grenzen aus `--bitrate-file`; nach Stau 3 s Sperre fürs Erhöhen.
 - Alle Schwellen als Konstanten oben in `ratectl.c`, damit sie mit echten Messungen nachgestellt werden können.
 

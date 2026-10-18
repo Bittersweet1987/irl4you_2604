@@ -58,6 +58,9 @@ typedef struct {
     guint retry_src;
     GstClockTime v_last_in_pts, v_last_out_pts;
     gint64 lag_ms;
+    gboolean base_ok;       /* base_ns gültig */
+    gint64 base_ns;         /* kleinste beobachtete Differenz Haupt-Takt minus Kamera-Takt: gleichmäßige Bildabstände */
+    double jit_ms;          /* geglättete Verspätung der Bilder gegenüber dem gleichmäßigen Takt */
 } cam_t;
 
 typedef struct {
@@ -212,6 +215,9 @@ static GstClockTime main_running_time(void)
     return t;
 }
 
+#define BASE_RESYNC_NS (1000LL * GST_MSECOND) /* Sprung größer als das: neue Ausrichtung (Kamera neu gestartet) */
+#define BASE_CREEP 0.002                    /* Anteil der Verspätung, den der Takt je Bild nachgezogen wird (Taktdrift) */
+
 static GstFlowReturn forward(GstAppSink *sink, cam_t *c, GstAppSrc *dst, gboolean video)
 {
     GstSample *smp = gst_app_sink_pull_sample(sink);
@@ -236,6 +242,23 @@ static GstFlowReturn forward(GstAppSink *sink, cam_t *c, GstAppSrc *dst, gboolea
     GstBuffer *in = gst_sample_get_buffer(smp);
     GstBuffer *b = gst_buffer_copy(in); /* teilt den Speicher (DMA-Puffer), nur die Metadaten sind neu */
     GstClockTime pts = rt + (GstClockTime)(A.align_ms + c->offset_ms) * GST_MSECOND;
+    GstClockTime in_pts = GST_BUFFER_PTS(in);
+    if (GST_CLOCK_TIME_IS_VALID(in_pts)) {
+        /* Zeitstempel der Kamera behalten statt jedes Bild nach seiner Ankunft zu stempeln: Ankunft und Dekoder liefern in Schüben,
+         * das gäbe ungleiche Abstände, der Mischer müsste Bilder doppeln oder auslassen (Ruckeln). Wir folgen dem Kameratakt
+         * (Bildabstände bleiben gleich) und verschieben ihn nur, wenn Bilder früher ankommen oder der Takt langsam wegläuft. */
+        gint64 delta = (gint64)rt - (gint64)in_pts;
+        if (!c->base_ok || (video && (delta < c->base_ns || delta - c->base_ns > BASE_RESYNC_NS))) {
+            c->base_ns = delta;
+            c->base_ok = TRUE;
+        } else if (video) {
+            c->base_ns += (gint64)((delta - c->base_ns) * BASE_CREEP);
+        }
+        if (video)
+            c->jit_ms += ((double)(delta - c->base_ns) / GST_MSECOND - c->jit_ms) * 0.05;
+        gint64 sm = (gint64)in_pts + c->base_ns + (gint64)(A.align_ms + c->offset_ms) * (gint64)GST_MSECOND;
+        pts = sm > 0 ? (GstClockTime)sm : 0;
+    }
     GST_BUFFER_PTS(b) = pts;
     GST_BUFFER_DTS(b) = GST_CLOCK_TIME_NONE;
     gint64 t = now_us();
@@ -356,6 +379,8 @@ static gboolean cam_start(cam_t *c)
     c->started_us = c->last_v_us = c->last_a_us = now_us();
     c->v_last_in_pts = c->v_last_out_pts = GST_CLOCK_TIME_NONE;
     c->lag_ms = 0;
+    c->base_ok = FALSE;
+    c->jit_ms = 0;
     c->frames = 0;
     if (gst_element_set_state(p, GST_STATE_PLAYING) == GST_STATE_CHANGE_FAILURE) {
         if (c->fails % 20 == 0) /* nicht alle 3 s dieselbe Meldung */
@@ -648,6 +673,7 @@ static void write_stats(void)
         JBOOL(b, "live", st == 3);
         JDBL(b, "fps", st == 3 ? c->fps : 0.0);
         JINT(b, "lag_ms", c->lag_ms);
+        JDBL(b, "jit_ms", c->jit_ms);
         JINT(b, "offset_ms", c->offset_ms);
         JINT(b, "restarts", c->restarts);
         JBOOL(b, "audio", st == 3 && t - c->last_a_us < (gint64)CAM_SILENT_MS * 1000);
@@ -977,6 +1003,8 @@ int main(int argc, char **argv)
     srt_startup();
     ratectl_init(&A.rc, 500, 6000, start_kbps, A.latency_ms);
     read_bitrate_file(TRUE);
+    if (start_kbps <= 0)
+        A.rc.target_kbps = A.rc.max_kbps; /* ohne Vorgabe sofort mit der Obergrenze starten (kein Anlauf) */
     apply_bitrate(A.rc.target_kbps);
 
     A.loop = g_main_loop_new(NULL, FALSE);

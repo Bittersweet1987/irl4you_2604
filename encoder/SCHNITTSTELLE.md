@@ -38,7 +38,7 @@ irl4you-encoder --pipeline DATEI --srt HOST:PORT [Optionen]
 | `--latency MS` | SRT-Latenz | 2000 |
 | `--streamid TEXT` | SRT-Stream-ID | keine |
 | `--bitrate-file DATEI` | Grenzen für die Regelung, siehe unten | 500 bis 6000 kbit/s |
-| `--start-kbps N` | Bitrate beim Start (wird in die Grenzen gelegt) | Untergrenze |
+| `--start-kbps N` | Bitrate beim Start (wird in die Grenzen gelegt) | Obergrenze (sofort volle Rate) |
 | `--control FIFO` | Steuerbefehle (wird angelegt, wenn nicht vorhanden) | keiner |
 | `--stats DATEI` | Statistik als JSON, jede Sekunde atomar ersetzt | keine |
 | `--align MS` | Vorlauf in ms, um den die Bilder aller Kameras hinter der Uhr der Box eingeplant werden (Ausrichtung) | 0 |

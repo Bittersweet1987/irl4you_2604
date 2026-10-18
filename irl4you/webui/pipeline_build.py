@@ -206,7 +206,7 @@ class PipelineBuild:
         else:
             v = (f"demux.video !\n{q} !\nh264parse ! mppvideodec !\n"
                  "videorate ! video/x-raw,framerate=30/1,format=NV12 ! queue !\n")
-        v += ("mpph265enc zero-copy-pkt=0 qp-max=51 gop=60 name=venc !\n"
+        v += ("mpph265enc zero-copy-pkt=0 qp-min=1 qp-min-i=1 qp-max=51 gop=60 name=venc !\n"
               f"h265parse config-interval=-1 ! {q} ! mux.\n")
         out.append(v)
         vol = "volume name=avol ! " if pip and plugin_view() else ""
@@ -273,7 +273,7 @@ class PipelineBuild:
                    + (f" slot2=1 corner2={c['corner2']}{xy(c, 'x2', 'y2', c['corner2'])}{sty(1, 2)}" if pip2 else "")
                    + (f" slot3=2 corner3={c['corner3']}{xy(c, 'x3', 'y3', c['corner3'])}{sty(2, 3)}" if pip3 else "") + " !\n"
                    "queue max-size-time=500000000 max-size-buffers=4 leaky=downstream !\n"
-                   "mpph265enc zero-copy-pkt=0 qp-max=51 gop=60 name=venc !\n"
+                   "mpph265enc zero-copy-pkt=0 qp-min=1 qp-min-i=1 qp-max=51 gop=60 name=venc !\n"
                    f"h265parse config-interval=-1 ! {q} ! mux.\n")
         vol = "volume name=avol ! " if plugin_view() else ""
         opus = f"audioconvert ! audioresample quality=10 sinc-filter-mode=1 ! {vol}opusenc bitrate=128000 ! opusparse"

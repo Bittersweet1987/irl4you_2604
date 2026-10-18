@@ -63,20 +63,20 @@ int main(void)
     /* 7. Stetig wachsender Puffer bei unauffälliger Laufzeit: sanft senken */
     ratectl_init(&rc, 500, 8000, 6000, 2000);
     now = 1000;
-    run(&rc, &now, 5, 40, 1, 10);
+    int k0 = run(&rc, &now, 5, 40, 1, 10);
     for (int i = 0; i < 20; i++) {
-        rc_sample_t s = {.rtt_ms = 42, .sndbuf_ms = 10 + i * 15, .now_ms = now};
+        rc_sample_t s = {.rtt_ms = 42, .sndbuf_ms = 10 + i * 40, .now_ms = now};
         k = ratectl_update(&rc, &s);
         now += 250;
     }
-    CHECK(k < 6000, "wachsender Puffer: keine Senkung (%d)", k);
+    CHECK(k < k0, "wachsender Puffer: keine Senkung (%d, vorher %d)", k, k0);
 
-    /* 8. Laufzeit steigt dauerhaft um 60 ms (Stau baut sich langsam auf, Puffer noch klein): senken, aber nicht als Stau */
+    /* 8. Laufzeit steigt dauerhaft um 200 ms (Stau baut sich langsam auf, Puffer noch klein): senken, aber nicht als Stau */
     ratectl_init(&rc, 500, 8000, 6000, 2000);
     now = 1000;
-    run(&rc, &now, 10, 40, 2, 20);
-    k = run(&rc, &now, 5, 100, 2, 60);
-    CHECK(k < 6000, "Anstieg: keine Senkung (%d)", k);
+    int k8 = run(&rc, &now, 10, 40, 2, 20);
+    k = run(&rc, &now, 15, 240, 2, 60);
+    CHECK(k < k8, "Anstieg: keine Senkung (%d, vorher %d)", k, k8);
     CHECK(rc.state == RC_RISING, "Anstieg: Zustand %s", ratectl_state_name(rc.state));
 
     printf("%s (%d Fehler)\n", fails ? "FEHLGESCHLAGEN" : "OK", fails);

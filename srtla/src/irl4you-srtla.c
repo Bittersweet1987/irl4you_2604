@@ -91,6 +91,8 @@ typedef struct {
     double recent;            /* decaying packet count for the share */
     uint64_t tx_pkts, tx_bytes, lost, reordered, last_bytes;
     double kbps;
+    double loss;              /* smoothed share of packets reported lost (0..1) */
+    uint64_t last_lost, last_pkts;
     int last_errno;
 } link_t;
 
@@ -234,6 +236,7 @@ static void write_stats(FILE *f)
         fprintf(f, ",\"window\":%d,\"inflight\":%d,\"kbps\":%.0f,\"share\":%.0f,\"packets\":%llu,\"lost\":%llu,\"reordered\":%llu",
                 (int)l->win, l->inflight, l->kbps, sum > 0 ? 100.0 * l->recent / sum : 0.0,
                 (unsigned long long)l->tx_pkts, (unsigned long long)l->lost, (unsigned long long)l->reordered);
+        fprintf(f, ",\"loss\":%.3f", l->loss);
         if (l->last_errno)
             fprintf(f, ",\"error\":\"%s\"", strerror(l->last_errno));
         fprintf(f, "}");
@@ -508,6 +511,13 @@ static void window_cut(link_t *l, int64_t now)
 
 /* ---- choosing a link ---- */
 
+/* A lossy link still carries traffic, but gets less of it: every lost packet costs a retransmission and delay. */
+static double quality(const link_t *l)
+{
+    double q = 1.0 - 3.0 * l->loss;
+    return q < 0.15 ? 0.15 : q;
+}
+
 static double lat_score(const link_t *l) { return l->srtt + 2 * l->jitter; }
 
 static void classify_links(void)
@@ -544,7 +554,7 @@ static int pick_link_fresh(void)
             link_t *l = &S.links[i];
             if (!l->used || l->inflight >= l->win)
                 continue;
-            double lack = S.min_share / 100.0 - l->recent / sum;
+            double lack = S.min_share / 100.0 * quality(l) - l->recent / sum;
             if (lack > worst) {
                 worst = lack;
                 pick = i;
@@ -573,7 +583,7 @@ static int pick_link_fresh(void)
             else if (S.mode == MODE_BEST || pass == 1)
                 v = l->have_rtt ? -lat_score(l) : -1e9;
             else
-                v = room;
+                v = room * quality(l);
             if (pick < 0 || v > best) {
                 best = v;
                 pick = i;
@@ -917,6 +927,13 @@ static void every_second(double secs)
         link_t *l = &S.links[i];
         l->kbps = (l->tx_bytes - l->last_bytes) * 8 / 1000.0 / secs;
         l->last_bytes = l->tx_bytes;
+        uint64_t dp = l->tx_pkts - l->last_pkts, dl = l->lost - l->last_lost;
+        if (dp >= 20)
+            l->loss = 0.6 * l->loss + 0.4 * ((double)dl / (double)dp);
+        else if (dp == 0)
+            l->loss *= 0.9;
+        l->last_pkts = l->tx_pkts;
+        l->last_lost = l->lost;
     }
     emit_stats();
 }
