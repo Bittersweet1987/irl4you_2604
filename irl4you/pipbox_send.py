@@ -272,6 +272,30 @@ def write_pipeline(cfg):
     return text
 
 
+UPLINK_WAIT_S = 30        # nach dem Hochfahren so lange auf die Adressen der gewählten Sendewege warten (WLAN, Mobilfunk-Router)
+UPLINK_WAIT_UPTIME_S = 180  # nur kurz nach dem Systemstart; später (Sendewege ausgesteckt) sofort mit den vorhandenen starten
+
+
+def uptime_s():
+    try:
+        with open("/proc/uptime") as f:
+            return float(f.read().split()[0])
+    except (OSError, ValueError, IndexError):
+        return 1e9
+
+
+def uplink_ips(uplinks, wait=UPLINK_WAIT_S, sleep=time.sleep, clock=time.monotonic, up=uptime_s):
+    """IP-Adressen der gewählten Sendewege. Direkt nach dem Systemstart wartet es bis zu `wait` Sekunden, bis alle da sind
+    (sonst startet die Sendung mit nur den Kabelwegen und die WLAN-Leitungen kommen erst Minuten später dazu)."""
+    deadline = clock() + (wait if up() < UPLINK_WAIT_UPTIME_S else 0)
+    while True:
+        have = {o["iface"]: o["ip"] for o in server.iface_ips()}
+        ips = [have[u] for u in uplinks if u in have]
+        if len(ips) == len(uplinks) or clock() >= deadline:
+            return ips
+        sleep(1)
+
+
 def prepare():
     srt = load_json(f"{STATE}/srtla.json")
     pipe = load_json(f"{STATE}/pipeline.json")
@@ -319,8 +343,7 @@ def prepare():
         for key in keys:
             if not auto and stream_live(key) is False:
                 raise Refuse(f"Die Kamera {key} sendet gerade nicht an die Box")
-    have = {o["iface"]: o["ip"] for o in server.iface_ips()}
-    ips = [have[u] for u in st.get("uplinks", []) if u in have]
+    ips = uplink_ips(st.get("uplinks", []))
     if not ips:
         raise Refuse("Keiner der gewählten Sendewege hat eine IP-Adresse")
     ensure_work()

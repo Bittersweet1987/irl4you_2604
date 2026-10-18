@@ -607,6 +607,30 @@ class TestSendekette(unittest.TestCase):
         s.live = live
         return s
 
+    def test_wartet_auf_sendewege_nach_dem_start(self):
+        """Direkt nach dem Systemstart wartet die Sendung bis zu 30 s auf die Adressen aller gewählten Sendewege."""
+        zeit, stand = [0.0], [[{"iface": "eth0", "ip": "10.0.0.2"}]]
+        calls = []
+
+        def sleep(n):
+            zeit[0] += n
+            calls.append(zeit[0])
+            if zeit[0] >= 5:
+                stand[0] = [{"iface": "eth0", "ip": "10.0.0.2"}, {"iface": "wlan0", "ip": "10.0.0.3"}]
+        old = self.ps.server.iface_ips
+        self.ps.server.iface_ips = lambda: stand[0]
+        try:
+            self.assertEqual(self.ps.uplink_ips(["eth0", "wlan0"], sleep=sleep, clock=lambda: zeit[0], up=lambda: 20), ["10.0.0.2", "10.0.0.3"])
+            self.assertEqual(calls[-1], 5, "hört auf zu warten, sobald alle da sind")
+            stand[0], zeit[0] = [{"iface": "eth0", "ip": "10.0.0.2"}], 0.0
+            self.assertEqual(self.ps.uplink_ips(["eth0", "wlan0"], wait=30, sleep=lambda n: zeit.__setitem__(0, zeit[0] + n), clock=lambda: zeit[0], up=lambda: 20), ["10.0.0.2"])
+            self.assertGreaterEqual(zeit[0], 30, "nach 30 s mit den vorhandenen Wegen weitermachen")
+            zeit[0] = 0.0
+            self.assertEqual(self.ps.uplink_ips(["eth0", "wlan0"], sleep=lambda n: self.fail("kein Warten lange nach dem Start"),
+                                                clock=lambda: zeit[0], up=lambda: 4000), ["10.0.0.2"])
+        finally:
+            self.ps.server.iface_ips = old
+
     def test_aufruf_encoder(self):
         a = self.sender().args("encoder")
         self.assertEqual(a[0], self.ps.ENCODER)
