@@ -24,5 +24,13 @@ jobs:
             *) echo "VERSION '$v' ungültig"; exit 1 ;;
           esac
           tag="v$v.0"
-          if gh release view "$tag" >/dev/null 2>&1; then echo "$tag existiert schon"; exit 0; fi
-          gh release create "$tag" --target "$GITHUB_SHA" --title "$tag" --generate-notes
+          lic="Lizenz: CC BY-ND 4.0 (Nutzung auch kommerziell erlaubt, Änderungen nur nach Rückfrage bei Bittersweet1987, Ausnahme IRL4YOU), siehe LICENSE und ZUSATZERLAUBNIS.md im Repository. Drittprojekte behalten ihre Lizenzen (NOTICE.md)."
+          if gh release view "$tag" >/dev/null 2>&1; then
+            body="$(gh release view "$tag" --json body --jq .body)"
+            case "$body" in *"CC BY-ND 4.0"*) echo "$tag existiert schon"; exit 0 ;; esac
+            gh release edit "$tag" --notes "$lic
+
+$body"
+            exit 0
+          fi
+          gh release create "$tag" --target "$GITHUB_SHA" --title "$tag" --generate-notes --notes "$lic"
