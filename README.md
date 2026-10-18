@@ -12,6 +12,17 @@ Läuft auf Ubuntu 26.04 mit Rockchip-Kernel 6.1.
 - **Updater** (`updater/`): `irl4you-update` holt die Commits von `main`; er wartet, solange gesendet wird.
 - **Bauen** (`build/`): Pakete und Images entstehen auf der Box. Releases: [docs/RELEASE.md](docs/RELEASE.md).
 
+## Zugriff auf andere Dienste
+
+Die Box ruft diese Dienste von Dritten auf. Sie gehören ihren Betreibern; Nutzung nach deren Bedingungen.
+
+- **Twitch** (Anmeldung, API, Chat und EventSub): Chat, Ereignisse und Senden. Anmeldedaten bleiben auf der Box.
+- **BetterTTV, FrankerFaceZ, 7TV**: Emotes im Chat, zur Laufzeit geladen und nicht mitgeliefert.
+- **GitHub**: Updates (`irl4you-update` liest die Commits von `main` und lädt den Stand).
+- **Tailscale** (optional): Fernzugriff, den man selbst einrichtet.
+- **Ubuntu-Paketquellen und PyPI**: Systempakete und Python-Bibliotheken bei Installation und Updates.
+- **Moblin, Streamer.bot** (nur Links/Anbindung): Moblin-App und DJI-Ablauf nach [Moblin](https://github.com/eerimoq/moblin); die Apps selbst sind nicht enthalten.
+
 ## Versionen
 
 Schema `vX.Y.Z`: X gibt Marco vor (0 = Alpha), Y steigt mit einem Release, Z zählt die Commits. Änderungen stehen in [CHANGELOG.md](CHANGELOG.md).
