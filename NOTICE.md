@@ -34,7 +34,7 @@ Die Pakete in `irl4you/debs/` baut die Box selbst (Skripte in `build/`). Der Que
 | SRS 6.0.193 (`irl4you-srs`) | [ossrs/srs](https://github.com/ossrs/srs) | MIT | RTMP/SRT-Eingang, Bau mit einer Zeile Korrektur (`build/box-build.sh`) |
 | Rockchip MPP 1.1.0 (`irl4you-mpp`) | [rockchip-linux/mpp](https://github.com/rockchip-linux/mpp) | Apache-2.0 | Hardware-Video |
 | Rockchip RGA (`librga`) | [JeffyCN/mirrors](https://github.com/JeffyCN/mirrors), Zweig `linux-rga-multi` | Apache-2.0 | Bildskalierung |
-| GStreamer-Elemente für MPP (`irl4you-gst-rockchip`) | [JeffyCN/mirrors](https://github.com/JeffyCN/mirrors), Zweig `gstreamer-rockchip` | LGPL/MIT laut Quellprojekt | gebaut gegen MPP |
+| GStreamer-Elemente für MPP (`irl4you-gst-rockchip`) | [JeffyCN/mirrors](https://github.com/JeffyCN/mirrors), Zweig `gstreamer-rockchip` | LGPL (COPYING: LGPL-2.1; Quelldateien: LGPL-2 oder neuer) | gebaut gegen MPP; Lizenz gegen den gebauten Zweig geprüft |
 | WLAN-Treiber rtw88 (`irl4you-wifi-rtw88`) | [lwfinger/rtw88](https://github.com/lwfinger/rtw88) | GPL-2.0 | Kernelmodul für Kernel 6.1.172 |
 | WLAN-Treiber AIC8800 (`irl4you-wifi-aic8800`) | [shenmintao/aic8800d80](https://github.com/shenmintao/aic8800d80), Zweig `legacy-mcu1` | GPL-2.0, Firmware des Herstellers | Kernelmodul für Kernel 6.1.172 |
 | Linux-Kernel (Rockchip BSP 6.1) | [armbian/linux-rockchip](https://github.com/armbian/linux-rockchip) | GPL-2.0 | Quelle für Kernelbaum und Module |
@@ -49,4 +49,4 @@ Der Chat lädt Emotes zur Laufzeit von Twitch, BetterTTV, FrankerFaceZ und 7TV. 
 
 - **MIT**: der eigene Code dieses Repositorys.
 - **GPL-2.0**: Kernel und die beiden WLAN-Treiber. Die Pakete enthalten die gebauten Module; der Quelltext ist über die oben genannten Quellen und die Bauskripte in `build/` erreichbar.
-- **MIT, Apache-2.0, LGPL**: SRS, MPP, librga, gstreamer-rockchip (siehe Tabelle).
+- **MIT, Apache-2.0, LGPL**: SRS, MPP und librga (MIT bzw. Apache-2.0), gstreamer-rockchip (LGPL) (siehe Tabelle).
