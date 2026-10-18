@@ -824,17 +824,51 @@ class TestRtmpEingang(unittest.TestCase):
         self.assertEqual(len(root.findall(".//stream")), 1, "fremde Applikation und ungültiger Name bleiben draußen")
         self.assertEqual(root.findtext(".//application/name"), "publish")
 
-    def test_zaehler_in_schuben_ergeben_stabile_bildrate(self):
-        """SRS aktualisiert seine Zähler nur alle ~5 s: die Bildrate darf trotzdem nicht springen oder fehlen."""
-        frames, nbytes, seen = 0, 0, []
-        for sec in range(60):
-            if sec % 5 == 0:
-                frames, nbytes = sec * 30, sec * 750_000
-            fps, bps = self.meter.feed("a", frames, nbytes)
-            if sec >= 12:
-                seen.append(fps)
-            self.t[0] += 1.0
-        self.assertTrue(all(f is not None and 29 <= f <= 31 for f in seen), seen)
+    def run_meter(self, seconds, true_fps, cid="c1", start=0.0, byte_period=3.0, frame_period=15.0, sid="a", poll=0.2, mbit=8.0):
+        """SRS-Verhalten: Byte-Zähler springt alle ~3 s, Bildzähler nur alle ~15 s. Gibt (Zeit, Bildrate, Bitrate) je Abfrage zurück."""
+        out, t0 = [], self.t[0]
+        for i in range(int(seconds / poll)):
+            el = i * poll + start
+            frames = int(int(el / frame_period) * frame_period * true_fps) if el >= frame_period or start else 0
+            nbytes = int(int(el / byte_period) * byte_period * mbit * 125000)
+            fps, bps = self.meter.feed(sid, frames, nbytes, cid)
+            out.append((self.t[0] - t0, fps, bps))
+            self.t[0] += poll
+        return out
+
+    def test_zaehler_in_schueben_ergeben_stabile_bildrate(self):
+        """SRS setzt den Bildzähler nur alle ~15 s weiter (Bytes alle ~3 s): nie über 30, nie ein Wert zu hoch oder zu niedrig durch Mischen der Takte."""
+        for true in (30.0, 29.97, 30.7, 25.0, 60.0):
+            self.meter = self.st.Meter(clock=lambda: self.t[0])
+            res = self.run_meter(120, true)
+            want = {30.0: 30, 29.97: 30, 30.7: 30, 25.0: 25, 60.0: 60}[true]
+            seen = [f for t, f, b in res if t >= 32]
+            self.assertTrue(seen and all(f == want for f in seen), (true, sorted(set(seen))))
+            self.assertTrue(all(abs(b - 8_000_000) < 600_000 for t, f, b in res if t >= 13), "Bitrate")
+
+    def test_bildrate_nie_ohne_wert_und_nie_ueber_senderate(self):
+        """Neue Verbindung: sobald der erste Bildzähler-Sprung da ist, steht der Wert; davor kein falscher Wert."""
+        res = self.run_meter(60, 30.0)
+        werte = [f for t, f, b in res if f is not None]
+        self.assertTrue(werte and max(werte) <= 30 and min(werte) >= 30, sorted(set(werte)))
+        erste = min(t for t, f, b in res if f is not None)
+        self.assertLessEqual(erste, 16.0, "erster Wert nach dem ersten Zählersprung")
+
+    def test_wiederverbinden_behaelt_letzte_bildrate(self):
+        self.run_meter(40, 30.0, cid="c1")
+        res = self.run_meter(10, 30.0, cid="c2")           # neue Verbindung (andere cid), Zähler beginnen bei 0
+        self.assertTrue(all(f == 30 for t, f, b in res), "keine Lücke beim Wiederverbinden")
+
+    def test_stillstand_meldet_nichts(self):
+        self.run_meter(30, 30.0)
+        for _ in range(100):                                 # Zähler bleiben stehen: der Sender sendet nichts mehr
+            self.t[0] += 0.2
+            fps, bps = self.meter.feed("a", 1000, 99_999_999, "c1")
+        self.assertEqual((fps, bps), (0.0, 0.0))
+
+    def test_einrasten_auf_uebliche_bildrate(self):
+        for roh, soll in ((30.9, 30), (29.5, 30), (31.5, 32), (59.94, 60), (24.0, 24), (27.4, 27), (49.5, 50)):
+            self.assertEqual(self.st.snap_rate(roh), soll, roh)
 
     def test_leere_liste_hat_applikation(self):
         import xml.etree.ElementTree as ET
