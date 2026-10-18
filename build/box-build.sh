@@ -24,7 +24,7 @@ mkdeb() {
 # PR-Stand aus irl4you-pip holen (Entwürfe, solange nicht gemergt): pip_src <Verzeichnis> <PR-Nummer>
 pip_src() {
     if [ ! -d "$B/$1/.git" ]; then git clone -q "$PIP_REPO" "$B/$1"; fi
-    git -C "$B/$1" fetch -q origin "pull/$2/head:pr$2" 2>/dev/null || git -C "$B/$1" fetch -q origin main
+    git -C "$B/$1" fetch -q -f origin "+pull/$2/head:pr$2" 2>/dev/null || git -C "$B/$1" fetch -q origin main
     git -C "$B/$1" checkout -q -f "pr$2" 2>/dev/null || git -C "$B/$1" checkout -q -f origin/main
     git -C "$B/$1" log -1 --format='%h %cs %s'
 }
