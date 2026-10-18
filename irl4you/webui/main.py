@@ -146,11 +146,20 @@ def main():
     LimitedHTTPServer.allow_public = args.allow_public
     srv = LimitedHTTPServer((args.host, args.port), Handler)
     if args.extra_port and args.extra_port != args.port:
-        try:
-            extra = LimitedHTTPServer((args.host, args.extra_port), Handler)
-            threading.Thread(target=extra.serve_forever, daemon=True).start()
-            print(f"PIPBOX auch auf http://{args.host}:{args.extra_port}")
-        except OSError as e:
-            print(f"Port {args.extra_port} nicht verfügbar: {e}", flush=True)
+        def serve_extra():
+            # Port 80 kann beim Start noch belegt sein (z. B. nginx-Beispielseite): weiter versuchen, bis die Oberfläche auch ohne Port erreichbar ist
+            warned = False
+            while True:
+                try:
+                    extra = LimitedHTTPServer((args.host, args.extra_port), Handler)
+                except OSError as e:
+                    if not warned:
+                        print(f"Port {args.extra_port} nicht verfügbar, versuche es weiter: {e}", flush=True)
+                        warned = True
+                    time.sleep(5)
+                    continue
+                print(f"PIPBOX auch auf http://{args.host}:{args.extra_port}", flush=True)
+                extra.serve_forever()
+        threading.Thread(target=serve_extra, daemon=True).start()
     print(f"PIPBOX auf http://{args.host}:{args.port} (demo={args.demo})")
     srv.serve_forever()
