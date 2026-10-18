@@ -80,5 +80,9 @@ install -m 644 "$HERE"/bootloader/*.bin /usr/share/irl4you/bootloader/
 install -m 755 "$HERE/bootloader/irl4you-bootloader.sh" /usr/share/irl4you/bootloader/irl4you-bootloader.sh
 ln -sf /usr/share/irl4you/bootloader/irl4you-bootloader.sh /usr/local/sbin/irl4you-bootloader
 
+# 11. Verbindungsgeschwindigkeit begrenzen (M1 im Netz 192.168.1.x: 100 Mbit/s, sonst harter Reset der Box unter Last)
+install -D -m 755 "$HERE/lan-speed/pipbox-lan-speed" /etc/NetworkManager/dispatcher.d/pipbox-lan-speed
+[ -e /etc/irl4you/lan-speed.conf ] || install -D -m 644 "$HERE/lan-speed/lan-speed.conf" /etc/irl4you/lan-speed.conf
+
 [ "$changed" = 1 ] && echo "system-base-fixes: Änderungen angewendet (Neustart empfohlen)" || echo "system-base-fixes: nichts zu tun"
 exit 0

@@ -1,0 +1,50 @@
+#!/bin/sh
+# IRL4YOU BOX: Verbindungsgeschwindigkeit einer Netzkarte begrenzen (NetworkManager-Dispatcher).
+# Hintergrund: Die Box stürzte ab (harter Reset ohne Meldung), sobald über eine mit 1 Gbit/s verbundene Karte viel Verkehr lief
+# (Netgear Nighthawk M1 am LAN-Anschluss). Mit 100 Mbit/s tritt das nicht auf, und 100 Mbit/s reichen für die Sendung.
+# Einstellungen: /etc/irl4you/lan-speed.conf, je Zeile "subnet <Netz/Länge> <Mbit/s>" oder "mac <MAC-Adresse> <Mbit/s>" (10, 100 oder 1000).
+[ -n "$2" ] || exit 0
+case "$2" in up|dhcp4-change|reapply) ;; *) exit 0 ;; esac
+IFACE="$1"
+case "$IFACE" in ""|*[!A-Za-z0-9_.-]*) exit 0 ;; esac
+[ -r "/sys/class/net/$IFACE/address" ] && [ -e "/sys/class/net/$IFACE/device" ] || exit 0
+[ -r /etc/irl4you/lan-speed.conf ] || exit 0
+command -v ethtool >/dev/null 2>&1 || exit 0
+MAC=$(cat "/sys/class/net/$IFACE/address")
+WANT=$(python3 - "$IFACE" "$MAC" <<'PY'
+import ipaddress, subprocess, sys
+iface, mac = sys.argv[1], sys.argv[2].lower()
+addrs = []
+try:
+    out = subprocess.run(["ip", "-4", "-o", "addr", "show", "dev", iface], capture_output=True, text=True).stdout
+    for l in out.splitlines():
+        p = l.split()
+        if "inet" in p:
+            addrs.append(ipaddress.ip_interface(p[p.index("inet") + 1]).ip)
+except Exception:
+    pass
+want = None
+for line in open("/etc/irl4you/lan-speed.conf"):
+    p = line.split("#")[0].split()
+    if len(p) != 3 or p[2] not in ("10", "100", "1000"):
+        continue
+    try:
+        if p[0] == "mac" and p[1].lower() == mac:
+            want = int(p[2])
+        elif p[0] == "subnet" and any(a in ipaddress.ip_network(p[1], strict=False) for a in addrs):
+            want = int(p[2])
+    except ValueError:
+        pass
+print(want or "")
+PY
+)
+[ -n "$WANT" ] || exit 0
+CUR=$(cat "/sys/class/net/$IFACE/speed" 2>/dev/null || echo 0)
+[ "$CUR" -gt "$WANT" ] 2>/dev/null || exit 0
+case "$WANT" in 10) ADV=0x003 ;; 100) ADV=0x00f ;; *) exit 0 ;; esac
+if ethtool -s "$IFACE" speed "$WANT" duplex full autoneg on advertise "$ADV" 2>/dev/null; then
+    logger -t pipbox-lan-speed "$IFACE auf $WANT Mbit/s begrenzt (war $CUR)"
+else
+    logger -t pipbox-lan-speed "FEHLER beim Begrenzen von $IFACE auf $WANT Mbit/s"
+fi
+exit 0
