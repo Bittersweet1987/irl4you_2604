@@ -47,7 +47,7 @@ Der Chat lädt Emotes zur Laufzeit von Twitch, BetterTTV, FrankerFaceZ und 7TV. 
 
 ## Welche Lizenz gilt wo
 
-- **CC BY-ND 4.0**: der eigene Code dieses Repositorys (Nutzung auch kommerziell erlaubt, Änderungen nur nach Rückfrage bei Bittersweet1987, Ausnahme IRL4YOU; siehe `ZUSATZERLAUBNIS.md`). Frühere Versionen unter MIT bleiben MIT. Der Moblin-Hinweis oben bleibt bestehen.
+- **CC BY-ND 4.0**: der eigene Code dieses Repositorys (Nutzung auch kommerziell erlaubt, Änderungen nur nach Rückfrage bei Bittersweet1987, Ausnahme IRL4YOU; siehe `ZUSATZERLAUBNIS.md`). Die Lizenz gilt auch für frühere Versionen; was jemand vor dem 18.10.2026 unter MIT erhalten hat, behält die damals gewährten Rechte. Der Moblin-Hinweis oben bleibt bestehen.
 - **MIT** (Fremdcode): Moblin-Ablauf, SRS, bleak, dbus-fast.
 - **GPL-2.0**: Kernel und die beiden WLAN-Treiber. Die Pakete enthalten die gebauten Module; der Quelltext ist über die oben genannten Quellen und die Bauskripte in `build/` erreichbar.
 - **MIT, Apache-2.0, LGPL**: SRS, MPP und librga (MIT bzw. Apache-2.0), gstreamer-rockchip (LGPL) (siehe Tabelle).
