@@ -17,5 +17,3 @@ Drittprojekte (zum Beispiel SRS, Rockchip MPP, librga, gstreamer-rockchip, WLAN-
 ## Frühere Versionen
 
 Die Rechteinhaber stellen alle Versionen dieses Projekts, auch frühere Commits und Veröffentlichungen, ab dem 18.10.2026 unter die Lizenz CC BY-ND 4.0 (mit der Zusatzerlaubnis oben). Wer eine frühere Version bereits vor diesem Datum unter der MIT-Lizenz erhalten hat, behält dafür die damals gewährten Rechte; eine bereits gewährte MIT-Lizenz lässt sich nicht zurückholen. Für alles, was man ab jetzt herunterlädt oder aktualisiert, gilt die neue Lizenz.
-
-Dies ist keine Rechtsberatung.
