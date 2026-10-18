@@ -74,5 +74,11 @@ if ! cmp -s "$HERE/cpucap/irl4you-cpucap.service" /etc/systemd/system/irl4you-cp
 fi
 /usr/libexec/irl4you/irl4you-cpucap.sh || true
 
+# 10. Werkzeug zum Tauschen des Bootloader-FIT (nur bereitgestellt, nichts wird automatisch geschrieben): irl4you-bootloader status|apply|restore
+install -d /usr/share/irl4you/bootloader
+install -m 644 "$HERE"/bootloader/*.bin /usr/share/irl4you/bootloader/
+install -m 755 "$HERE/bootloader/irl4you-bootloader.sh" /usr/share/irl4you/bootloader/irl4you-bootloader.sh
+ln -sf /usr/share/irl4you/bootloader/irl4you-bootloader.sh /usr/local/sbin/irl4you-bootloader
+
 [ "$changed" = 1 ] && echo "system-base-fixes: Änderungen angewendet (Neustart empfohlen)" || echo "system-base-fixes: nichts zu tun"
 exit 0
