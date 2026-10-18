@@ -50,5 +50,10 @@ Description: WLAN-USB-Treiber rtw88 (lwfinger, mac80211) fuer Kernel $KVER
 CTL
 printf '#!/bin/sh\ndepmod -a %s || true\nexit 0\n' "$KVER" > "$ST/DEBIAN/postinst"; cp "$ST/DEBIAN/postinst" "$ST/DEBIAN/postrm"
 chmod 755 "$ST/DEBIAN/postinst" "$ST/DEBIAN/postrm"
+mkdir -p "$ST/usr/share/doc/irl4you-wifi-rtw88"; printf 'Paket: irl4you-wifi-rtw88
+Lizenz: GPL-2.0
+Quelle/Urheber: Realtek und Mitwirkende, lwfinger/rtw88
+Vollstaendige Lizenztexte: /usr/share/common-licenses/GPL-2 und NOTICE.md im Repo Bittersweet1987/irl4you_2604
+' > "$ST/usr/share/doc/irl4you-wifi-rtw88/copyright"
 dpkg-deb --root-owner-group --build "$ST" "$B/irl4you-wifi-rtw88_${D}+${KVER}_arm64.deb" >/dev/null
 ls -la "$B"/irl4you-wifi-rtw88_*.deb

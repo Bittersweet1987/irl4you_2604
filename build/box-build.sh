@@ -11,10 +11,15 @@ mkdir -p "$B/debs"; cd "$B"
 export DEBIAN_FRONTEND=noninteractive
 log() { echo "[$(date +%H:%M:%S)] $*"; }
 
-# mkdeb NAME VERSION STAGING "Depends" "Beschreibung"
+# mkdeb NAME VERSION STAGING "Depends" "Beschreibung" ["Lizenz[|Quelle]"]; die Lizenz kommt nach /usr/share/doc/NAME/copyright (Texte: NOTICE.md im Repo)
 mkdeb() {
-    local name=$1 ver=$2 st=$3 deps=$4 desc=$5
-    mkdir -p "$st/DEBIAN"
+    local name=$1 ver=$2 st=$3 deps=$4 desc=$5 lic=${6:-MIT|IRL4YOU}
+    mkdir -p "$st/DEBIAN" "$st/usr/share/doc/$name"
+    printf 'Paket: %s
+Lizenz: %s
+Quelle/Urheber: %s
+Vollstaendige Lizenztexte: /usr/share/common-licenses und NOTICE.md im Repo Bittersweet1987/irl4you_2604
+'         "$name" "${lic%%|*}" "${lic#*|}" > "$st/usr/share/doc/$name/copyright"
     printf 'Package: %s\nVersion: %s\nArchitecture: arm64\nMaintainer: IRL4YOU <irl4you@localhost>\nDepends: %s\nSection: video\nPriority: optional\nDescription: %s\n' \
         "$name" "$ver" "$deps" "$desc" > "$st/DEBIAN/control"
     dpkg-deb --root-owner-group --build "$st" "$B/debs/${name}_${ver}_arm64.deb" >/dev/null
@@ -61,7 +66,7 @@ build_srs() {
     make -j"$(nproc)" > "$B/srs-make.log" 2>&1 || { tail -30 "$B/srs-make.log"; exit 1; }; test -x objs/srs; ./objs/srs -v
     rm -rf ../st; install -D -m 755 objs/srs ../st/usr/bin/irl4you-srs
     local v; v=$(awk '/VERSION_MAJOR/{a=$3} /VERSION_MINOR/{b=$3} /VERSION_REVISION/{c=$3} END{print a"."b"."c}' src/core/srs_core_version6.hpp)
-    mkdeb irl4you-srs "$v" "$B/srs/st" "libc6, libstdc++6, libssl3t64" "RTMP/HEVC-Eingang fuer IRL4YOU (SRS 6, ossrs/srs)"
+    mkdeb irl4you-srs "$v" "$B/srs/st" "libc6, libstdc++6, libssl3t64" "RTMP/HEVC-Eingang fuer IRL4YOU (SRS 6, ossrs/srs)" "MIT|SRS-Autoren, ossrs/srs"
     cd "$B"
 }
 

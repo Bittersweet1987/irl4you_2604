@@ -41,5 +41,10 @@ Description: WLAN-USB-Treiber AIC8800 (D80/DC/DW) fuer Kernel $KVER
 CTL
 printf '#!/bin/sh\ndepmod -a %s || true\nudevadm control --reload-rules 2>/dev/null || true\nexit 0\n' "$KVER" > "$ST/DEBIAN/postinst"; cp "$ST/DEBIAN/postinst" "$ST/DEBIAN/postrm"
 chmod 755 "$ST/DEBIAN/postinst" "$ST/DEBIAN/postrm"
+mkdir -p "$ST/usr/share/doc/irl4you-wifi-aic8800"; printf 'Paket: irl4you-wifi-aic8800
+Lizenz: GPL-2.0 (Treiber); Firmware: Herstellerlizenz
+Quelle/Urheber: AICSemi, shenmintao/aic8800d80
+Vollstaendige Lizenztexte: /usr/share/common-licenses/GPL-2 und NOTICE.md im Repo Bittersweet1987/irl4you_2604
+' > "$ST/usr/share/doc/irl4you-wifi-aic8800/copyright"
 dpkg-deb --root-owner-group --build "$ST" "$B/irl4you-wifi-aic8800_${D}+${KVER}_arm64.deb" >/dev/null
 ls -la "$B"/irl4you-wifi-aic8800_*.deb

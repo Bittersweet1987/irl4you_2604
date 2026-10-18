@@ -11,10 +11,15 @@ mkdir -p "$B/debs"; cd "$B"
 export DEBIAN_FRONTEND=noninteractive
 log() { echo "[$(date +%H:%M:%S)] $*"; }
 
-# mkdeb NAME VERSION STAGING "Depends" "Beschreibung"
+# mkdeb NAME VERSION STAGING "Depends" "Beschreibung" ["Lizenz[|Quelle]"]; die Lizenz kommt nach /usr/share/doc/NAME/copyright (Texte: NOTICE.md im Repo)
 mkdeb() {
-    local name=$1 ver=$2 st=$3 deps=$4 desc=$5
-    mkdir -p "$st/DEBIAN"
+    local name=$1 ver=$2 st=$3 deps=$4 desc=$5 lic=${6:-MIT|IRL4YOU}
+    mkdir -p "$st/DEBIAN" "$st/usr/share/doc/$name"
+    printf 'Paket: %s
+Lizenz: %s
+Quelle/Urheber: %s
+Vollstaendige Lizenztexte: /usr/share/common-licenses und NOTICE.md im Repo Bittersweet1987/irl4you_2604
+'         "$name" "${lic%%|*}" "${lic#*|}" > "$st/usr/share/doc/$name/copyright"
     printf 'Package: %s\nVersion: %s\nArchitecture: arm64\nMaintainer: IRL4YOU <irl4you@localhost>\nDepends: %s\nSection: video\nPriority: optional\nDescription: %s\n' \
         "$name" "$ver" "$deps" "$desc" > "$st/DEBIAN/control"
     dpkg-deb --root-owner-group --build "$st" "$B/debs/${name}_${ver}_arm64.deb" >/dev/null
@@ -39,7 +44,7 @@ build_mpp() {
     cmake --build b -j"$(nproc)" >"$B/mpp-build.log" 2>&1 || { tail -20 "$B/mpp-build.log"; exit 1; }
     DESTDIR="$PWD/st" cmake --install b >/dev/null
     local v; v="$(echo "$MPP_REF" | sed 's/[^0-9A-Za-z.]/./g').$(git log -1 --format=%cd --date=format:%Y%m%d)"
-    mkdeb irl4you-mpp "$v" "$PWD/st" "libc6" "Rockchip MPP (Hardware-Video) fuer IRL4YOU, aus rockchip-linux/mpp gebaut"
+    mkdeb irl4you-mpp "$v" "$PWD/st" "libc6" "Rockchip MPP (Hardware-Video) fuer IRL4YOU, aus rockchip-linux/mpp gebaut" "Apache-2.0|Rockchip, rockchip-linux/mpp"
     cd "$B"
 }
 
@@ -51,7 +56,7 @@ build_rga() {
     meson setup b --prefix=/usr --libdir=lib/aarch64-linux-gnu --buildtype=release -Dlibrga_demo=false >/dev/null
     meson compile -C b >"$B/rga-build.log" 2>&1 || { tail -20 "$B/rga-build.log"; exit 1; }
     DESTDIR="$PWD/st" meson install -C b >/dev/null
-    mkdeb irl4you-rga "2.$(git log -1 --format=%cd --date=format:%Y%m%d)" "$PWD/st" "libc6, libstdc++6" "Rockchip RGA fuer IRL4YOU, aus dem Quelltext (JeffyCN/mirrors linux-rga-multi) gebaut"
+    mkdeb irl4you-rga "2.$(git log -1 --format=%cd --date=format:%Y%m%d)" "$PWD/st" "libc6, libstdc++6" "Rockchip RGA fuer IRL4YOU, aus dem Quelltext (JeffyCN/mirrors linux-rga-multi) gebaut" "Apache-2.0|Rockchip, JeffyCN/mirrors linux-rga-multi"
     cd "$B"
 }
 
@@ -70,7 +75,7 @@ build_gst() {
     meson compile -C b >"$B/gst-build.log" 2>&1 || { tail -20 "$B/gst-build.log"; exit 1; }
     DESTDIR="$PWD/st" meson install -C b >/dev/null
     mkdeb irl4you-gst-rockchip "1.$(git log -1 --format=%cd --date=format:%Y%m%d).${PKG_REV:-1}" "$PWD/st" \
-        "irl4you-mpp, irl4you-rga, libgstreamer1.0-0, libgstreamer-plugins-base1.0-0" "GStreamer-Elemente fuer Rockchip MPP/RGA fuer IRL4YOU (gstreamer-rockchip)"
+        "irl4you-mpp, irl4you-rga, libgstreamer1.0-0, libgstreamer-plugins-base1.0-0" "GStreamer-Elemente fuer Rockchip MPP/RGA fuer IRL4YOU (gstreamer-rockchip)" "LGPL-2.1|Rockchip/JeffyCN, gstreamer-rockchip"
     cd "$B"
 }
 

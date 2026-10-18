@@ -63,5 +63,8 @@ if ! cmp -s "$HERE/leds/irl4you-leds.service" /etc/systemd/system/irl4you-leds.s
 fi
 /usr/libexec/irl4you/irl4you-leds.sh || true
 
+# 8. Automatische Sicherheitsupdates von Ubuntu (ohne Neustart, niedrige Prioritaet)
+sh "$HERE/auto-security-updates.sh" || true
+
 [ "$changed" = 1 ] && echo "system-base-fixes: Änderungen angewendet (Neustart empfohlen)" || echo "system-base-fixes: nichts zu tun"
 exit 0
