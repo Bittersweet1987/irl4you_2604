@@ -36,7 +36,8 @@
 <label class="chk"><input type="checkbox" id="na_on"> Feste Zusatzadresse verwenden</label>
 <div class="row" style="justify-content:flex-start;gap:6px;flex-wrap:wrap"><select id="na_card" aria-label="Netzkarte"></select><input id="na_addr" type="text" inputmode="decimal" maxlength="15" placeholder="z. B. 192.168.1.50" aria-label="IP-Adresse" autocomplete="off" style="width:11em"><span>/</span><input id="na_prefix" type="number" min="8" max="30" value="24" aria-label="Netzlänge" style="width:4.5em"></div>
 <label class="chk" id="na_ack_row"><input type="checkbox" id="na_ack"> Ich bin einverstanden, dass die Änderung am Netzwerk der Box auf meine eigene Verantwortung erfolgt.</label>
-<div class="actions"><button type="button" id="na_save">Speichern</button></div>
+<div class="actions"><button type="button" id="na_save">Speichern</button><button type="button" id="na_remove" class="sec" hidden>Zusatzadresse entfernen</button></div>
+<div id="na_warn" class="err" role="status"></div>
 <div id="na_info" class="ph" role="status"></div>
 <div id="na_err" class="err"></div>
 </details>

@@ -167,12 +167,15 @@ def current():
 
 
 def remove_address():
+    """Entfernt die Zusatzadresse laut Einstellung und alles, was sie sonst noch gesetzt hat (Adressen mit der Bezeichnung :pb, auch aus alten Fassungen)."""
     d = current()
-    if not d:
-        return
-    names = [n for n, m in wired().items() if m == d["mac"]]
-    for n in names:
-        ip("addr", "del", "%s/%d" % (d["addr"], int(d["prefix"])), "dev", n)
+    if d:
+        for n in [n for n, m in wired().items() if m == d["mac"]]:
+            ip("addr", "del", "%s/%d" % (d["addr"], int(d["prefix"])), "dev", n)
+    for line in (ip("-4", "-o", "addr", "show").stdout or "").splitlines():
+        m = re.match(r"^\d+:\s+(\S+)\s+inet\s+(\S+/\d+).*\s\S+:%s\\" % LABEL, line)
+        if m:
+            ip("addr", "del", m.group(2), "dev", m.group(1).split("@")[0])
 
 
 def disable():

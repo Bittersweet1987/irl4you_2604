@@ -109,10 +109,13 @@ class ExtraAddress:
     PRIVATE = ("10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16")
     SKIP = ("lo", "docker", "veth", "br-", "virbr", "p2p", "tailscale", "tun", "tap", "wg", "zt", "wlan", "wl")
     WAIT = 15.0
+    HOOKS = ("/etc/network/if-up.d/pipbox-extra-ip", "/etc/NetworkManager/dispatcher.d/pipbox-extra-ip")
+    NO_OVERLAP = ("lo", "docker", "veth", "br-", "virbr", "p2p", "tailscale", "tun", "tap", "wg", "zt")
 
     def __init__(self, state_dir, demo=False, clock=time.time, sleep=time.sleep):
         self.req = os.path.join(state_dir, "netaddr-request")
         self.demo, self.clock, self.sleep = demo, clock, sleep
+        self._warn = (-1e9, [])
         self.fake = {"enabled": False, "mac": "aa:bb:cc:00:11:22", "addr": "", "prefix": 24}
 
     @classmethod
@@ -168,6 +171,41 @@ class ExtraAddress:
     def installed(self):
         return os.path.exists(self.UNIT)
 
+    def overlaps(self, nets=None):
+        """Netzanschlüsse (auch WLAN, Mobilfunk), deren IPv4-Netze sich überschneiden: dann ist offen, über welchen Weg Antworten gehen."""
+        import ipaddress
+        if nets is None:
+            nets = []
+            try:
+                r = subprocess.run(["ip", "-4", "-o", "addr", "show"], capture_output=True, text=True, timeout=5)
+            except (OSError, subprocess.SubprocessError):
+                return []
+            for line in (r.stdout or "").splitlines():
+                m = re.match(r"^\d+:\s+(\S+)\s+inet\s+(\d+\.\d+\.\d+\.\d+/\d+)", line)
+                if m and not m.group(1).startswith(self.NO_OVERLAP):
+                    nets.append((m.group(1).split("@")[0], m.group(2)))
+        parsed = []
+        for n, a in nets:
+            try:
+                parsed.append((n, ipaddress.ip_network(a, strict=False)))
+            except ValueError:
+                pass
+        out = []
+        for i, (n1, a) in enumerate(parsed):
+            for n2, b in parsed[i + 1:]:
+                if n1 != n2 and a.overlaps(b) and a.prefixlen > 0 and b.prefixlen > 0:
+                    out.append({"a": n1, "b": n2, "net": str(a if a.prefixlen <= b.prefixlen else b)})
+        return out
+
+    def warning(self):
+        """Kurzer Hinweis für die Meldungsleiste (5 s zwischengespeichert), leer wenn alles getrennt ist."""
+        if self.demo:
+            return []
+        now = self.clock()
+        if now - self._warn[0] > 5:
+            self._warn = (now, self.overlaps())
+        return [{"level": "warn", "kind": "net", "t": 0, "text": "Zwei Netzanschlüsse liegen im selben Adressbereich"}] if self._warn[1] else []
+
     def _conf(self):
         try:
             d = json.loads(read(self.CONF, "") or "{}")
@@ -180,13 +218,14 @@ class ExtraAddress:
     def status(self):
         if self.demo:
             f = self.fake
-            return {"installed": True, "enabled": f["enabled"], "mac": f["mac"], "addr": f["addr"], "prefix": f["prefix"], "present": f["enabled"], "error": "",
+            return {"installed": True, "enabled": f["enabled"], "mac": f["mac"], "addr": f["addr"], "prefix": f["prefix"], "present": f["enabled"], "error": "", "leftover": False, "overlaps": [],
                     "cards": [{"name": "eth0", "mac": "aa:bb:cc:00:11:22", "addrs": ["192.168.1.20/24"]}, {"name": "eth1", "mac": "aa:bb:cc:00:11:33", "addrs": ["192.168.50.20/24"]}]}
         c = self._conf()
         cards = self.cards()
         present = bool(c) and any(x["mac"] == c["mac"] and "%s/%d" % (c["addr"], c["prefix"]) in x["addrs"] for x in cards)
         return {"installed": self.installed(), "enabled": bool(c), "mac": (c or {}).get("mac", ""), "addr": (c or {}).get("addr", ""), "prefix": (c or {}).get("prefix", 24),
-                "present": present, "error": "", "cards": cards}
+                "present": present, "error": "", "cards": cards, "overlaps": self.overlaps(),
+                "leftover": not c and any(os.path.exists(h) for h in self.HOOKS)}
 
     def set(self, enable, mac=None, addr=None, prefix=None, ack=False):
         if not isinstance(enable, bool):

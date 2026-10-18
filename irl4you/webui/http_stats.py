@@ -20,6 +20,10 @@ class HttpStats:
             m["alerts"] = list(m.get("alerts") or []) + self.usbwatch.alerts()
         except Exception:
             pass
+        try:
+            m["alerts"] = list(m.get("alerts") or []) + self.netaddr.warning()
+        except Exception:
+            pass
         m["cameras"] = self.cams.listing(self.host(), self.djisvc.host_for_key)
         parked = set()
         try:

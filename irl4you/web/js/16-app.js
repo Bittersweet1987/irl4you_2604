@@ -216,6 +216,10 @@
     info = $("na_info"),
     err = $("na_err"),
     save = $("na_save"),
+    rem = $("na_remove"),
+    W1 = "Warnung: Diese Netzanschlüsse liegen im selben Adressbereich:",
+    W2 = "Antworten können dann über den falschen Anschluss gehen und das Bündeln stören. Stelle bei einem der Anschlüsse im Router oder in der Karte einen anderen Adressbereich ein.",
+    warn = $("na_warn"),
     box = $("opt_netaddr");
   let last = null,
     ready = false;
@@ -244,6 +248,16 @@
       prefix.value = d.prefix || 24;
     }
     ready = !!d.installed && (d.cards || []).length > 0;
+    rem.hidden = !(d.installed && (d.enabled || d.leftover));
+    warn.textContent = "";
+    if ((d.overlaps || []).length) {
+      for (const t of [W1, d.overlaps.map((o) => `${o.a} / ${o.b} (${o.net})`).join(", "), W2]) {
+        const e = document.createElement("div");
+        e.textContent = t;
+        if (t !== W1 && t !== W2) e.translate = false;
+        warn.appendChild(e);
+      }
+    }
     gate();
     info.textContent = !d.installed
       ? "Kommt mit dem nächsten Software-Update."
@@ -280,6 +294,16 @@
       err.textContent = x.message;
       gate();
     }
+  });
+  rem.addEventListener("click", async () => {
+    err.textContent = "";
+    rem.disabled = true;
+    try {
+      render(await srtlaCall("POST", "/api/netaddr", { enable: false }));
+    } catch (x) {
+      err.textContent = x.message;
+    }
+    rem.disabled = false;
   });
   box.addEventListener("toggle", () => {
     if (box.open) load();
