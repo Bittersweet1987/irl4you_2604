@@ -4,9 +4,9 @@
 # Anderer Wert in /etc/irl4you/cpucap.conf: BIG_MAX_KHZ=<kHz>; 0 = kein Deckel.
 BIG_MAX_KHZ=1416000
 # Mit der neuen Firmware (BL31 v1.47, per irl4you-bootloader apply) lief der Takt unter Volllast bis 2208 MHz stabil (5 min, 67 °C);
-# bei 2304/2256 MHz gab es einen Reset. Ohne die neue Firmware gilt der niedrige Deckel.
+# bei 2304/2256 MHz gab es einen Reset. Gesetzt ist 2016 MHz als Abstand zur Grenze. Ohne die neue Firmware gilt der niedrige Deckel.
 if [ -x /usr/local/sbin/irl4you-bootloader ] && /usr/local/sbin/irl4you-bootloader status 2>/dev/null | grep -q 'bl31-v1.47'; then
-    BIG_MAX_KHZ=2208000
+    BIG_MAX_KHZ=2016000
 fi
 [ -f /etc/irl4you/cpucap.conf ] && . /etc/irl4you/cpucap.conf
 [ "$BIG_MAX_KHZ" = 0 ] && exit 0
