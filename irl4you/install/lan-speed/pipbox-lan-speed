@@ -46,6 +46,8 @@ CUR=$(cat "/sys/class/net/$IFACE/speed" 2>/dev/null || echo 0)
 case "$WANT" in 10) ADV=0x003 ;; 100) ADV=0x00f ;; *) exit 0 ;; esac
 if ethtool -s "$IFACE" speed "$WANT" duplex full autoneg on advertise "$ADV" 2>/dev/null; then
     logger -t pipbox-lan-speed "$IFACE auf $WANT Mbit/s begrenzt (war $CUR)"
+    # Nach dem Umschalten bleibt die Sendewarteschlange der Realtek-Karte hängen (Pakete gehen nicht mehr raus), bis die Karte einmal aus- und eingeschaltet wurde.
+    ( sleep 2; ip link set "$IFACE" down; sleep 1; ip link set "$IFACE" up ) >/dev/null 2>&1 &
 else
     logger -t pipbox-lan-speed "FEHLER beim Begrenzen von $IFACE auf $WANT Mbit/s"
 fi
