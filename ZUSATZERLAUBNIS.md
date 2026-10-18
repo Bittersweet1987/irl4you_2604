@@ -6,7 +6,7 @@ Kurz gesagt: Die Box darf genutzt werden, auch kommerziell (zum Beispiel zum Str
 
 ## Zusätzliche Erlaubnis für IRL4YOU
 
-Zusätzlich zur Lizenz erlaubt die Rechteinhaber (Bittersweet1987 und Akino01) der Organisation **IRL4YOU** und den Konten, die er als Collaborator dieses Repositorys eingetragen hat, den Code zu ändern und die Änderungen zu veröffentlichen und weiterzugeben. Diese Erlaubnis gilt für diese Personen und Konten, nicht für Dritte, und sie gilt, solange sie im Repository eingetragen sind.
+Zusätzlich zur Lizenz erlauben die Rechteinhaber (Bittersweet1987 und Akino01) der Organisation **IRL4YOU** und den Konten, die sie als Collaborator dieses Repositorys eingetragen hat, den Code zu ändern und die Änderungen zu veröffentlichen und weiterzugeben. Diese Erlaubnis gilt für diese Personen und Konten, nicht für Dritte, und sie gilt, solange sie im Repository eingetragen sind.
 
 Alle anderen fragen vor Änderungen bei Bittersweet1987 oder Akino01 nach (Nachricht über GitHub). Eine Erlaubnis zählt erst, wenn sie schriftlich vorliegt.
 
