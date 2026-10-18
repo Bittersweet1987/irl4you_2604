@@ -2,7 +2,7 @@
   "name": "irl4you",
   "version": "@VERSION@",
   "min_updater": 1,
-  "restart": ["pipbox.service"],
+  "restart": ["pipbox.service", "pipbox-rtmpstat.service"],
   "health_units": ["pipbox.service"],
   "reboot": false
 }
