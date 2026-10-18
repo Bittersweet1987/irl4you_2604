@@ -802,6 +802,18 @@ class TestRtmpEingang(unittest.TestCase):
         self.assertEqual(len(root.findall(".//stream")), 1, "fremde Applikation und ungültiger Name bleiben draußen")
         self.assertEqual(root.findtext(".//application/name"), "publish")
 
+    def test_zaehler_in_schuben_ergeben_stabile_bildrate(self):
+        """SRS aktualisiert seine Zähler nur alle ~5 s: die Bildrate darf trotzdem nicht springen oder fehlen."""
+        frames, nbytes, seen = 0, 0, []
+        for sec in range(60):
+            if sec % 5 == 0:
+                frames, nbytes = sec * 30, sec * 750_000
+            fps, bps = self.meter.feed("a", frames, nbytes)
+            if sec >= 12:
+                seen.append(fps)
+            self.t[0] += 1.0
+        self.assertTrue(all(f is not None and 29 <= f <= 31 for f in seen), seen)
+
     def test_leere_liste_hat_applikation(self):
         import xml.etree.ElementTree as ET
         root = ET.fromstring(self.st.build_xml([], self.meter))

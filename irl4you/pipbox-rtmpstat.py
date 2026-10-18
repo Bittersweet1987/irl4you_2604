@@ -8,7 +8,7 @@ DJI-Dienst, HDMI-Dienst, Sendekette, Protokolle) liest dagegen seit jeher eine X
   name, time (ms), bw_in (bit/s), bytes_in, bw_video, bw_audio (bit/s, geschätzt), nclients (Zuschauer),
   <publishing/> solange jemand sendet, meta/video (width, height, frame_rate, codec, profile, level), meta/audio (codec, sample_rate, channels).
 
-Bildrate und Bitrate misst das Programm selbst aus den Zählern von SRS (Unterschied über etwa 2 bis 5 Sekunden), weil SRS nur Zähler und einen
+Bildrate und Bitrate misst das Programm selbst aus den Zählern von SRS (Unterschied über bis zu 15 Sekunden, SRS aktualisiert die Zähler nur alle ~5 s), weil SRS nur Zähler und einen
 30-Sekunden-Mittelwert liefert. Der Austausch des RTMP-Servers bleibt damit eine Sache dieses Programms.
 
   pipbox-rtmpstat.py [--listen ADR:PORT] [--srs URL] [--app publish]
@@ -23,7 +23,8 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from xml.sax.saxutils import escape
 
 AUDIO_BPS = 128000          # Schätzung für den Tonanteil, solange SRS nur die Summe meldet
-WINDOW_MIN, WINDOW_MAX = 2.0, 6.0
+WINDOW_MIN, WINDOW_MAX = 2.0, 15.0   # Messfenster zwischen Zähleränderungen
+STALE_AFTER = 12.0                   # so lange darf SRS die Zähler unverändert lassen
 CODEC_NAMES = {"h264": "H264", "avc": "H264", "h265": "H265", "hevc": "H265", "av1": "AV1", "aac": "AAC", "mp3": "MP3", "opus": "Opus"}
 
 
@@ -41,17 +42,24 @@ class Meter:
         self.lock = threading.Lock()
 
     def feed(self, sid, frames, nbytes):
+        """SRS aktualisiert seine Zähler nur etwa alle 5 s in einem Schub. Gemessen wird deshalb zwischen den Zeitpunkten, an denen sich
+        ein Zähler tatsächlich geändert hat, über bis zu WINDOW_MAX Sekunden. Gleicher Zählerstand heißt nicht „kein Bild“."""
         now = self.clock()
+        frames, nbytes = frames or 0, nbytes or 0
         with self.lock:
-            h = [x for x in self.hist.get(sid, []) if now - x[0] <= WINDOW_MAX and x[1] <= (frames or 0) and x[2] <= (nbytes or 0)]
-            if not h or now - h[-1][0] >= 0.4:
-                h.append((now, frames or 0, nbytes or 0))
+            h = self.hist.get(sid, [])
+            if h and (frames < h[-1][1] or nbytes < h[-1][2]):
+                h = []                                   # Sender neu verbunden: Zähler fangen von vorn an
+            if not h or frames != h[-1][1] or nbytes != h[-1][2]:
+                h.append((now, frames, nbytes))
+            h = [x for x in h if now - x[0] <= WINDOW_MAX] or h[-1:]
             self.hist[sid] = h
-            old = next((x for x in h if now - x[0] >= WINDOW_MIN), None)
-            if old is None or now - old[0] <= 0:
+            if now - h[-1][0] > STALE_AFTER:
+                return 0.0, 0.0                          # seit längerer Zeit keine Änderung: es kommt nichts mehr an
+            if len(h) < 2 or h[-1][0] - h[0][0] < WINDOW_MIN:
                 return None, None
-            dt = now - old[0]
-            return (h[-1][1] - old[1]) / dt, (h[-1][2] - old[2]) * 8 / dt
+            dt = h[-1][0] - h[0][0]
+            return (h[-1][1] - h[0][1]) / dt, (h[-1][2] - h[0][2]) * 8 / dt
 
     def forget(self, alive):
         with self.lock:
@@ -85,7 +93,7 @@ def build_xml(streams, meter, app="publish"):
                     escape(codec(v.get("codec"))), escape(str(v.get("profile") or "")), escape(str(v.get("level") or ""))))
             if a:
                 x.append("<audio><codec>%s</codec><sample_rate>%s</sample_rate><channels>%s</channels></audio>" % (
-                    escape(codec(a.get("codec"))), int(a.get("sample_rate") or 0), int(a.get("channels") or 0)))
+                    escape(codec(a.get("codec"))), int(a.get("sample_rate") or 0), int(a.get("channel") or a.get("channels") or 0)))
             x.append("</meta>")
         x.append("<nclients>%d</nclients>" % max(0, int(s.get("clients") or 0) - (1 if pub else 0)))
         if pub:
