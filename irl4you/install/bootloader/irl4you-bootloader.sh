@@ -5,7 +5,7 @@
 # restore schreibt den ursprünglichen Stand (BL31 v1.45) zurück
 # Wird NICHT automatisch beim Update ausgeführt. Startet die Box nach apply nicht mehr, hilft nur die Karte am PC (restore-fit.ps1).
 set -eu
-HERE=$(cd "$(dirname "$0")" && pwd)
+HERE=$(dirname "$(readlink -f "$0")")
 DEV=${DEV:-/dev/mmcblk1}; SEEK=16384
 NEW="$HERE/fit-opi5plus-bl31-v1.47.bin"; ORIG="$HERE/fit-opi5plus-orig-bl31-v1.45.bin"
 BK=/var/lib/irl4you/bootloader-backup
