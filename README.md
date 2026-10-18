@@ -44,6 +44,6 @@ Dieses Projekt wurde mit KI erstellt und wird von KI unterstützt. Code, Texte u
 
 ## Lizenz
 
-Der eigene Code steht unter [CC BY-ND 4.0](LICENSE): Nutzung auch kommerziell erlaubt, Änderungen nur nach Rückfrage bei Bittersweet1987 oder Akinos01 (IRL4YOU), siehe [ZUSATZERLAUBNIS.md](ZUSATZERLAUBNIS.md). Drittprojekte behalten ihre Lizenzen, siehe [NOTICE.md](NOTICE.md).
+Der eigene Code steht unter [CC BY-ND 4.0](LICENSE): Nutzung auch kommerziell erlaubt, Änderungen nur nach Rückfrage bei [Bittersweet1987](https://discord.com/users/232451293040476160) oder [Akinos01 (IRL4YOU)](https://discord.com/users/523858990510243861), siehe [ZUSATZERLAUBNIS.md](ZUSATZERLAUBNIS.md). Drittprojekte behalten ihre Lizenzen, siehe [NOTICE.md](NOTICE.md).
 
 Anfragen zu Änderungen per Discord: [Bittersweet1987](https://discord.com/users/232451293040476160) oder [Akinos01 (IRL4YOU)](https://discord.com/users/523858990510243861).
