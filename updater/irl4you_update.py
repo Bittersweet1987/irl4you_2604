@@ -25,6 +25,7 @@ Ablauf beim Installieren:
 Die Oberfläche kann nur Stichwörter aus einer festen Liste anfordern (check, install, rollback, switch <SHA>).
 Quelle, Zugangsschlüssel und Pfade stehen ausschließlich in der Konfig-Datei, die nur root ändern kann.
 """
+import base64
 import configparser
 import datetime
 import fcntl
@@ -348,6 +349,17 @@ class Updater:
         except (Refuse, ValueError, KeyError, IndexError, TypeError) as e:
             self.log("Dritte Stelle der Version nicht ermittelbar (%s), 0 angenommen" % e)
             return 0
+
+    def version_of(self, sha):
+        """Versionsnummer x.y.z eines Commits (VERSION im Commit, dritte Stelle = Commits seit dem Release) oder None, wenn nicht ermittelbar."""
+        try:
+            raw = self._json("/repos/%s/contents/VERSION?ref=%s" % (self.cfg.repo, sha))
+            v = base64.b64decode(raw["content"]).decode("utf-8").strip()
+            if re.match(r"^\d{1,4}\.\d{1,4}$", v):
+                v = "%s.%d" % (v, self.build_number(sha))
+            return v if VERSION_RE.match(v) else None
+        except Exception:
+            return None
 
     def resolve(self, ref):
         return self._commit(self._json("/repos/%s/commits/%s" % (self.cfg.repo, urllib.parse.quote(ref))))
@@ -677,7 +689,7 @@ class Updater:
                 break
             notes.append("- " + c["message"].strip().splitlines()[0] if c["message"].strip() else "- (ohne Text)")
         self.status(state="idle", step="", version=self.label(self.active_id()), commit=(cur or "")[:12],
-                    latest=short(commits[0]["sha"]), available=bool(tip), checked=int(self.now()),
+                    latest=short(commits[0]["sha"]), latest_version=self.version_of(commits[0]["sha"]), available=bool(tip), checked=int(self.now()),
                     notes="\n".join(notes)[:4000] if tip else "",
                     releases=[{"version": short(c["sha"]), "commit": c["sha"], "published": c["date"], "prerelease": False,
                                "notes": c["message"][:4000]} for c in commits],

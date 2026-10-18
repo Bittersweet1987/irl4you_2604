@@ -181,8 +181,10 @@ class SwUpdate:
         chk = self.check(force, fresh)
         st = ((self.demo_fake() if self.fake_t0 else dict(self.fake)) or {}) if self.demo else chk
         latest = chk.get("latest") if self.HEX_RE.match(str(chk.get("latest") or "")) else None
+        lv = str(chk.get("latest_version") or "")
         state = st.get("state", "idle")
-        out = {"current": self.label(), "stage": self.STAGE, "latest": latest, "notes": str(chk.get("notes") or "")[:4000] if chk.get("available") else "",
+        out = {"current": self.label(), "stage": self.STAGE, "latest": latest,
+               "latest_version": lv if latest and re.match(r"^\d{1,4}\.\d{1,4}\.\d{1,4}(-[a-z0-9.]{1,20})?$", lv) else "", "notes": str(chk.get("notes") or "")[:4000] if chk.get("available") else "",
                "error": "", "checked_at": chk.get("checked") or chk.get("checked_at"),
                "newer": bool(latest and chk.get("available")),
                "state": state if state in ("installing", "done", "rolledback", "failed", "refused") else "idle",
