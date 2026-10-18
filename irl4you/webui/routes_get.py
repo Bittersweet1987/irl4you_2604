@@ -122,12 +122,6 @@ class GetRoutes:
         if path == "/api/support":
             return self.reply(200, {"cases": self.support.list(), "version": self.swupdate.version, "issues": "https://github.com/Bittersweet1987/irl4you_2604/issues",
                                     "now": int(time.time()), "delete_window": int(self.support.DELETE_WINDOW)})
-        if path == "/api/update":
-            try:
-                self.updates.auto_check(present=True)
-            except Exception as e:
-                print("auto_check (Anmeldung):", e)
-            return self.reply(200, self.updates.status())
         if path == "/api/dji":
             st = label_bluetooth(self.djisvc.status(), self.names)
             return self.reply(200, st)

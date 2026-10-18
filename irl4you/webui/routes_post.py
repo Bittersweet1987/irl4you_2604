@@ -288,9 +288,6 @@ class PostRoutes:
                 return self.reply(200, self.twitch.test())
             if path == "/api/hdmi":
                 return self.reply(200, self.hdmi.set(d))
-            if path == "/api/update":
-                self.updates.request(d.get("mode"), d.get("confirm") is True)
-                return self.reply(200, {"ok": True})
             m = re.match(r"^/api/cameras/([0-9a-f]{8})$", path)
             if m:
                 try:

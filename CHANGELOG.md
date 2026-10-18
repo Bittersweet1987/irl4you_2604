@@ -3,6 +3,7 @@
 Versionsschema: x.y.z, angezeigt als vx.y.z. x gibt Marco vor (0 = Alpha). y steigt nur, wenn Marco ein Release ausruft (dann wird VERSION auf "x.y" geändert). z ist die Zahl der Commits seit dem letzten Release und wird vom Updater beim Installieren aus GitHub gezählt (VERSION enthält nur "x.y"). Die Box folgt weiterhin den Commits von main; die Nummer ist nur der Anzeigename.
 
 ## 0.1
+- Karte "System-Updates (BELABOX)" entfernt (apt-Updates mit BELABOX-Paketen, pipbox-update, /api/update, Symbol im Kopf, Texte in allen Sprachen). Das Software-Update von IRL4YOU (irl4you-update) bleibt.
 - WLAN-Sticks mit AIC8800 (z. B. UGREEN AX900): Treiber, Firmware und Umschaltdatei kommen als Paket irl4you-wifi-aic8800 (Zweig legacy-mcu1 für Kernel 6.1.172); pipbox-wlandriver schaltet den Stick vom USB-Laufwerk-Modus um und prüft die Schnittstelle, es wird nichts mehr geladen oder gebaut.
 - Bluetooth: der Kernel 6.1 kennt UGREEN BT6.0 (Barrot) und TP-Link UB500 selbst; der alte btusb-Patch entfällt. pipbox-btdriver trägt nur noch fehlende Kennungen zur Laufzeit nach und hebt eine Funksperre (rfkill) auf; pipbox-btchip prüft nur noch den eingebauten Chip der ROCK 5B Plus.
 - Neues Versionsschema (vorher 2.0.0-rc.x), erstes Release 0.1. Der Updater zählt die dritte Stelle selbst, sobald VERSION nur "x.y" enthält. Sonst unverändert gegenüber 2.0.0-rc.4.

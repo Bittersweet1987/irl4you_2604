@@ -142,18 +142,18 @@ step dienste
 for f in "$HERE"/install/*.service "$HERE"/install/*.path "$HERE"/install/*.timer "$HERE"/install/*.socket; do
   install -m 644 "$f" "/etc/systemd/system/$(basename "$f")"
 done
-# Reste der alten Fassung (Software-Update lief früher über pipbox-swupdate, jetzt über irl4you-update)
-rm -f /etc/systemd/system/pipbox-swupdate.service /etc/systemd/system/pipbox-swupdate.path
+# Reste der alten Fassungen (Software-Update lief früher über pipbox-swupdate, System-Updates (BELABOX) über pipbox-update; jetzt irl4you-update)
+rm -f /etc/systemd/system/pipbox-swupdate.service /etc/systemd/system/pipbox-swupdate.path /etc/systemd/system/pipbox-update.service /etc/systemd/system/pipbox-update.path
 mkdir -p /etc/systemd/system/tailscaled.service.d
 [ -f "$HERE/install/tailscaled-pipbox-order.conf" ] && install -m 644 "$HERE/install/tailscaled-pipbox-order.conf" /etc/systemd/system/tailscaled.service.d/pipbox-order.conf
 UNITS="pipbox.service pipbox-dji.service pipbox-hdmi.service pipbox-health.service pipbox-arp.service
-  pipbox-update.path pipbox-send-ctl.path pipbox-remote.path pipbox-remote-heal.timer pipbox-wifi.path
+  pipbox-send-ctl.path pipbox-remote.path pipbox-remote-heal.timer pipbox-wifi.path
   pipbox-power.path pipbox-logmode.path pipbox-netaddr.path pipbox-logs.path pipbox-ssh.path pipbox-btdriver.timer pipbox-btdriver.path
   pipbox-wlandriver.timer pipbox-btchip.path pipbox-btchip.service pipbox-logrotate.timer pipbox-preview.socket
   pipbox-modem.path pipbox-modem-apply.timer irl4you-srs.service pipbox-rtmpstat.service NetworkManager.service ModemManager.service nginx.service ssh.service"
 if now; then
   systemctl daemon-reload
-  systemctl disable pipbox-swupdate.path 2>/dev/null || true
+  systemctl disable pipbox-swupdate.path pipbox-update.path 2>/dev/null || true
   systemctl enable $UNITS
   # nginx nur neu laden (trennt die Kameras nicht), starten, wenn es nicht läuft
   if [ "$old_rtmp" = 1 ] && systemctl is-active --quiet nginx.service; then systemctl restart nginx.service

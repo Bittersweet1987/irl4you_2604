@@ -373,14 +373,6 @@ try {
   if (window.ResizeObserver) new ResizeObserver(setH).observe(hd);
   else window.addEventListener("resize", setH);
 } catch (e) {}
-$("hdr_sys").addEventListener("click", (e) => {
-  e.preventDefault();
-  const c = $("updcard");
-  if (c) {
-    c.open = true;
-    c.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
-});
 $("hdr_upd").addEventListener("click", (e) => {
   e.preventDefault();
   const c = $("swcard");

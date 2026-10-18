@@ -113,12 +113,6 @@
   padding-left: 10px;
   margin: 10px 0;
 }
-#updcard[open] > summary .sumh::before {
-  content: "\25BE  ";
-}
-#updcard[open] > summary {
-  margin-bottom: 10px;
-}
 .badge.attn {
   background: var(--warn);
   color: #0f172a;
@@ -325,11 +319,6 @@ pre {
   max-height: 220px;
   overflow: auto;
   margin: 8px 0 0;
-}
-.upd-line {
-  display: flex;
-  justify-content: space-between;
-  padding: 3px 0;
 }
 .livehealth {
   font-size: 12px;

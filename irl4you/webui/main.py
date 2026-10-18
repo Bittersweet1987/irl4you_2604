@@ -32,7 +32,7 @@ from .send import SendControl
 from .settings_transfer import SettingsTransfer
 from .stats import StatsServer, StatsShare
 from .system import AutoStart, BtDriver, Developer, LogBundle, LogMode, Power
-from .updates import SwUpdate, Updates
+from .updates import SwUpdate
 from .usbwatch import OutageWatch, UsbWatch
 from .wifi import Wifi
 
@@ -51,9 +51,6 @@ def main():
     ap.add_argument("--rtmp-app", default="publish", help="nginx-rtmp-Applikation")
     ap.add_argument("--rtmp-stat-url", default="", help="nginx-rtmp-Statistik (XML), z. B. http://127.0.0.1/stat")
     args = ap.parse_args()
-    Handler.updates = Updates(args.state, args.demo)
-    if not args.demo:
-        threading.Thread(target=Handler.updates.auto_loop, daemon=True).start()
     Handler.djisvc = None
     Handler.auth = Auth(args.state, args.bela_config or None,
                         demo=args.demo and args.host in ("127.0.0.1", "::1", "localhost"))

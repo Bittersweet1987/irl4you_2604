@@ -1013,7 +1013,7 @@ def sections():
             "Zugangsschlüssel sind durch Platzhalter ersetzt (gleiche Werte haben gleiche Nummern). Bitte trotzdem vor dem Weitergeben kurz durchsehen.\n"
             % (time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(now)), local, version))
     units = ["pipbox", "pipbox-dji", "pipbox-send", "pipbox-health", "bluetooth", "NetworkManager", "tailscaled", "nginx"]
-    helpers = ["irl4you-update", "pipbox-update", "pipbox-wifi", "pipbox-btdriver", "pipbox-remote", "pipbox-power", "pipbox-logmode"]
+    helpers = ["irl4you-update", "pipbox-wifi", "pipbox-btdriver", "pipbox-remote", "pipbox-power", "pipbox-logmode"]
     out = [("Kopf", head),
            ("System", "Kernel: %s\nBetriebszeit: %s\nLast: %s\n%s" % (run(["uname", "-r"], 5).strip(), run(["uptime", "-p"], 5).strip(),
                                                                     read_small("/proc/loadavg"), run(["free", "-m"], 5))),
@@ -1046,10 +1046,9 @@ def sections():
            ("Hänger der Sendekette (Diagnosepakete des Wächters: Threads von belacoder, Zustand D, Statistik; Neustart erfolgte automatisch)", tail_file("/var/lib/pipbox/hang-diagnose.txt", 400)),
            ("nginx: letzte Fehler", tail_file("/var/log/nginx/error.log", 40)),
            ("Zustand der Software-Updates", tail_file("/run/pipbox-swupdate/status.json", 40)),
-           ("Protokoll der Software-Updates", collapse_repeats(tail_file("/var/log/irl4you-update.log", 150))),
-           ("Protokoll der System-Updates", collapse_repeats(tail_file(f"{STATE}/update.log", 80)))]
+           ("Protokoll der Software-Updates", collapse_repeats(tail_file("/var/log/irl4you-update.log", 150))),]
     for u, n in (("pipbox-dji", 700), ("pipbox-send", 700), ("pipbox", 400), ("pipbox-wifi", 120), ("pipbox-btdriver", 120), ("irl4you-update", 200),
-                 ("pipbox-update", 100), ("pipbox-remote", 100), ("pipbox-power", 40)):
+                 ("pipbox-remote", 100), ("pipbox-power", 40)):
         text = journal(u, n)
         out.append(("Journal %s" % u, collapse_repeats(drop_noise(text) if u == "pipbox-dji" else text)))
     ts = ("serve:\n" + (run(["tailscale", "serve", "status"], 10).strip() or "(leer)") + "\n\nfunnel:\n"

@@ -462,12 +462,6 @@ async function tick() {
     if (due("net", "c_cams", 15000)) netRender();
     if (due("ua", "netcard", 20000)) uaLoad();
     if (due("dji", "c_cams", 20000)) await djiLoad();
-    if (due("upd", "updcard", 60000)) {
-      try {
-        const ur = await fetch("/api/update");
-        if (ur.ok) renderUpdate(await ur.json());
-      } catch (e) {}
-    }
     lastAlerts = m.alerts || [];
     paintHealth();
   } catch (e) {}

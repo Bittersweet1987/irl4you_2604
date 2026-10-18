@@ -82,7 +82,6 @@ $("logout").addEventListener("click", async () => {
   await fetch("/api/logout", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
   location.reload();
 });
-const UPD_LABEL = { check: "Suche", autocheck: "Suche", dry: "Probelauf", run: "Update", reboot: "Neustart" };
 const LOC = () => (window.PB_I18N ? PB_I18N.locale() : "de-DE");
 const fmtT = (t) => (t ? new Date(t * 1000).toLocaleString(LOC()) : "nie");
 function progSet(id, show, pct, text, since) {
@@ -109,111 +108,6 @@ function progTick() {
   });
 }
 setInterval(progTick, 1000);
-function renderUpdate(u) {
-  const v = u.versions || {},
-    busy = u.state === "running" || u.state === "rebooting";
-  const lines = [
-    ["Kernel (läuft)", esc(u.kernel_running || "–")],
-    ["Kernelpaket installiert", esc(v["belabox-linux-rk3588"] || "–")],
-    ["belaui / belacoder", esc((v["belaui"] || "–") + " / " + (v["belacoder"] || "–"))],
-    ["Zuletzt geprüft", fmtT(u.last_check)],
-  ];
-  if (u.available != null)
-    lines.push(["Verfügbar", u.download && u.download !== "0 B" ? `${u.available} Pakete (${esc(u.download)})` : `${u.available} Pakete`]);
-  if (u.available != null && u.belabox && u.belabox.length) lines.push(["BELABOX-Pakete", u.belabox.map(esc).join(", ")]);
-  if (u.would_reboot) lines.push(["Hinweis", "Danach ist ein Neustart nötig (Kernel/Netzwerk)."]);
-  $("updinfo").innerHTML = lines.map((l) => `<div class="upd-line"><span class="muted">${l[0]}</span><span>${l[1]}</span></div>`).join("");
-  {
-    const dot = $("hdr_sys"),
-      n = !busy && u.state !== "failed" && u.state !== "refused" && u.available > 0 ? u.available : 0;
-    dot.hidden = !n;
-    if (n) {
-      const t = [
-        u.last_check
-          ? `BELABOX-Systemupdates: ${n} Pakete verfügbar (Stand ${fmtT(u.last_check)}).`
-          : `BELABOX-Systemupdates: ${n} Pakete verfügbar.`,
-        u.would_reboot ? "Danach ist ein Neustart nötig." : "",
-        u.streaming ? "Einspielen geht nicht während der Übertragung." : "Zu den Systemupdates.",
-      ]
-        .filter(Boolean)
-        .join(" ");
-      dot.title = t;
-      dot.setAttribute("aria-label", t);
-    }
-  }
-  const p = u.progress,
-    show = u.state === "running" && p && p.total > 0;
-  if (show)
-    progSet(
-      "updprog",
-      true,
-      Math.round((100 * (p.downloading + p.unpacking + p.setting_up)) / (3 * p.total)),
-      `Laden ${p.downloading}/${p.total}, Entpacken ${p.unpacking}/${p.total}, Einrichten ${p.setting_up}/${p.total}`,
-      (u.started || 0) * 1000,
-    );
-  else progSet("updprog", u.state === "running", 0, "", (u.started || 0) * 1000);
-  let msg = "";
-  if (!u.helper_installed) msg = "Update-Helfer ist auf der Box nicht installiert.";
-  else if (u.state === "running") msg = (UPD_LABEL[u.mode] || "Aktion") + " läuft…";
-  else if (u.state === "rebooting") msg = "Die Box startet neu. Diese Seite lädt nach dem Start wieder.";
-  else if (u.reboot_pending) msg = "Neustart nötig, damit der neue Kernel/Netzwerkteile aktiv werden.";
-  else if (u.message) msg = u.message;
-  if (u.streaming) msg = "Übertragung läuft: Installieren und Neustart sind gesperrt. " + msg;
-  $("updmsg").textContent = msg;
-  $("updmsg").style.color = u.state === "failed" || u.state === "refused" ? "var(--crit)" : "";
-  $("u_check").disabled = $("u_dry").disabled = busy || !u.helper_installed;
-  $("u_run").disabled = busy || u.streaming || !u.helper_installed;
-  $("u_run").className = u.available > 0 ? "warnbtn" : "sec";
-  $("u_reboot").disabled = busy || u.streaming || !u.helper_installed;
-  $("u_reboot").className = u.reboot_pending ? "warnbtn" : "sec";
-  if (u.log !== undefined && $("upddet").open) $("updlog").textContent = u.log || "(leer)";
-  const attention = busy || u.reboot_pending || u.state === "failed" || u.state === "refused" || u.available > 0;
-  let badge = "nicht geprüft",
-    cls = "ok";
-  if (busy) {
-    badge = u.state === "rebooting" ? "Neustart…" : "läuft…";
-    cls = "attn";
-  } else if (u.reboot_pending) {
-    badge = "Neustart nötig";
-    cls = "attn";
-  } else if (u.state === "failed" || u.state === "refused") {
-    badge = "Fehler";
-    cls = "attn";
-  } else if (u.available > 0) {
-    badge = `${u.available} Updates verfügbar`;
-    cls = "attn";
-  } else if (u.last_check || u.state === "done") {
-    badge = "aktuell";
-    cls = "ok";
-  }
-  $("updbadge").textContent = badge;
-  $("updbadge").className = "badge " + cls;
-  if (attention && window._updAttn !== true) $("updcard").open = true;
-  window._updAttn = attention;
-}
-async function updPost(mode, confirm) {
-  const r = await fetch("/api/update", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ mode, confirm }),
-  });
-  if (!r.ok) alert((await r.json()).error);
-  tick();
-}
-$("u_check").onclick = () => updPost("check");
-$("u_dry").onclick = () => updPost("dry");
-$("u_run").onclick = () => {
-  if (
-    confirm(
-      "System-Update installieren?\n\n• Es darf KEINE Übertragung laufen.\n• Strom nicht trennen: bei einem Kernel-Update kann die Box sonst unbrauchbar werden.\n• Danach ist meist ein Neustart nötig, und die Kameras müssen neu geprüft werden.\n• Ein automatisches Zurückrollen gibt es nicht.",
-    )
-  )
-    updPost("run", true);
-};
-$("u_reboot").onclick = () => {
-  if (confirm("Box jetzt neu starten?")) updPost("reboot", true);
-};
-$("upddet").addEventListener("toggle", tick);
 const DJI_STATE = {
   idle: ["Getrennt", 0],
   searching: ["Sucht", 1],

@@ -90,10 +90,6 @@ html[data-design] :is(button, input, select, summary, a):focus-visible {
 :where(html[data-design="klar"]) details.card[open] > summary .sumh::before,
 :where(html[data-design="klar"]) .subsec[open] > summary::before,
 :where(html[data-design="klar"]) #swcard[open] > summary .sumh::before,
-:where(html[data-design="klar"]) #updcard[open] > summary .sumh::before {
-  content: "";
-  transform: rotate(45deg);
-}
 :where(html[data-design="klar"]) .subsec > summary {
   margin: 18px 0 8px;
   min-height: 40px;

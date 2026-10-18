@@ -149,10 +149,6 @@ KEY_RE = re.compile(r"^[a-z0-9][a-z0-9_-]{0,31}$")
 ROLES = ("main", "pip", "extra")
 
 
-KEY_PACKAGES = ("belabox-linux-rk3588", "belaui", "belacoder", "belabox-rk3588",
-                "irl4you-encoder", "irl4you-srtla", "irl4you-mpp", "irl4you-gst-rockchip")
-
-
 def belacoder_running():
     try:
         for d in os.listdir("/proc"):
@@ -162,23 +158,6 @@ def belacoder_running():
         pass
     return False
 
-
-def installed_versions():
-    try:
-        st = os.stat("/var/lib/dpkg/status")
-        sig = (st.st_mtime_ns, st.st_size)
-    except OSError:
-        sig = None
-    hit = _TTL.get("dpkg")
-    if hit is not None and hit[0] == sig and sig is not None:
-        return dict(hit[1])
-    res = {}
-    for block in (read("/var/lib/dpkg/status", "") or "").split("\n\n"):
-        f = dict(line.split(": ", 1) for line in block.splitlines() if ": " in line and not line.startswith(" "))
-        if f.get("Package") in KEY_PACKAGES and "installed" in f.get("Status", "") and "not-installed" not in f.get("Status", ""):
-            res[f["Package"]] = f.get("Version", "?")
-    _TTL["dpkg"] = (sig, dict(res))
-    return res
 
 
 IFACE_NAME_RE = re.compile(r"^[A-Za-z0-9._-]{1,15}$")

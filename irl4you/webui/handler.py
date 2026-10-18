@@ -11,7 +11,6 @@ class Handler(HttpBase, HttpStats, GetRoutes, PostRoutes):
     sampler = None
     cams = None
     auth = None
-    updates = None
     djisvc = None
     netchoice = None
     names = None
