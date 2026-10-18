@@ -591,12 +591,6 @@ def big_cpus(cpu_dir="/sys/devices/system/cpu"):
     return sorted(c for c, v in cap.items() if v >= top * 0.9)
 
 
-# Der Kernel 6.1 setzt die Spannungsstufe zum Takt der schnellen Kerne noch nicht (Boot-Meldung "rockchip_pvtpll_set_volt_sel:
-# error cfg"). Ab 1608 MHz setzte die Box unter Last hart zurück (gemessen 18.10.2026), bis 1416 MHz lief sie stabil.
-# Deshalb deckeln wir den Takt der schnellen Kerne, bis der Kernel das kann.
-SAFE_MAX_KHZ = 1416000
-
-
 class CpuBoost:
 
     def __init__(self, cpu_dir="/sys/devices/system/cpu", state=f"{RUN}/cpugov.json", log=print):
@@ -616,21 +610,8 @@ class CpuBoost:
                 out.append(p)
         return out
 
-    @staticmethod
-    def cap_clock(p):
-        """Höchsttakt der Gruppe auf SAFE_MAX_KHZ begrenzen (bleibt bestehen, wird nicht zurückgesetzt)."""
-        try:
-            avail = sorted(int(x) for x in open(p + "/scaling_available_frequencies").read().split())
-            cap = max([f for f in avail if f <= SAFE_MAX_KHZ] or avail[:1])
-            if int(open(p + "/scaling_max_freq").read()) > cap:
-                with open(p + "/scaling_max_freq", "w") as f:
-                    f.write(str(cap))
-        except (OSError, ValueError):
-            pass
-
     def on(self):
         for p in self._policy_dirs():
-            self.cap_clock(p)
             try:
                 cur = open(p + "/scaling_governor").read().strip()
                 if cur != "performance" and "performance" in open(p + "/scaling_available_governors").read().split():
