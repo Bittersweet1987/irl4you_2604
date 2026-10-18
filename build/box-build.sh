@@ -6,7 +6,7 @@ set -euo pipefail
 HERE=$(cd "$(dirname "$0")" && pwd)   # vor dem cd merken: Aufruf mit relativem Pfad bleibt gueltig
 B=${B:-/var/tmp/irl4you-build}
 KVER=$(uname -r)
-PIP_REPO=${PIP_REPO:-https://github.com/Bittersweet1987/irl4you-pip.git}
+SRC=$(cd "$HERE/.." && pwd)   # Quelltext von Encoder und SRTLA-Sender liegt in diesem Repo (encoder/, srtla/)
 mkdir -p "$B/debs"; cd "$B"
 export DEBIAN_FRONTEND=noninteractive
 log() { echo "[$(date +%H:%M:%S)] $*"; }
@@ -21,20 +21,12 @@ mkdeb() {
     ls -la "$B/debs/${name}_${ver}_arm64.deb"
 }
 
-# PR-Stand aus irl4you-pip holen (Entwürfe, solange nicht gemergt): pip_src <Verzeichnis> <PR-Nummer>
-pip_src() {
-    if [ ! -d "$B/$1/.git" ]; then git clone -q "$PIP_REPO" "$B/$1"; fi
-    git -C "$B/$1" fetch -q -f origin "+pull/$2/head:pr$2" 2>/dev/null || git -C "$B/$1" fetch -q origin main
-    git -C "$B/$1" checkout -q -f "pr$2" 2>/dev/null || git -C "$B/$1" checkout -q -f origin/main
-    git -C "$B/$1" log -1 --format='%h %cs %s'
-}
-
 build_encoder() {
     log "irl4you-encoder"
     apt-get install -y -q --no-install-recommends meson ninja-build gcc pkgconf libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev \
         libjson-glib-dev libsrt-gnutls-dev srt-tools gstreamer1.0-plugins-ugly gstreamer1.0-plugins-bad gstreamer1.0-libav >/dev/null
-    pip_src pip-encoder 2
-    cd "$B/pip-encoder/encoder"; rm -rf b st
+    rm -rf "$B/src-encoder"; cp -a "$SRC/encoder" "$B/src-encoder"
+    cd "$B/src-encoder"; rm -rf b st
     meson setup b --prefix=/usr >/dev/null; meson compile -C b 2>&1 | tail -3
     meson test -C b --print-errorlogs 2>&1 | tail -6
     DESTDIR="$PWD/st" meson install -C b >/dev/null
@@ -46,8 +38,8 @@ build_encoder() {
 build_srtla() {
     log "irl4you-srtla"
     apt-get install -y -q --no-install-recommends gcc make >/dev/null
-    pip_src pip-srtla 1
-    cd "$B/pip-srtla/srtla"; rm -rf build st
+    rm -rf "$B/src-srtla"; cp -a "$SRC/srtla" "$B/src-srtla"
+    cd "$B/src-srtla"; rm -rf build st
     make 2>&1 | tail -3
     make test 2>&1 | tail -8
     make install PREFIX=/usr DESTDIR="$PWD/st" >/dev/null
