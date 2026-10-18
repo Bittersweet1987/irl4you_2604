@@ -24,7 +24,7 @@ jobs:
             *) echo "VERSION '$v' ungültig"; exit 1 ;;
           esac
           tag="v$v.0"
-          lic="Lizenz: CC BY-ND 4.0 (Nutzung auch kommerziell erlaubt, Änderungen nur nach Rückfrage bei Bittersweet1987, Ausnahme IRL4YOU), siehe LICENSE und ZUSATZERLAUBNIS.md im Repository. Drittprojekte behalten ihre Lizenzen (NOTICE.md)."
+          lic="Lizenz: CC BY-ND 4.0 (Nutzung auch kommerziell erlaubt, Änderungen nur nach Rückfrage bei Bittersweet1987 oder Akino01, Ausnahme IRL4YOU), siehe LICENSE und ZUSATZERLAUBNIS.md im Repository. Drittprojekte behalten ihre Lizenzen (NOTICE.md)."
           if gh release view "$tag" >/dev/null 2>&1; then
             body="$(gh release view "$tag" --json body --jq .body)"
             case "$body" in *"CC BY-ND 4.0"*) echo "$tag existiert schon"; exit 0 ;; esac
