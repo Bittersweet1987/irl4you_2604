@@ -1,5 +1,5 @@
 #!/bin/sh
-# IRL4YOU BOX auf Ubuntu 26.04 einrichten, ohne BELABOX (kein belaUI, keine BELABOX-Pakete).
+# IRL4YOU BOX auf Ubuntu 26.04 einrichten.
 # Läuft als root auf der neuen Box (oder im chroot des neuen Systems mit --chroot: dann werden keine Dienste gestartet).
 #
 #   install-2604.sh [--chroot] [--migrate-from DIR]
@@ -17,7 +17,7 @@
 # über den Update-Helfer (Commits von main, Repo irl4you_2604).
 #
 # Die eigenen Programme (irl4you-encoder, irl4you-srtla, irl4you-mpp, irl4you-rga, irl4you-gst-rockchip, Kernel) kommen als .deb-Pakete
-# aus Belabox-2604/build und werden hier nicht gebaut.
+# aus dem Ordner build/ des Repos und werden hier nicht gebaut.
 set -eu
 SRC="$(cd "$(dirname "$0")/.." && pwd)"
 CHROOT=0

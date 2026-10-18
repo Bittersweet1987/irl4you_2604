@@ -9,7 +9,7 @@ SYSFS_BT = "/sys/class/bluetooth"
 SYSFS_NET = "/sys/class/net"
 BTDRIVER_STATUS = "/run/pipbox-btdriver/status.json"
 BARROT_VENDOR = "33fa"
-BARROT_HINT = ("Dieser Stick hat einen BARROT-Chip (zum Beispiel UGREEN Bluetooth 5.4 oder 6.0). Der Kernel dieser BELABOX (5.10) startet ihn nicht von allein. "
+BARROT_HINT = ("Dieser Stick hat einen BARROT-Chip (zum Beispiel UGREEN Bluetooth 5.4 oder 6.0). Der Kernel dieser IRL4YOU Box startet ihn nicht von allein. "
                "Die Box richtet dafür beim Einstecken selbst einen Treiber ein (dauert wenige Minuten, nie während einer Übertragung). "
                "Steht diese Meldung danach noch da, ließ sich der Treiber nicht einrichten (siehe die Meldung zum Treiber): "
                "Bitte einen Stick mit Realtek-Chip RTL8761B verwenden, zum Beispiel TP-Link UB500 oder ASUS USB-BT500.")

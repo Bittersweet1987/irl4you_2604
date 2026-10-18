@@ -191,7 +191,7 @@ function phoneRender(d) {
   b.textContent = pr.active ? "Abbrechen" : "Handy koppeln";
   const m = $("ph_msg");
   m.textContent = pr.active
-    ? `Die Box ist jetzt noch ${pr.left} Sekunden sichtbar. Am Handy in den Bluetooth-Einstellungen nach neuen Geräten suchen und „belabox“ auswählen.`
+    ? `Die Box ist jetzt noch ${pr.left} Sekunden sichtbar. Am Handy in den Bluetooth-Einstellungen nach neuen Geräten suchen und „irl4you“ auswählen.`
     : pr.message || "";
 }
 $("ph_pair").onclick = async () => {

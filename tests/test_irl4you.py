@@ -1,4 +1,4 @@
-"""Ohne Box: die neuen Teile von IRL4YOU für 26.04 (Belabox-2604/irl4you) als Funktionen prüfen.
+"""Ohne Box: die Teile von IRL4YOU für 26.04 (irl4you/) als Funktionen prüfen.
 
 Mobilfunk (pipbox_modem), eigenes Passwort mit übernommenem bcrypt-Hash, zusätzliche Tonquellen, feste Kartennamen,
 Netzwerk-Dispatcher (mit einem nachgebauten `ip`), Vollständigkeit des Installationsskripts.
@@ -163,7 +163,7 @@ class TestModem(unittest.TestCase):
 
 
 class TestPasswort(unittest.TestCase):
-    """Eigenes Passwort von IRL4YOU mit dem übernommenen bcrypt-Hash aus belaUI."""
+    """Eigenes Passwort von IRL4YOU mit bcrypt-Hash (bei der Umstellung von der alten Box übernommen)."""
 
     def setUp(self):
         try:
@@ -189,19 +189,6 @@ class TestPasswort(unittest.TestCase):
         self.assertTrue(a.valid(tok))
         with self.assertRaises(ValueError):
             a.login("falsch", "10.0.0.1")
-
-    def test_gemerkte_anmeldungen_bleiben_gueltig(self):
-        """Gleicher Hash wie vorher in belaUI: 'Angemeldet bleiben' aus der 22.04-Zeit gilt weiter (sessions.json wird übernommen)."""
-        bela = os.path.join(self.dir, "bela.json")
-        with open(bela, "w") as f:
-            json.dump({"password_hash": self.h}, f)
-        alt = self.server.Auth(os.path.join(self.dir, "alt"), bela)
-        neu_dir = os.path.join(self.dir, "neu")
-        os.makedirs(neu_dir)
-        with open(os.path.join(neu_dir, "auth.json"), "w") as f:
-            json.dump({"bcrypt": self.h}, f)
-        neu = self.server.Auth(neu_dir)
-        self.assertEqual(alt._cred(), neu._cred())
 
     def test_ersteinrichtung_ohne_setup_code(self):
         a = self.server.Auth(self.dir)
@@ -528,6 +515,18 @@ class TestInstallation(unittest.TestCase):
             if sh:
                 r = subprocess.run([sh, "-n", p], capture_output=True, text=True)
                 self.assertEqual(r.returncode, 0, rel + ": " + r.stderr)
+
+    def test_keine_belabox_texte(self):
+        """Oberfläche, Meldungen und Übersetzungen sprechen nur von der IRL4YOU Box (Ausnahme: Danksagung im Fuß der Seite)."""
+        for base, _, files in os.walk(IRL):
+            if "debs" in base.split(os.sep) or "__pycache__" in base:
+                continue
+            for f in files:
+                if not f.endswith((".py", ".js", ".html", ".json", ".css")):
+                    continue
+                txt = open(os.path.join(base, f), encoding="utf-8").read()
+                txt = re.sub(r'"?Drittprojekte \(Moblin, BELABOX\)"?(: "[^"]*")?', "", txt)
+                self.assertNotIn("belabox", txt.lower(), os.path.join(base, f))
 
     def test_version_als_verweis(self):
         """Updates: jede Version liegt in /opt/irl4you/releases/<Version>, /opt/pipbox ist ein Verweis; system-install.sh kopiert keine Programmdateien."""

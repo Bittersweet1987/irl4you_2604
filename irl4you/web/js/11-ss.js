@@ -55,7 +55,7 @@ async function rLoad() {
   const acts = $("r_actions");
   acts.innerHTML = "";
   const FUNNEL_ASK =
-    "Die Oberfläche öffentlich im Internet freigeben (Funnel)?\n\nDanach kann JEDER im Internet, der die Adresse der Box kennt, die Anmeldeseite öffnen, auch ohne Tailscale. Geschützt ist die Box dann nur durch das BELABOX-Passwort.\n\n• Nur mit einem starken, langen Passwort verwenden.\n• Die Freigabe bleibt an, auch nach einem Neustart der Box, bis Sie sie mit „Öffentliche Freigabe beenden“ abschalten.\n• Der Gerätename steht in öffentlichen Zertifikatslisten und wird von Suchprogrammen gefunden, die Anmeldeseite wird dann ausprobiert.\n\nWenn Sie nur von eigenen Geräten zugreifen wollen, reicht die Freigabe im privaten Netz (Tailscale-App auf dem Gerät).\n\nWirklich öffentlich freigeben?";
+    "Die Oberfläche öffentlich im Internet freigeben (Funnel)?\n\nDanach kann JEDER im Internet, der die Adresse der Box kennt, die Anmeldeseite öffnen, auch ohne Tailscale. Geschützt ist die Box dann nur durch das Passwort der IRL4YOU Box.\n\n• Nur mit einem starken, langen Passwort verwenden.\n• Die Freigabe bleibt an, auch nach einem Neustart der Box, bis Sie sie mit „Öffentliche Freigabe beenden“ abschalten.\n• Der Gerätename steht in öffentlichen Zertifikatslisten und wird von Suchprogrammen gefunden, die Anmeldeseite wird dann ausprobiert.\n\nWenn Sie nur von eigenen Geräten zugreifen wollen, reicht die Freigabe im privaten Netz (Tailscale-App auf dem Gerät).\n\nWirklich öffentlich freigeben?";
   const add = (txt, act, cls, ask, extra) => {
     const b = document.createElement("button");
     b.type = "button";
@@ -104,7 +104,7 @@ async function rLoad() {
       choice("Ja, einrichten", "", async () => {
         if (
           !confirm(
-            "Tailscale aus der offiziellen Paketquelle installieren?\n\nDas lädt ein kleines Programm herunter. Es ändert nichts am BELABOX-System.",
+            "Tailscale aus der offiziellen Paketquelle installieren?\n\nDas lädt ein kleines Programm herunter. Es ändert nichts am System der IRL4YOU Box.",
           )
         )
           return;

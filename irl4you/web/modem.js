@@ -48,7 +48,7 @@ catch(x){msg.textContent=x.message;return;}b.blur();setTimeout(load,1200);});
 function pwInit(){const f=$("uipw_form");if(!f)return;f.addEventListener("submit",async e=>{e.preventDefault();const m=$("uipw_msg");
 const o=$("uipw_old").value,n=$("uipw_new").value,n2=$("uipw_new2").value;if(n!==n2){m.textContent="Die beiden neuen Passwörter sind verschieden";return;}
 try{await call("POST","/api/password",{old:o,new:n,remember:true});m.textContent="Passwort geändert. Andere Geräte müssen sich neu anmelden.";f.reset();}catch(x){m.textContent=x.message;}});
-call("GET","/api/auth").then(a=>{if(a.mode!=="own"){$("uipw_form").hidden=true;$("uipw_msg").textContent=a.mode==="demo"?"In der Vorschau nicht möglich.":"Das Passwort wird über die BELABOX-Oberfläche verwaltet.";}}).catch(()=>{});}
+call("GET","/api/auth").then(a=>{if(a.mode!=="own"){$("uipw_form").hidden=true;$("uipw_msg").textContent=a.mode==="demo"?"In der Vorschau nicht möglich.":"Das Passwort lässt sich hier nicht ändern.";}}).catch(()=>{});}
 function init(){pwInit();const sec=$("net_modem");if(sec)sec.addEventListener("toggle",()=>{if(sec.open)load();});load();}
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init);else init();
 })();

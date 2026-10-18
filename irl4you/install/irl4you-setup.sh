@@ -1,5 +1,5 @@
 #!/bin/sh
-# IRL4YOU BOX: Dienste, Netz, udev, RTMP, venv und PiP-Baustein einrichten (Ubuntu 26.04, ohne BELABOX). Wird von install/system-install.sh
+# IRL4YOU BOX: Dienste, Netz, udev, RTMP, venv und PiP-Baustein einrichten (Ubuntu 26.04). Wird von install/system-install.sh
 # aufgerufen (nach Basis-Anpassungen und eigenen .deb-Paketen). Kopiert keine Programmdateien: die liegen unter
 # /opt/irl4you/releases/<Version>, /opt/pipbox zeigt auf die aktive Version. Darf mehrfach laufen.
 #
@@ -142,7 +142,7 @@ step dienste
 for f in "$HERE"/install/*.service "$HERE"/install/*.path "$HERE"/install/*.timer "$HERE"/install/*.socket; do
   install -m 644 "$f" "/etc/systemd/system/$(basename "$f")"
 done
-# Reste der alten Fassungen (Software-Update lief früher über pipbox-swupdate, System-Updates (BELABOX) über pipbox-update; jetzt irl4you-update)
+# Reste der alten Fassungen (Software-Update lief früher über pipbox-swupdate, die apt-Karte über pipbox-update; jetzt irl4you-update)
 rm -f /etc/systemd/system/pipbox-swupdate.service /etc/systemd/system/pipbox-swupdate.path /etc/systemd/system/pipbox-update.service /etc/systemd/system/pipbox-update.path
 mkdir -p /etc/systemd/system/tailscaled.service.d
 [ -f "$HERE/install/tailscaled-pipbox-order.conf" ] && install -m 644 "$HERE/install/tailscaled-pipbox-order.conf" /etc/systemd/system/tailscaled.service.d/pipbox-order.conf

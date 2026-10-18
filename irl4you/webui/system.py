@@ -303,25 +303,14 @@ class Developer:
     HELPER = "/etc/systemd/system/pipbox-ssh.path"
     USER_RE = re.compile(r"[a-z_][a-z0-9_-]{0,31}")
 
-    def __init__(self, state_dir, demo, bela_config=None):
+    def __init__(self, state_dir, demo):
         self.req = os.path.join(state_dir, "ssh-request")
         self.pass_file = os.path.join(state_dir, "ssh-pass.json")
         self.demo = demo
-        self.bela_dir = os.path.dirname(os.path.abspath(bela_config)) if bela_config else None
         self.system_file = os.path.join(state_dir, "system.json")
         self.fake_active = False
         self.fake_pass = "Demo-Passwort-1234"
         self.fake_time = 0
-
-    def _json(self, name):
-        if not self.bela_dir:
-            return None
-        try:
-            with open(os.path.join(self.bela_dir, name)) as f:
-                d = json.load(f)
-        except (OSError, ValueError):
-            return None
-        return d if isinstance(d, dict) else None
 
     def ssh_user(self):
         try:
@@ -329,8 +318,6 @@ class Developer:
                 u = json.load(f).get("ssh_user")
         except (OSError, ValueError, AttributeError):
             u = None
-        if u is None:
-            u = (self._json("setup.json") or {}).get("ssh_user")
         return u if isinstance(u, str) and self.USER_RE.fullmatch(u) else ""
 
     def _ours(self):
@@ -345,10 +332,7 @@ class Developer:
         return None
 
     def password_created(self):
-        if self._ours():
-            return True
-        c = self._json("config.json")
-        return None if c is None else bool(c.get("ssh_pass"))
+        return bool(self._ours())
 
     @staticmethod
     def _has_unit():
@@ -419,8 +403,4 @@ class Developer:
         ours = self._ours()
         if ours:
             return {"user": self.ssh_user() or ours["user"], "password": ours["password"], "state": self.status().get("password_state")}
-        c = self._json("config.json")
-        pw = c.get("ssh_pass") if c else None
-        if not isinstance(pw, str) or not pw:
-            raise ValueError("Für SSH wurde noch kein Passwort erzeugt. Es entsteht beim ersten Einschalten oder mit „Passwort zurücksetzen“.")
-        return {"user": self.ssh_user(), "password": pw, "state": self.status().get("password_state")}
+        raise ValueError("Für SSH wurde noch kein Passwort erzeugt. Es entsteht beim ersten Einschalten oder mit „Passwort zurücksetzen“.")

@@ -1,7 +1,7 @@
 # irl4you/
 
 Programmstand von IRL4YOU für Ubuntu 26.04 (alles, was auf der Box unter `/opt/pipbox` liegt; jeder Commit auf `main` ist ein Stand).
-Gepflegt wird er lokal in `Belabox-2604\irl4you\`, getestet (`tests/test_irl4you.py`, auf der Box die Suite in `Belabox-2604\tests`) und dann hierher committet.
+Gepflegt wird er lokal gepflegt, getestet (`tests/test_irl4you.py`, auf der Box die Box-Suite) und dann hierher committet.
 
 - `server.py` (Einstieg) und `webui/` (Oberfläche, Port 8780 und 80, aufgeteilt in Teile mit höchstens 500 Zeilen: common, auth, pipeline*, send, cameras, wifi, updates, routes_get/post …), `pipbox_send.py`/`pipbox_live.py` (Sendekette mit `irl4you-encoder` und `irl4you-srtla`),
   `pipbox_modem.py` + `pipbox-modem.py` (Mobilfunk), `dji*.py`, `hdmi_daemon.py`, Helfer `pipbox-*.py`, `web/`.

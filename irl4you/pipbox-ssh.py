@@ -19,7 +19,6 @@ ACTIONS = ("start", "stop", "check", "reset")
 PASS_FILE = f"{STATE}/ssh-pass.json"
 PASS_LEN = 20
 ALPHABET = string.ascii_letters + string.digits
-BELA_DIR = "/opt/belaUI"
 SHADOW = "/etc/shadow"
 USER_RE = re.compile(r"[a-z_][a-z0-9_-]{0,31}")
 
@@ -55,7 +54,7 @@ def read_json(path, limit=65536):
 
 def ssh_user():
     own = read_json(f"{STATE}/system.json")
-    user = own.get("ssh_user") if own is not None else (read_json(f"{BELA_DIR}/setup.json") or {}).get("ssh_user")
+    user = own.get("ssh_user") if own is not None else None
     return user if isinstance(user, str) and USER_RE.fullmatch(user) else None
 
 
@@ -75,7 +74,7 @@ def load_ours(user):
 
 
 def generated_password_exists(user):
-    return bool(load_ours(user) or (read_json(f"{BELA_DIR}/config.json") or {}).get("ssh_pass"))
+    return bool(load_ours(user))
 
 
 def password_state():
@@ -88,10 +87,7 @@ def password_state():
     ours = load_ours(user)
     if ours:
         return "generated" if line == ours["hash"] else "own"
-    cfg = read_json(f"{BELA_DIR}/config.json") or {}
-    if not cfg.get("ssh_pass") or not cfg.get("ssh_pass_hash"):
-        return "unknown"
-    return "generated" if line == str(cfg["ssh_pass_hash"]).rstrip("\n") else "own"
+    return "unknown"
 
 
 def store_ours(user, password, line):

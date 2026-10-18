@@ -6,7 +6,6 @@ import ipaddress
 import json
 import os
 import secrets
-import subprocess
 import threading
 import time
 
@@ -25,14 +24,9 @@ MAX_CHECKS = 2
 
 class Auth:
 
-    BELA_JS = ("const b=require(process.argv[1]);let d='';"
-               "process.stdin.on('data',c=>d+=c).on('end',()=>"
-               "process.exit(b.compareSync(d,process.argv[2])?0:1))")
-
     DEMO_PASSWORD = "demo"
 
-    def __init__(self, state_dir, bela_config=None, demo=False):
-        self.bela_config = bela_config
+    def __init__(self, state_dir, demo=False):
         self.demo = bool(demo)
         self.dir = state_dir
         self.path = os.path.join(state_dir, "auth.json")
@@ -48,12 +42,12 @@ class Auth:
                 self.cfg = json.load(f)
         except (OSError, ValueError):
             pass
-        if self.demo and not self.bela_hash():
+        if self.demo:
             salt = secrets.token_bytes(16)
             self.cfg = {"salt": salt.hex(), "hash": self._hash(self.DEMO_PASSWORD, salt).hex()}
 
     def _cred(self):
-        h = self.bela_hash() or ("demo" if self.demo else (self.cfg or {}).get("hash")) or ""
+        h = self.own_bcrypt() or ("demo" if self.demo else (self.cfg or {}).get("hash")) or ""
         return hashlib.sha256(("pbcred:" + h).encode()).hexdigest()
 
     @staticmethod
@@ -79,62 +73,24 @@ class Auth:
         h = (self.cfg or {}).get("bcrypt")
         return h if isinstance(h, str) and h.startswith("$2") else None
 
-    def bela_hash(self):
-        own = self.own_bcrypt()
-        if own:
-            return own
-        if not self.bela_config:
-            return None
-        try:
-            with open(self.bela_config) as f:
-                h = json.load(f).get("password_hash")
-        except (OSError, ValueError):
-            return None
-        return h if isinstance(h, str) and h.startswith("$2") else None
-
-    def bela_ok(self, pw, h):
+    @staticmethod
+    def bcrypt_ok(pw, h):
         try:
             import bcrypt
         except ImportError:
-            bcrypt = None
-        if bcrypt is not None:
-            try:
-                return bcrypt.checkpw(pw.encode("utf-8"), h.encode("ascii"))
-            except (ValueError, TypeError):
-                raise RuntimeError("Passwortprüfung nicht möglich")
-        if not self.bela_config:
             raise RuntimeError("Passwortprüfung nicht möglich (python3-bcrypt fehlt)")
-        mod = os.path.join(os.path.dirname(self.bela_config), "node_modules", "bcrypt")
         try:
-            r = subprocess.run(["node", "-e", self.BELA_JS, mod, h],
-                               input=pw.encode(), timeout=10,
-                               stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        except (OSError, subprocess.TimeoutExpired):
-            raise RuntimeError("BELABOX-Passwortprüfung nicht möglich")
-        if r.returncode not in (0, 1):
-            raise RuntimeError("BELABOX-Passwortprüfung nicht möglich")
-        return r.returncode == 0
-
-    def bela_pending(self):
-        if not self.bela_config or self.bela_hash():
-            return False
-        return os.path.isdir(os.path.dirname(os.path.abspath(self.bela_config)))
+            return bcrypt.checkpw(pw.encode("utf-8"), h.encode("ascii"))
+        except (ValueError, TypeError):
+            raise RuntimeError("Passwortprüfung nicht möglich")
 
     @property
     def mode(self):
-        if self.own_bcrypt():
-            return "own"
-        if self.bela_hash():
-            return "belabox"
-        if self.demo and self.cfg:
-            return "demo"
-        if self.cfg:
-            return "own"
-        return "belabox-wartet" if self.bela_pending() else "own"
+        return "demo" if self.demo and self.cfg and not self.own_bcrypt() else "own"
 
     @property
     def configured(self):
-        return bool(self.cfg) or self.mode == "belabox"
+        return bool(self.cfg)
 
     @property
     def setup_needed(self):
@@ -190,8 +146,6 @@ class Auth:
             self.unreserve(ip, mark)
         return good
 
-    WAITING_MSG = "Auf der BELABOX ist noch kein Passwort gesetzt. Bitte zuerst in der BELABOX-Oberfläche eines festlegen."
-
     TAILSCALE = ipaddress.ip_network("100.64.0.0/10")
 
     @classmethod
@@ -207,8 +161,6 @@ class Auth:
         if not self.local_ip(ip):
             raise ValueError("Die Ersteinrichtung ist nur aus dem lokalen Netz möglich")
         with self.lock:
-            if self.mode == "belabox-wartet":
-                raise ValueError(self.WAITING_MSG)
             if not self.setup_needed:
                 raise ValueError("Passwort ist schon gesetzt")
             if len(pw or "") < 10:
@@ -231,7 +183,7 @@ class Auth:
             raise ValueError("Neues Passwort: höchstens 72 Byte")
         bh = self.own_bcrypt()
         if bh:
-            verify = lambda: self.bela_ok(old or "", bh)
+            verify = lambda: self.bcrypt_ok(old or "", bh)
         else:
             verify = lambda: hmac.compare_digest(self._hash(old or "", bytes.fromhex(self.cfg["salt"])), bytes.fromhex(self.cfg["hash"]))
         if not self.check_password(ip, verify):
@@ -253,10 +205,10 @@ class Auth:
 
     def login(self, pw, ip, remember=False):
         if not self.configured:
-            raise ValueError(self.WAITING_MSG if self.mode == "belabox-wartet" else "Noch kein Passwort gesetzt")
-        bh = self.bela_hash()
+            raise ValueError("Noch kein Passwort gesetzt")
+        bh = self.own_bcrypt()
         if bh:
-            verify = lambda: self.bela_ok(pw or "", bh)
+            verify = lambda: self.bcrypt_ok(pw or "", bh)
         else:
             verify = lambda: hmac.compare_digest(self._hash(pw or "", bytes.fromhex(self.cfg["salt"])), bytes.fromhex(self.cfg["hash"]))
         if not self.check_password(ip, verify):

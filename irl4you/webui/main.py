@@ -45,15 +45,14 @@ def main():
     ap.add_argument("--allow-public", action="store_true", help=argparse.SUPPRESS)
     ap.add_argument("--state", default=os.path.join(APP_DIR, "state"),
                     help="Ordner für Passwort-Hash und Kameraliste")
-    ap.add_argument("--bela-config", default="", help="belaUI config.json: BELABOX-Passwort mitbenutzen")
+    ap.add_argument("--bela-config", default="", help=argparse.SUPPRESS)      # veraltet, ohne Wirkung (alte Dienstdateien nennen es noch)
     ap.add_argument("--extra-port", type=int, default=0, help="zusätzlicher Port (z. B. 80), gleiche Oberfläche")
     ap.add_argument("--rtmp-port", type=int, default=1935, help="RTMP-Port, den Kameras nutzen")
     ap.add_argument("--rtmp-app", default="publish", help="nginx-rtmp-Applikation")
     ap.add_argument("--rtmp-stat-url", default="", help="nginx-rtmp-Statistik (XML), z. B. http://127.0.0.1/stat")
     args = ap.parse_args()
     Handler.djisvc = None
-    Handler.auth = Auth(args.state, args.bela_config or None,
-                        demo=args.demo and args.host in ("127.0.0.1", "::1", "localhost"))
+    Handler.auth = Auth(args.state, demo=args.demo and args.host in ("127.0.0.1", "::1", "localhost"))
     Handler.cams = CameraStore(os.path.join(args.state, "cameras.json"), args.rtmp_app, args.rtmp_stat_url, args.demo)
     Handler.outages = OutageWatch()
     Handler.usbwatch = UsbWatch(os.path.join(args.state, "usb-events.json"), demo=args.demo)
@@ -82,7 +81,7 @@ def main():
     Handler.logmode = LogMode(args.state, args.demo)
     Handler.btdriver = BtDriver(args.state, args.demo)
     Handler.logbundle = LogBundle(args.state, args.demo)
-    Handler.developer = Developer(args.state, args.demo, args.bela_config or None)
+    Handler.developer = Developer(args.state, args.demo)
     Handler.autostart = AutoStart(args.state, Handler.send, args.demo)
     if not args.demo:
         threading.Thread(target=Handler.autostart.run, daemon=True).start()
