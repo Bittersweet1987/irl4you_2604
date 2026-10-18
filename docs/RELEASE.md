@@ -13,3 +13,7 @@ Die Version hat die Form x.y.z und wird als vx.y.z angezeigt.
 3. Die Box installiert wie bisher jeden grünen Commit von `main` über `irl4you-update`. Der Release ist für sie nur der Punkt, ab dem die dritte Stelle wieder bei 0 beginnt.
 
 Fehlt ein Release, lässt er sich über Actions → Release → "Run workflow" nachholen. Gibt es den Tag schon, passiert nichts.
+
+## Commit-Nachrichten
+
+Keine Zeilen `Co-Authored-By:` (und keine `Claude-Session:`-Zeilen) in Commit-Nachrichten dieses Projekts. Die Änderungsliste in der Oberfläche blendet solche Zeilen zusätzlich aus und zeigt pro Commit die Versionsnummer vX.Y.Z.

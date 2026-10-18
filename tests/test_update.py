@@ -3,6 +3,7 @@ systemctl ist ein Platzhalter-Skript.
 
 Aufruf: python3 -m unittest discover -s tests -v
 """
+import base64
 import datetime
 import hashlib
 import http.server
@@ -97,6 +98,10 @@ class FakeGitHub:
                 p = u.path
                 if p == base + "commits" and "path" in q:
                     return self.js(fake.version_commits(q["sha"][0]))
+                if p == base + "contents/VERSION":
+                    c = fake.find(q["ref"][0])
+                    data = as_bytes(c["files"]["VERSION"]) if c else None
+                    return self.js({"content": base64.b64encode(data).decode()}) if data else self.js({}, 404)
                 if p.startswith(base + "compare/"):
                     a, b = p.rsplit("/", 1)[1].split("...")
                     ia, ib = fake.index(a), fake.index(b)
@@ -164,11 +169,12 @@ class FakeGitHub:
     def version_commits(self, sha):
         """Neuester Commit ab sha abwärts, der VERSION ändert (Release)."""
         i = self.index(sha)
+        out = []
         for j in range(i, len(self.commits)):
             below = self.commits[j + 1]["files"].get("VERSION") if j + 1 < len(self.commits) else None
             if self.commits[j]["files"].get("VERSION") != below:
-                return [self.api(self.commits[j])]
-        return []
+                out.append(self.api(self.commits[j]))
+        return out
 
     def find(self, ref):
         for c in self.commits:
@@ -314,6 +320,18 @@ class TestCheck(Base):
         self.assertEqual(s["latest"], c3["sha"][:7])
         self.assertEqual([r["version"] for r in s["releases"]], [c["sha"][:7] for c in (c3, c2, c1)])
         self.assertIn("Mit Einzelheiten", s["releases"][1]["notes"])
+
+    def test_history_one_entry_per_commit_with_version_without_trailers(self):
+        self.gh.add("2.0.0", message="Erster Stand")
+        self.u.install()
+        self.gh.add("2.0.1", message="Zweiter\n\nEinzelheit\n\nCo-Authored-By: X <x@example.com>\nClaude-Session: https://x")
+        c3 = self.gh.add("2.0.2", message="Dritter")
+        self.u.check()
+        s = self.status()
+        self.assertEqual([r["label"] for r in s["releases"]], ["2.0.2", "2.0.1", "2.0.0"])
+        self.assertEqual(s["latest_version"], "2.0.2")
+        self.assertEqual(s["releases"][1]["notes"], "Zweiter\n\nEinzelheit")
+        self.assertNotIn("Co-Authored", json.dumps(s))
 
     def test_up_to_date(self):
         self.gh.add()

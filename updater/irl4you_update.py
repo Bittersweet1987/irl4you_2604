@@ -49,6 +49,12 @@ UPDATER_API = 2                     # Stand dieses Helfers; ein Paket kann im Ma
 CONFIG = os.environ.get("IRL4YOU_UPDATE_CONF", "/etc/irl4you/update.conf")
 VERSION_RE = re.compile(r"^\d{1,4}\.\d{1,4}\.\d{1,4}(-[a-z0-9.]{1,20})?$")
 SHA_RE = re.compile(r"^[0-9a-f]{40}$")
+TRAILER_RE = re.compile(r"^(co-authored-by|claude-session|signed-off-by):", re.I)
+
+
+def clean_message(msg):
+    """Commit-Text ohne Trailer-Zeilen (Co-Authored-By usw.) und ohne Leerzeilen am Ende."""
+    return "\n".join(l for l in str(msg).splitlines() if not TRAILER_RE.match(l.strip())).strip()
 HEX_RE = re.compile(r"^[0-9a-f]{7,40}$")
 ID_RE = re.compile(r"^[0-9a-f]{12}$")
 MODES = ("check", "install", "rollback", "switch")
@@ -360,6 +366,41 @@ class Updater:
             return v if VERSION_RE.match(v) else None
         except Exception:
             return None
+
+    def versions_of(self, commits):
+        """Versionsnummern x.y.z für die Commits einer Liste (neuester zuerst) mit wenigen Anfragen: Der Release ist der
+        nächste ältere Commit der Liste, der VERSION ändert, die dritte Stelle zählt ab ihm hoch. Nicht ermittelbar: None."""
+        out = [None] * len(commits)
+        try:
+            rels = self._json("/repos/%s/commits?sha=%s&path=VERSION&per_page=30" % (self.cfg.repo, commits[0]["sha"]))
+            rel = {r["sha"] for r in rels if isinstance(r, dict)}
+            cache = {}
+
+            def at(sha):
+                if sha not in cache:
+                    raw = self._json("/repos/%s/contents/VERSION?ref=%s" % (self.cfg.repo, sha))
+                    cache[sha] = base64.b64decode(raw["content"]).decode("utf-8").strip()
+                return cache[sha]
+
+            for i, c in enumerate(commits):
+                j = next((k for k in range(i, len(commits)) if commits[k]["sha"] in rel), None)
+                if j is None:
+                    continue
+                v = at(commits[j]["sha"])
+                if re.match(r"^\d{1,4}\.\d{1,4}$", v):
+                    v = "%s.%d" % (v, j - i)
+                out[i] = v if VERSION_RE.match(v) else None
+            last = len(commits) - 1
+            if out[last] is None:
+                base = self.version_of(commits[last]["sha"])
+                m = re.match(r"^(\d{1,4}\.\d{1,4}\.)(\d{1,6})$", base or "")
+                if m:
+                    for i in range(last + 1):
+                        if out[i] is None:
+                            out[i] = "%s%d" % (m.group(1), int(m.group(2)) + last - i)
+        except Exception as e:
+            self.log("Versionsnummern der Commits nicht ermittelbar (%s)" % e)
+        return out
 
     def resolve(self, ref):
         return self._commit(self._json("/repos/%s/commits/%s" % (self.cfg.repo, urllib.parse.quote(ref))))
@@ -687,12 +728,14 @@ class Updater:
         for c in commits:
             if c["sha"] == cur:
                 break
-            notes.append("- " + c["message"].strip().splitlines()[0] if c["message"].strip() else "- (ohne Text)")
+            lines = clean_message(c["message"]).splitlines()
+            notes.append("- " + lines[0] if lines else "- (ohne Text)")
+        labels = self.versions_of(commits)
         self.status(state="idle", step="", version=self.label(self.active_id()), commit=(cur or "")[:12],
-                    latest=short(commits[0]["sha"]), latest_version=self.version_of(commits[0]["sha"]), available=bool(tip), checked=int(self.now()),
+                    latest=short(commits[0]["sha"]), latest_version=labels[0], available=bool(tip), checked=int(self.now()),
                     notes="\n".join(notes)[:4000] if tip else "",
-                    releases=[{"version": short(c["sha"]), "commit": c["sha"], "published": c["date"], "prerelease": False,
-                               "notes": c["message"][:4000]} for c in commits],
+                    releases=[{"version": short(c["sha"]), "label": labels[i], "commit": c["sha"], "published": c["date"], "prerelease": False,
+                               "notes": clean_message(c["message"])[:4000]} for i, c in enumerate(commits)],
                     message=msg)
         return (tip["sha"] if tip else None), bool(tip)
 

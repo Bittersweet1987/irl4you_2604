@@ -118,6 +118,12 @@ class SwUpdate:
     def backups(self):
         return [n for n, _ in self.installed()]
 
+    @staticmethod
+    def head_of(r):
+        """Überschrift eines Eintrags: Versionsnummer vX.Y.Z, sonst die Commit-Kennung."""
+        lab = str(r.get("label") or "")
+        return "v" + lab if re.match(r"^\d+\.\d+\.\d+", lab) else str(r["version"])
+
     def history(self):
         if self.demo:
             return {"text": "## b7c3d21\n- Beispiel für einen neuen Stand.\n\n## a84e4b3\n- Erster Stand.", "error": ""}
@@ -125,7 +131,9 @@ class SwUpdate:
         parts = []
         for r in st.get("releases") or []:
             if isinstance(r, dict) and self.HEX_RE.match(str(r.get("version", ""))):
-                parts.append("## %s\n%s" % (r["version"], str(r.get("notes") or "").strip()))
+                lines = str(r.get("notes") or "").strip().splitlines()
+                body = ("- " + lines[0] + "".join("\n  " + l for l in lines[1:] if l.strip())) if lines else "- (ohne Text)"
+                parts.append("## %s\n%s" % (self.head_of(r), body))
         if not parts:
             return {"text": "", "error": "Noch keine Liste: bitte zuerst nach Updates suchen." if os.path.exists(self.HELPER) else "Der Update-Helfer ist nicht installiert."}
         return {"text": "\n\n".join(parts), "error": ""}
