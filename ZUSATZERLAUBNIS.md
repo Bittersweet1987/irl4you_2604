@@ -2,7 +2,7 @@
 
 Der eigene Code von IRL4YOU Box (Copyright (c) 2026 [Bittersweet1987](https://discord.com/users/232451293040476160) und [Akinos01 (IRL4YOU)](https://discord.com/users/523858990510243861)) steht unter der Lizenz [Creative Commons Namensnennung - Keine Bearbeitungen 4.0 International (CC BY-ND 4.0)](LICENSE). Der Lizenztext in `LICENSE` ist unverändert.
 
-Kurz gesagt: Die Box darf genutzt werden, auch kommerziell (zum Beispiel zum Streamen). Wer den Code ändern oder Änderungen weitergeben möchte, fragt vorher bei Bittersweet1987 nach. Die Namensnennung ist Pflicht.
+Kurz gesagt: Die Box darf genutzt werden, auch kommerziell (zum Beispiel zum Streamen). Wer den Code ändern oder Änderungen weitergeben möchte, fragt vorher bei [Akinos01](https://discord.com/users/523858990510243861) oder [Bittersweet1987](https://discord.com/users/232451293040476160) nach. Die Namensnennung ist Pflicht.
 
 ## Zusätzliche Erlaubnis für IRL4YOU
 
