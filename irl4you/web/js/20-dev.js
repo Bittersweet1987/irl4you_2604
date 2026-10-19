@@ -41,6 +41,12 @@ async function devLoad() {
     devTimer = setTimeout(devLoad, 1500);
   } else $("dev_msg").textContent = d.state === "error" ? d.message || "Fehler" : "";
 }
+function encMark(mode, swOk) {
+  document.querySelectorAll("#enc_seg button").forEach((b) => {
+    b.classList.toggle("on", b.dataset.mode === mode);
+    b.disabled = b.dataset.mode === "software" && !swOk;
+  });
+}
 async function encLoad() {
   let d;
   try {
@@ -48,20 +54,19 @@ async function encLoad() {
   } catch (e) {
     return;
   }
-  $("enc_mode").value = d.mode;
-  $("enc_mode").querySelector("option[value=software]").disabled = !d.software_available;
+  encMark(d.mode, d.software_available);
 }
-$("enc_mode").addEventListener("change", async () => {
-  const msg = $("enc_msg"),
-    sel = $("enc_mode");
-  sel.disabled = true;
+$("enc_seg").addEventListener("click", async (ev) => {
+  const b = ev.target.closest("button");
+  if (!b || b.classList.contains("on") || b.disabled) return;
+  const msg = $("enc_msg");
+  document.querySelectorAll("#enc_seg button").forEach((x) => (x.disabled = true));
   try {
-    const r = await srtlaCall("POST", "/api/encoder", { mode: sel.value });
+    const r = await srtlaCall("POST", "/api/encoder", { mode: b.dataset.mode });
     msg.textContent = r.note || "Gespeichert.";
   } catch (x) {
     msg.textContent = x.message;
   }
-  sel.disabled = false;
   encLoad();
 });
 async function devPost(body, wait) {
