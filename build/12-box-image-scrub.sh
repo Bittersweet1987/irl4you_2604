@@ -18,6 +18,11 @@ scrub_image() {
     rm -f "$R"/etc/sudoers.d/92-claude-build "$R"/etc/sudoers.d/90-claude-readonly
     # Netz: WLAN-Zugänge, Tailscale-Identität, Adressen
     rm -f "$R"/etc/NetworkManager/system-connections/*
+    # Ubuntu 26.04 legt NetworkManager-Verbindungen zusätzlich als netplan-Dateien ab: dort stehen WLAN-Name, WLAN-Kennwort und MAC-Adressen
+    rm -f "$R"/etc/netplan/90-NM-*.yaml
+    rm -f "$R/var/lib/NetworkManager"/seen-bssids "$R/var/lib/NetworkManager"/timestamps "$R/var/lib/NetworkManager"/NetworkManager.state           "$R/var/lib/NetworkManager"/*.leases
+    # Reste der Entwicklung im Home des Root-Kontos (Sicherungen, Listen)
+    rm -rf "$R/root/bl-backup" "$R/root"/*.txt "$R/root"/*.bak
     rm -rf "$R/var/lib/tailscale" "$R/var/lib/NetworkManager"/*.lease "$R/var/lib/NetworkManager"/secret_key
     # Kennungen und Spuren
     : > "$R/etc/machine-id"; rm -f "$R/var/lib/dbus/machine-id"; ln -sf /etc/machine-id "$R/var/lib/dbus/machine-id"
