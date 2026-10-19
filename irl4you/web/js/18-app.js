@@ -179,10 +179,7 @@
       n = window.innerWidth;
     now.textContent = `Dieses Gerät zeigt gerade die Ansicht ${u === "mobile" ? "Mobil" : "Desktop"} (${mode === "auto" ? "automatisch, Fensterbreite " + n + " Pixel" : "von Hand gewählt"}).`;
     $("view_mode").value = mode;
-    for (const p of ["desktop", "mobile"]) {
-      $("vw_" + p).setAttribute("aria-pressed", String(edit === p));
-      $("vw_" + p).classList.toggle("on", edit === p);
-    }
+    for (const p of ["desktop", "mobile"]) ($("vw_" + p).classList.toggle("on", edit === p), $("vw_" + p).setAttribute("aria-pressed", String(edit === p)));
     $("vw_copy").textContent = edit === "desktop" ? "Von Mobil übernehmen" : "Von Desktop übernehmen";
   }
   function buildList() {
