@@ -2,6 +2,19 @@
 
 Versionsschema: x.y.z, angezeigt als vx.y.z. x gibt Marco vor (0 = Alpha). y steigt nur, wenn Marco ein Release ausruft (dann wird VERSION auf "x.y" geändert). z ist die Zahl der Commits seit dem letzten Release und wird vom Updater beim Installieren aus GitHub gezählt (VERSION enthält nur "x.y"). Die Box folgt weiterhin den Commits von main; die Nummer ist nur der Anzeigename.
 
+## 0.3
+- Kameras laufen flüssig: Der Kamerapuffer im Encoder war zu klein (8 Bilder, `max-bytes` 200 kB bei 1350 ms Vorlauf), dadurch wurden die ältesten Bilder weggeworfen und der Mischer wiederholte ein bis zwei Sekunden dasselbe Bild. Der Puffer fasst jetzt Vorlauf plus 1,5 s (Encoder 0.2.2). Standbild-Folgen am Empfänger: vorher bis 70 Bilder, jetzt höchstens so viele wie in den Kameraeingängen selbst.
+- Keine falsche Meldung "Bild 2,5 s zu früh" mehr (Kamera wurde alle paar Minuten 15 s abgeschaltet): `lag_ms` wurde je Bild auf ganze Millisekunden gekürzt, die Summe sank dadurch ständig; jetzt in Nanosekunden, die ersten 5 s nach dem Kamerastart zählen nicht mit.
+- Ausblenden, Tonquelle und Stumm lösten in der neuen Sendekette einen Neustart der ganzen Sendung aus; sie werden jetzt live umgestellt (wie Bildwechsel und Kamera deaktivieren).
+- Die SRT-Sendegeschwindigkeit ist auf die eingestellte Höchstbitrate plus 25 % begrenzt (Encoder 0.2.3): kein Stoß mit Leitungsgeschwindigkeit mehr nach dem Verbinden oder einem Stau (vorher kurzzeitig bis über 60 Mbit/s bei 12 Mbit/s Höchstbitrate).
+- WLAN: "Trennen" schaltet die automatische Verbindung ab (bleibt nach einem Neustart getrennt), "Vergessen" meldet Fehler statt Erfolg.
+- SSH-Passwort: ohne `system.json` gilt der erste normale Benutzer als Standard (Anzeige und Zurücksetzen gingen sonst nicht); Bluetooth-Firmware (.zst) für Realtek-Sticks wie UB500 wird entpackt.
+- Netzwerk: feste Zusatzadresse jederzeit entfernbar, Warnung bei zwei Anschlüssen im selben Adressbereich, Routing je Anschluss nach DHCP-Adresse.
+- Takt-Deckel der großen Kerne 2016 MHz mit Firmware BL31 v1.47 (`irl4you-bootloader`, nur manuell), sonst 1416 MHz.
+- Software-Update: "Neueste auf GitHub" zeigt die Versionsnummer; Änderungsliste mit einem Eintrag je Commit; Sicherheitsupdates nur noch zusammen mit IRL4YOU-Updates.
+- Lizenz CC BY-ND 4.0 mit Zusatzerlaubnis für IRL4YOU, README zweisprachig; SRS prüft H.264 zuerst im Längenformat (Redmi); Bildraten-Messung der Eingänge korrigiert; Encoder- und SRTLA-Quelltext liegen im Repo.
+- Bekannt offen: In seltenen Fällen setzt sich die Box hart zurück (LED rot, Netzteil ziehen); die Ursache ist noch nicht gefunden.
+
 ## 0.1
 - Lizenz: der eigene Code steht jetzt unter CC BY-ND 4.0 statt MIT (Nutzung auch kommerziell, Änderungen nur nach Rückfrage bei [Bittersweet1987](https://discord.com/users/232451293040476160) oder [Akinos01](https://discord.com/users/523858990510243861), Ausnahme IRL4YOU; `LICENSE`, `ZUSATZERLAUBNIS.md`, `NOTICE.md`). Seitenfuß in allen Sprachen angepasst; gilt auch für frühere Versionen (bereits unter MIT erhaltene Kopien behalten ihre damaligen Rechte).
 - Die IRL4YOU Box ist ohne Portangabe erreichbar (http://irl4you.local oder http://<IP>, Port 80); der alte Port 8780 bleibt. Der Dienst versucht Port 80 weiter, wenn er beim Start noch belegt ist, statt dauerhaft nur auf 8780 zu laufen. Anmeldung und Ersteinrichtung nur aus dem lokalen Netz unverändert.
