@@ -235,17 +235,6 @@ def hold_delays(delays, buffer, big_key=None, big_lead=None, uniform=False, shif
     return {k: max(int(v), floor_big if k == big_key else floor) for k, v in delays.items()}
 
 
-def dec_chain(nm):
-    """Dekoder einer Kamera. Standard: Hardware (MPP). Steht in /etc/irl4you/decoder das Wort "sw", dekodiert die CPU (zum Eingrenzen von Abstürzen)."""
-    try:
-        sw = open("/etc/irl4you/decoder").read().strip().lower() == "sw"
-    except OSError:
-        sw = False
-    if sw:
-        return f"avdec_h264 name={nm}_dec ! videoconvert name={nm}_cv ! "
-    return f"mppvideodec name={nm}_dec ! "
-
-
 def venc_chain(q):
     """Kodier-Teil der Pipeline. Standard: Hardware-Encoder (H.265). Steht in /etc/irl4you/encoder das Wort "x264", läuft stattdessen
     der Software-Encoder (H.264), zum Eingrenzen von Abstürzen des Hardware-Encoders."""
@@ -299,7 +288,7 @@ def build(c, base=RTMP_BASE, frame=None):
             f"[cam {s}]\n#idle\n"
             f"rtmpsrc name={nm}_src location={base}/{key} ! flvdemux name={nm}\n"
             f"{nm}.video ! queue name={nm}_vq max-size-time=4000000000 max-size-buffers=400 ! h264parse name={nm}_parse ! "
-            f"{dec_chain(nm)}"
+            f"mppvideodec name={nm}_dec ! "
             f"queue name={nm}_lq max-size-buffers=45 max-size-bytes=0 max-size-time=0 leaky=downstream ! "
             f"videorate name={nm}_vr max-duplication-time=100000000 ! capsfilter name={nm}_c1 caps=\"video/x-raw,framerate={FPS}/1\" ! "
             f"videocrop name={nm}_crop ! "
