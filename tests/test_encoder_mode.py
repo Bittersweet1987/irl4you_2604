@@ -138,5 +138,52 @@ class TestMenue(unittest.TestCase):
             em.set("software")
 
 
+class TestCpuBoost(unittest.TestCase):
+    """Hardware-Kodierung lässt die CPU-Regler in Ruhe (kühler); Software-Kodierung nagelt die großen Kerne auf performance und hebt den Deckel an."""
+
+    def setUp(self):
+        self.live = irl("pipbox_live")
+        self.tmp = tempfile.TemporaryDirectory()
+        t = self.tmp.name
+        for c in range(8):
+            d = f"{t}/cpu/cpu{c}"
+            os.makedirs(d + "/cpufreq")
+            big = c >= 4
+            open(d + "/cpu_capacity", "w").write("1024" if big else "400")
+            open(d + "/cpufreq/related_cpus", "w").write("4 5 6 7" if big else "0 1 2 3")
+            open(d + "/cpufreq/scaling_governor", "w").write("ondemand")
+            open(d + "/cpufreq/scaling_available_governors", "w").write("ondemand performance")
+            open(d + "/cpufreq/scaling_max_freq", "w").write("1416000")
+        self.sw = f"{t}/sw"
+        open(self.sw, "w").write("2016000")
+        self.mode = f"{t}/mode"
+        self.old_mode = self.live.ENC_MODE_FILE
+        self.live.ENC_MODE_FILE = self.mode
+        self.boost = self.live.CpuBoost(cpu_dir=f"{t}/cpu", state=f"{t}/state.json", log=lambda m: None)
+        self.boost.sw_max_file = self.sw
+
+    def tearDown(self):
+        self.live.ENC_MODE_FILE = self.old_mode
+        self.tmp.cleanup()
+
+    def gov(self, c=4):
+        return open(f"{self.tmp.name}/cpu/cpu{c}/cpufreq/scaling_governor").read()
+
+    def mx(self, c=4):
+        return open(f"{self.tmp.name}/cpu/cpu{c}/cpufreq/scaling_max_freq").read()
+
+    def test_hardware_aendert_nichts(self):
+        open(self.mode, "w").write("hardware")
+        self.boost.on()
+        self.assertEqual((self.gov(), self.mx()), ("ondemand", "1416000"))
+
+    def test_software_performance_und_zurueck(self):
+        open(self.mode, "w").write("software")
+        self.boost.on()
+        self.assertEqual((self.gov(), self.mx(), self.gov(0)), ("performance", "2016000", "ondemand"))
+        self.boost.off()
+        self.assertEqual((self.gov(), self.mx()), ("ondemand", "1416000"))
+
+
 if __name__ == "__main__":
     unittest.main()

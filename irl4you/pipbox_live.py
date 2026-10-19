@@ -652,7 +652,8 @@ class CpuBoost:
 
     def __init__(self, cpu_dir="/sys/devices/system/cpu", state=f"{RUN}/cpugov.json", log=print):
         self.cpu_dir, self.state, self.log = cpu_dir, state, log
-        self.saved = {}
+        self.saved, self.saved_max = {}, {}
+        self.sw_max_file = "/run/irl4you-cpucap-sw"
 
     def _policy_dirs(self):
         seen, out = set(), []
@@ -668,6 +669,10 @@ class CpuBoost:
         return out
 
     def on(self):
+        """Hardware-Kodierung: nichts festnageln, die Kerne regeln sich (Regler ondemand, Einstellung in irl4you-cpucap.sh), das hält die Box
+        3-4 °C kühler. Software-Kodierung (x264): volle Leistung (performance) und angehobener Takt-Deckel, sonst reicht die Rechenleistung nicht."""
+        if encoder_mode() != "software":
+            return
         for p in self._policy_dirs():
             try:
                 cur = open(p + "/scaling_governor").read().strip()
@@ -675,31 +680,44 @@ class CpuBoost:
                     with open(p + "/scaling_governor", "w") as f:
                         f.write("performance")
                     self.saved[p] = cur
-            except OSError as e:
+                sw = int(open(self.sw_max_file).read().strip())
+                old = int(open(p + "/scaling_max_freq").read().strip())
+                if sw > old:
+                    with open(p + "/scaling_max_freq", "w") as f:
+                        f.write(str(sw))
+                    self.saved_max[p] = old
+            except (OSError, ValueError) as e:
                 self.log(f"send: Takt der schnellen Kerne nicht umstellbar ({e.__class__.__name__})")
-        if self.saved:
+        if self.saved or self.saved_max:
             try:
                 os.makedirs(os.path.dirname(self.state), exist_ok=True)
                 with open(self.state, "w") as f:
-                    json.dump(self.saved, f)
+                    json.dump({"gov": self.saved, "max": self.saved_max}, f)
             except OSError:
                 pass
-            self.log("send: schnelle Kerne auf vollem Takt (performance), solange gemischt wird")
+            self.log("send: Software-Kodierung: schnelle Kerne auf vollem Takt (performance), solange gesendet wird")
 
     def off(self):
-        saved = self.saved
-        if not saved:
+        gov, mx = self.saved, self.saved_max
+        if not gov and not mx:
             try:
-                saved = json.load(open(self.state))
-            except (OSError, ValueError):
-                saved = {}
-        for p, g in saved.items():
+                st = json.load(open(self.state))
+                gov, mx = st.get("gov", {}), st.get("max", {})
+            except (OSError, ValueError, AttributeError):
+                gov, mx = {}, {}
+        for p, v in mx.items():
+            try:
+                with open(p + "/scaling_max_freq", "w") as f:
+                    f.write(str(v))
+            except OSError:
+                pass
+        for p, g in gov.items():
             try:
                 with open(p + "/scaling_governor", "w") as f:
                     f.write(str(g))
             except OSError:
                 pass
-        self.saved = {}
+        self.saved, self.saved_max = {}, {}
         try:
             os.unlink(self.state)
         except OSError:
