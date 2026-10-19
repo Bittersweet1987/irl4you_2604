@@ -1,0 +1,10 @@
+[Unit]
+Description=IRL4YOU BOX NPU-Last für die Oberfläche bereitstellen
+
+[Service]
+ExecStart=/usr/libexec/irl4you/irl4you-npu.sh
+Nice=19
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

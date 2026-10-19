@@ -74,6 +74,14 @@ if ! cmp -s "$HERE/cpucap/irl4you-cpucap.service" /etc/systemd/system/irl4you-cp
 fi
 /usr/libexec/irl4you/irl4you-cpucap.sh || true
 
+# 9b. NPU-Last für die Oberfläche bereitstellen (Debug-Dateisystem ist nur für root lesbar)
+install -D -m 755 "$HERE/npu/irl4you-npu.sh" /usr/libexec/irl4you/irl4you-npu.sh
+if ! cmp -s "$HERE/npu/irl4you-npu.service" /etc/systemd/system/irl4you-npu.service; then
+    install -m 644 "$HERE/npu/irl4you-npu.service" /etc/systemd/system/irl4you-npu.service
+    systemctl daemon-reload; systemctl enable irl4you-npu.service >/dev/null 2>&1 || true
+fi
+systemctl restart irl4you-npu.service >/dev/null 2>&1 || true
+
 # 10. Werkzeug zum Tauschen des Bootloader-FIT (nur bereitgestellt, nichts wird automatisch geschrieben): irl4you-bootloader status|apply|restore
 install -d /usr/share/irl4you/bootloader
 install -m 644 "$HERE"/bootloader/*.bin /usr/share/irl4you/bootloader/

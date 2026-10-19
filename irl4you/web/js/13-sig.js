@@ -66,7 +66,8 @@ function renderDetails(m) {
           ) + bar(c),
       )
       .join("") +
-    (ac.gpu ? drow("GPU", `<b>${ac.gpu.load_pct}</b> % <span class="muted">${ac.gpu.mhz} MHz</span>`) + bar(ac.gpu.load_pct) : "");
+    (ac.gpu ? drow("GPU", `<b>${ac.gpu.load_pct}</b> % <span class="muted">${ac.gpu.mhz} MHz</span>`) + bar(ac.gpu.load_pct) : "") +
+    (ac.npu ? drow("NPU", `<b>${ac.npu.load_pct}</b> % <span class="muted">${ac.npu.cores.join(" / ")}</span>`) + bar(ac.npu.load_pct) : "");
   $("det_temp").innerHTML =
     (d.temps || []).map((t) => drow(esc(t.name), `<b>${f1(t.c)}</b> °C`)).join("") || '<span class="muted">keine Daten</span>';
   const k = d.disk;
