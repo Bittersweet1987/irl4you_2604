@@ -34,12 +34,12 @@
 <details class="dcam" id="hdmi_cam" open>
 <summary><span class="dname" id="hdmi_name">HDMI-Eingang</span><span class="dright"><span class="dstate" id="hdmi_state"></span></span></summary>
 <div class="dbody">
-<label class="f">Quelle<select id="hdmi_source"><option value="hdmi">HDMI-Eingang</option><option value="usb">USB-Webcam</option></select></label>
+<label class="f">Quelle<select id="hdmi_source" data-seg><option value="hdmi">HDMI-Eingang</option><option value="usb">USB-Webcam</option></select></label>
 <div class="dsub muted" id="hdmi_signal"></div>
 <label class="chk"><input type="checkbox" id="hdmi_on"> Als Kamera senden</label>
 <details class="dsec" id="hdmi_vsec"><summary>Bild und Ton <span class="muted" id="hdmi_vsum"></span></summary>
 <div class="dgrid">
-<label class="f">Bildrate<select id="hdmi_fps"><option value="30">30 fps</option><option value="25">25 fps</option></select></label>
+<label class="f">Bildrate<select id="hdmi_fps" data-seg><option value="30">30 fps</option><option value="25">25 fps</option></select></label>
 <label class="f">Bitrate (Mbit/s)<input id="hdmi_br" type="number" min="1" max="20" step="0.5"></label>
 <label class="f">Ton<select id="hdmi_audio"><option value="hdmi">HDMI-Ton / Ton der Kamera</option><option value="usb">USB-Tonkarte (Mikrofon, Funkstrecke)</option><option value="analog">Analogeingang der Box</option><option value="none">ohne Ton</option></select></label>
 <label class="f" id="hdmi_fmtrow">Bildformat<select id="hdmi_fmt"><option value="auto">Automatisch (MJPEG zuerst)</option><option value="mjpeg">MJPEG (die Box kodiert mit der Bitrate neu)</option><option value="h264">H.264 (Strom der Kamera)</option></select></label>

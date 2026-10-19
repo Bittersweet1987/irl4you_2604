@@ -3,10 +3,10 @@
 <div id="view_ctl" class="viewctl">
 <div id="view_now" class="ph" role="status"></div>
 <div class="row" style="justify-content:flex-start;gap:6px;flex-wrap:wrap"><label for="view_mode">Ansicht dieses Geräts:</label>
-<select id="view_mode" aria-label="Ansicht dieses Geräts"><option value="auto">Automatisch (nach Fensterbreite)</option><option value="desktop">Immer Desktop</option><option value="mobile">Immer Mobil</option></select></div>
+<select id="view_mode" data-seg aria-label="Ansicht dieses Geräts"><option value="auto">Automatisch</option><option value="desktop">Desktop</option><option value="mobile">Mobil</option></select></div>
 <div class="ph">Automatisch: bis 620 Pixel Breite (Handy, schmales Fenster) gilt Mobil, sonst Desktop. Diese Wahl gilt nur für dieses Gerät.</div>
 <div class="sech">Einstellungen bearbeiten für</div>
-<div class="vseg" role="group" aria-label="Ansicht bearbeiten"><button type="button" id="vw_desktop" aria-pressed="true">Desktop</button><button type="button" id="vw_mobile" aria-pressed="false">Mobil</button></div>
+<div class="seg" role="group" aria-label="Ansicht bearbeiten"><button type="button" id="vw_desktop" class="on" aria-pressed="true">Desktop</button><button type="button" id="vw_mobile" aria-pressed="false">Mobil</button></div>
 <div class="actions"><button type="button" id="vw_copy" class="sec">Von Mobil übernehmen</button></div>
 <div id="vw_msg" class="ph" role="status"></div>
 </div>

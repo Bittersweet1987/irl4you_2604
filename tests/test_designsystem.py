@@ -16,6 +16,31 @@ def _read(path):
         return f.read()
 
 
+PARTIALS = os.path.join(ROOT, "irl4you", "web", "partials")
+
+
+class Umschalter(unittest.TestCase):
+    """docs/DESIGN.md: Wahl zwischen 2 bis 4 kurzen festen Optionen ist ein Umschalter (.seg), kein Auswahlfeld und keine eigene Knopfgruppe."""
+    # Auswahlfelder mit festen Optionen, die bewusst Auswahlfelder bleiben (lange Beschreibungen)
+    AUSNAHMEN = {"hdmi_audio", "hdmi_fmt", "p_audio", "p_swap", "b_spread"}
+
+    def test_feste_kurze_auswahl_ist_umschalter(self):
+        for p in glob.glob(os.path.join(PARTIALS, "*.html")):
+            for m in re.finditer(r"<select([^>]*)>(.*?)</select>", _read(p), re.S):
+                opts = re.findall(r"<option[^>]*>([^<]*)</option>", m.group(2))
+                sid = re.search(r'id="([^"]+)"', m.group(1))
+                name = sid.group(1) if sid else ""
+                if 2 <= len(opts) <= 4 and name not in self.AUSNAHMEN:
+                    self.assertIn("data-seg", m.group(1), (os.path.basename(p), name, "Umschalter nötig (docs/DESIGN.md)"))
+                    self.assertTrue(all(len(o) <= 20 for o in opts), (os.path.basename(p), name, "Optionstext zu lang für einen Umschalter"))
+
+    def test_keine_eigenen_gruppenstile(self):
+        for p in glob.glob(os.path.join(CSS, "*.css")):
+            self.assertNotIn(".vseg", _read(p), p)
+        for p in glob.glob(os.path.join(PARTIALS, "*.html")):
+            self.assertNotIn("vseg", _read(p), p)
+
+
 class DesignSystem(unittest.TestCase):
     def test_dateien_max_500_zeilen(self):
         for p in glob.glob(os.path.join(CSS, "*.css")):

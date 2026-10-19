@@ -316,30 +316,6 @@ details.card[hidden] {
   color: inherit;
   opacity: 0.9;
 }
-.vseg {
-  display: inline-flex;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  overflow: hidden;
-  margin: 2px 0 6px;
-}
-.vseg button {
-  background: transparent;
-  color: var(--text);
-  border: 0;
-  border-radius: 0;
-  padding: 8px 18px;
-  min-height: 40px;
-  cursor: pointer;
-}
-.vseg button + button {
-  border-left: 1px solid var(--line);
-}
-.vseg button[aria-pressed="true"] {
-  background: var(--accent);
-  color: #04202a;
-  font-weight: 600;
-}
 #pb_awake[aria-pressed="true"] {
   background: var(--accent);
   color: #0f172a;
