@@ -421,8 +421,6 @@ async function tick() {
         lt.style.color = tc >= 80 ? "var(--crit)" : tc >= 70 ? "var(--warn)" : "";
       }
     }
-    $("fanline").hidden = m.fan_pct == null;
-    if (m.fan_pct != null) $("fan").textContent = fmt(m.fan_pct, 0);
     $("mem").textContent = fmt(m.mem.used_pct, 0);
     $("membar").style.width = (m.mem.used_pct || 0) + "%";
     $("memfree").textContent = (m.mem.avail_mb / 1024).toFixed(1) + " GiB";
