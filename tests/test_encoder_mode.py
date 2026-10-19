@@ -48,6 +48,16 @@ class TestKodierkette(unittest.TestCase):
             self.assertEqual(self.live.encoder_mode(p), "hardware")
 
 
+class TestKameraEingang(unittest.TestCase):
+    def test_kamerakette_erkennt_h264_und_h265(self):
+        """Die Kamerazweige nehmen H.264 und H.265 (Enhanced RTMP) an: parsebin erkennt den Strom, der Hardware-Decoder dekodiert beides."""
+        live = irl("pipbox_live")
+        txt = live.build({"type": "pip", "main": "cam1", "pip": "cam2", "styles": {}})
+        text = str(txt)
+        self.assertIn("parsebin name=cam0_parse ! mppvideodec", text)
+        self.assertNotIn("h264parse name=cam0_parse", text)
+
+
 class TestMenue(unittest.TestCase):
     def setUp(self):
         self.mod = irl("webui.encoder_mode")

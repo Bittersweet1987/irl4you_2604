@@ -301,7 +301,7 @@ def build(c, base=RTMP_BASE, frame=None):
         cams.append(
             f"[cam {s}]\n#idle\n"
             f"rtmpsrc name={nm}_src location={base}/{key} ! flvdemux name={nm}\n"
-            f"{nm}.video ! queue name={nm}_vq max-size-time=4000000000 max-size-buffers=400 ! h264parse name={nm}_parse ! "
+            f"{nm}.video ! queue name={nm}_vq max-size-time=4000000000 max-size-buffers=400 ! parsebin name={nm}_parse ! "
             f"mppvideodec name={nm}_dec ! "
             f"queue name={nm}_lq max-size-buffers=45 max-size-bytes=0 max-size-time=0 leaky=downstream ! "
             f"videorate name={nm}_vr max-duplication-time=100000000 ! capsfilter name={nm}_c1 caps=\"video/x-raw,framerate={FPS}/1\" ! "
