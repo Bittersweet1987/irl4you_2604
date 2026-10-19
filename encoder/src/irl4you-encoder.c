@@ -57,7 +57,7 @@ typedef struct {
     int fails;              /* Fehlversuche seit dem letzten Bild (für weniger Meldungen) */
     guint retry_src;
     GstClockTime v_last_in_pts, v_last_out_pts;
-    gint64 lag_ms;
+    gint64 lag_ns; /* Summe der Verschiebungen von base_ns seit dem Start; in ns, weil die Änderung je Bild meist unter 1 ms liegt */
     gboolean base_ok;       /* base_ns gültig */
     gint64 base_ns;         /* kleinste beobachtete Differenz Haupt-Takt minus Kamera-Takt: gleichmäßige Bildabstände */
     double jit_ms;          /* geglättete Verspätung der Bilder gegenüber dem gleichmäßigen Takt */
@@ -216,6 +216,7 @@ static GstClockTime main_running_time(void)
 }
 
 #define BASE_RESYNC_NS (1000LL * GST_MSECOND) /* Sprung größer als das: neue Ausrichtung (Kamera neu gestartet) */
+#define LAG_WARMUP_US (5 * G_USEC_PER_SEC) /* Dauer nach dem Kamerastart, in der lag_ms nicht mitgezählt wird */
 #define BASE_CREEP 0.002                    /* Anteil der Verspätung, den der Takt je Bild nachgezogen wird (Taktdrift) */
 
 static GstFlowReturn forward(GstAppSink *sink, cam_t *c, GstAppSrc *dst, gboolean video)
@@ -272,7 +273,13 @@ static GstFlowReturn forward(GstAppSink *sink, cam_t *c, GstAppSrc *dst, gboolea
             /* Abweichung zwischen Takt der Kamera und Takt der Box: zeigt, ob die Kamera nachhängt */
             gint64 din = (gint64)GST_BUFFER_PTS(in) - (gint64)c->v_last_in_pts;
             gint64 dout = (gint64)pts - (gint64)c->v_last_out_pts;
-            c->lag_ms += (dout - din) / (gint64)GST_MSECOND;
+            /* Die ersten Sekunden zählen nicht: SRS liefert beim Verbinden den zwischengespeicherten Bildgruppen-Anfang auf einmal
+             * (Bilder bis zu mehreren Sekunden alt). Das senkt die Grundverschiebung einmalig, hat mit dem Takt der Kamera aber nichts zu tun
+             * und ließ IRL4YOU die Kamera als "Bild zu früh" abschalten. */
+            if (t - c->started_us < LAG_WARMUP_US)
+                c->lag_ns = 0;
+            else
+                c->lag_ns += dout - din; /* nicht je Bild auf ms kürzen: die kleinen Anhebungen gingen verloren, die Summe sank dauernd */
         }
         c->v_last_in_pts = GST_BUFFER_PTS(in);
         c->v_last_out_pts = pts;
@@ -378,7 +385,7 @@ static gboolean cam_start(cam_t *c)
     c->running = TRUE;
     c->started_us = c->last_v_us = c->last_a_us = now_us();
     c->v_last_in_pts = c->v_last_out_pts = GST_CLOCK_TIME_NONE;
-    c->lag_ms = 0;
+    c->lag_ns = 0;
     c->base_ok = FALSE;
     c->jit_ms = 0;
     c->frames = 0;
@@ -672,7 +679,7 @@ static void write_stats(void)
         JINT(b, "state", st);
         JBOOL(b, "live", st == 3);
         JDBL(b, "fps", st == 3 ? c->fps : 0.0);
-        JINT(b, "lag_ms", c->lag_ms);
+        JINT(b, "lag_ms", c->lag_ns / (gint64)GST_MSECOND);
         JDBL(b, "jit_ms", c->jit_ms);
         JINT(b, "offset_ms", c->offset_ms);
         JINT(b, "restarts", c->restarts);
@@ -982,6 +989,12 @@ int main(int argc, char **argv)
     else
         event("start: kein Element 'venc': Bitrate wird nicht geregelt");
 
+    /* Die Bilder tragen Zeitstempel bis zu align + Verschiebung in der Zukunft und warten so lange in appsrc, bis der Mischer sie braucht.
+     * Der Puffer muss diese ganze Zeit fassen (bis 60 Bilder/s, Ton rund 50 Pakete/s; ein 1080p-Bild belegt etwa 3 MB, also höchstens rund 0,5 GB je Kamera bei ausgebliebenem Mischer). Zu klein: leaky-type=downstream wirft die ältesten
+     * Bilder weg, der Mischer wiederholt dann Sekunden lang dasselbe Bild und springt (Ruckeln). max-bytes ist standardmäßig nur 200 kB
+     * (kleiner als ein einziges 1080p-Bild) und muss deshalb abgeschaltet werden. */
+    guint64 ahead_ms = (guint64)(A.align_ms > 0 ? A.align_ms : 0) + 1500; /* Reserve für Verschiebungen/Verzögerungen */
+    guint64 ahead_v = ahead_ms * 60 / 1000 + 8, ahead_a = ahead_ms * 50 / 1000 + 20;
     for (int i = 0; i < MAX_CAMS; i++) {
         cam_t *c = &A.cams[i];
         char n[16];
@@ -991,11 +1004,13 @@ int main(int argc, char **argv)
         GstElement *a = gst_bin_get_by_name(GST_BIN(A.main), n);
         if (v && GST_IS_APP_SRC(v)) {
             c->vin = GST_APP_SRC(v);
-            g_object_set(v, "is-live", TRUE, "format", GST_FORMAT_TIME, "max-buffers", (guint64)8, "leaky-type", 2 /* downstream */, NULL);
+            g_object_set(v, "is-live", TRUE, "format", GST_FORMAT_TIME, "max-buffers", ahead_v, "max-bytes", (guint64)0, "max-time", (guint64)0,
+                         "leaky-type", 2 /* downstream */, NULL);
         }
         if (a && GST_IS_APP_SRC(a)) {
             c->ain = GST_APP_SRC(a);
-            g_object_set(a, "is-live", TRUE, "format", GST_FORMAT_TIME, "max-buffers", (guint64)100, "leaky-type", 2, NULL);
+            g_object_set(a, "is-live", TRUE, "format", GST_FORMAT_TIME, "max-buffers", ahead_a, "max-bytes", (guint64)0, "max-time", (guint64)0,
+                         "leaky-type", 2, NULL);
         }
         c->want_run = c->desc != NULL && !c->idle;
     }

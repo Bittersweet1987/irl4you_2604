@@ -634,6 +634,11 @@ class Sender:
                                 "live": st.get("alive", []), "main": st.get("main"),
                                 "fps": {k: fps_slots[i] for i, k in enumerate(slots) if k and i in fps_slots}}
             data["always"] = True
+            if self.live:
+                # Die neue Sendekette (pipbox_live) stellt Ansicht, Ton und Verzögerung jederzeit live um (Steuerzeilen an den Encoder).
+                # Die Merkmale oben stammen aus dem Text der alten Pipeline (pbctl, avol ...) und wären hier immer "falsch":
+                # Ausblenden, Ton und Stumm lösten dann einen Neustart der ganzen Sendung aus.
+                data["delay_live"] = data["delay_live_pips"] = data["view_live"] = data["audio_live"] = True
         if self.fo is not None:
             keys = configured_keys(self.plan["cfg"])
             data["failover"] = {"auto": True, "layout": list(self.layout), "configured": keys, "inactive": list(self.plan["cfg"].get("inactive") or []),
