@@ -1,4 +1,4 @@
-project('irl4you-encoder', 'c', version : '0.2.2', default_options : ['c_std=gnu17', 'warning_level=2', 'buildtype=release'])
+project('irl4you-encoder', 'c', version : '0.2.3', default_options : ['c_std=gnu17', 'warning_level=2', 'buildtype=release'])
 gst = dependency('gstreamer-1.0', version : '>=1.24')
 gstapp = dependency('gstreamer-app-1.0')
 json = dependency('json-glib-1.0')

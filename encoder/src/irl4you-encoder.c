@@ -449,6 +449,17 @@ static GstFlowReturn on_out(GstAppSink *sink, gpointer u)
     return GST_FLOW_OK;
 }
 
+/* Obergrenze für die Sendegeschwindigkeit der SRT-Verbindung: eingestellte Höchstbitrate plus 25 % für Ton, Muxer-Rahmen und Wiederholungen.
+ * Ohne Grenze (libsrt-Standard) leert der Sender nach dem Verbinden oder einem Stau den ganzen Sendepuffer (bis zu 4 s Daten) mit
+ * Leitungsgeschwindigkeit, SRTLA schickt dann kurz weit über der eingestellten Bitrate (zig bis hunderte Mbit/s). */
+static void apply_maxbw(SRTSOCKET s)
+{
+    if (s == SRT_INVALID_SOCK || A.rc.max_kbps <= 0)
+        return;
+    int64_t bw = (int64_t)A.rc.max_kbps * 1000 / 8 * 125 / 100;
+    srt_setsockflag(s, SRTO_MAXBW, &bw, sizeof bw);
+}
+
 static SRTSOCKET srt_open(void)
 {
     SRTSOCKET s = srt_create_socket();
@@ -460,6 +471,7 @@ static SRTSOCKET srt_open(void)
     srt_setsockflag(s, SRTO_PAYLOADSIZE, &pl, sizeof pl);
     srt_setsockflag(s, SRTO_SENDER, &yes, sizeof yes);
     srt_setsockflag(s, SRTO_CONNTIMEO, &conto, sizeof conto);
+    apply_maxbw(s);
     if (A.streamid && *A.streamid)
         srt_setsockflag(s, SRTO_STREAMID, A.streamid, (int)strlen(A.streamid));
     struct addrinfo hints = {.ai_family = AF_UNSPEC, .ai_socktype = SOCK_DGRAM}, *ai = NULL;
@@ -534,6 +546,7 @@ static void read_bitrate_file(gboolean force)
     if (fscanf(f, "%d %d", &lo, &hi) == 2 && lo > 0 && hi > 0) {
         ratectl_set_limits(&A.rc, lo, hi);
         event("regler: Bitrate %d bis %d kbit/s", A.rc.min_kbps, A.rc.max_kbps);
+        apply_maxbw(A.sock);
     }
     fclose(f);
 }
