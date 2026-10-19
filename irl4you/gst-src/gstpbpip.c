@@ -797,8 +797,9 @@ static void pb_pip_mix_init(PbPipMix *self) {
 }
 
 #define RD_PIPS 3
-#define RD_HIST 6
-#define RD_MAXR 200
+/* Die Bilder laufen mit Vorlauf (Ausrichtung plus Verschiebung, bis etwa 4 s) in den Mischer: der Verlauf muss so weit zurückreichen */
+#define RD_HIST 120
+#define RD_MAXR 80
 #define RD_STALE_NS G_GUINT64_CONSTANT(1000000000)
 
 typedef struct {
