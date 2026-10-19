@@ -91,6 +91,8 @@ class GetRoutes:
             return self.reply(200, {"has_backup": os.path.isfile(self.transfer.backup_path), "sending": bool(self.send._active())})
         if path == "/api/developer":
             return self.reply(200, self.developer.status())
+        if path == "/api/encoder":
+            return self.reply(200, self.encmode.status())
         if path == "/api/developer/password":
             try:
                 return self.reply(200, self.developer.password())

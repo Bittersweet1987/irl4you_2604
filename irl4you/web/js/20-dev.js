@@ -41,6 +41,29 @@ async function devLoad() {
     devTimer = setTimeout(devLoad, 1500);
   } else $("dev_msg").textContent = d.state === "error" ? d.message || "Fehler" : "";
 }
+async function encLoad() {
+  let d;
+  try {
+    d = await srtlaCall("GET", "/api/encoder");
+  } catch (e) {
+    return;
+  }
+  $("enc_mode").value = d.mode;
+  $("enc_mode").querySelector("option[value=software]").disabled = !d.software_available;
+}
+$("enc_mode").addEventListener("change", async () => {
+  const msg = $("enc_msg"),
+    sel = $("enc_mode");
+  sel.disabled = true;
+  try {
+    const r = await srtlaCall("POST", "/api/encoder", { mode: sel.value });
+    msg.textContent = r.note || "Gespeichert.";
+  } catch (x) {
+    msg.textContent = x.message;
+  }
+  sel.disabled = false;
+  encLoad();
+});
 async function devPost(body, wait) {
   $("dev_msg").textContent = wait;
   try {
@@ -115,8 +138,10 @@ $("dev_reset").addEventListener("click", async () => {
   }
 });
 $("c_dev").addEventListener("toggle", () => {
-  if ($("c_dev").open) devLoad();
-  else devPwHide();
+  if ($("c_dev").open) {
+    devLoad();
+    encLoad();
+  } else devPwHide();
 });
 devLoad();
 async function powerDo(action) {

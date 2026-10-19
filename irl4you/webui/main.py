@@ -19,6 +19,7 @@ from .access import ExtraAddress, PreviewAccess, SupportCases, UiAccess
 from .actions import controller_action
 from .auth import Auth
 from .cameras import CameraStore, DeviceNames, FpsProbe
+from .encoder_mode import EncoderMode
 from .camservices import DjiService, HdmiService
 from .common import APP_DIR, iface_ips
 from .handler import Handler
@@ -82,6 +83,7 @@ def main():
     Handler.btdriver = BtDriver(args.state, args.demo)
     Handler.logbundle = LogBundle(args.state, args.demo)
     Handler.developer = Developer(args.state, args.demo)
+    Handler.encmode = EncoderMode(args.state, args.demo, Handler.send)
     Handler.autostart = AutoStart(args.state, Handler.send, args.demo)
     if not args.demo:
         threading.Thread(target=Handler.autostart.run, daemon=True).start()

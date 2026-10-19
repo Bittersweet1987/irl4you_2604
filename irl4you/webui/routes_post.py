@@ -81,6 +81,8 @@ class PostRoutes:
             if path == "/api/developer":
                 self.developer.request(d.get("action"), d.get("confirm") is True)
                 return self.reply(200, self.developer.status())
+            if path == "/api/encoder":
+                return self.reply(200, dict(self.encmode.set(d.get("mode")), **self.encmode.status()))
             if path == "/api/logs":
                 if d.get("action") != "collect":
                     raise ValueError("Unbekannte Aktion")

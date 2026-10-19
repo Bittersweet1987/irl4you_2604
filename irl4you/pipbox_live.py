@@ -17,6 +17,7 @@ RTMP_BASE = "rtmp://127.0.0.1:1935/publish"
 RUN = "/run/pipbox-send"
 CTL_FIFO = f"{RUN}/encoder.ctl"
 LIVE_STATS = f"{RUN}/encoder-stats.json"
+ENC_MODE_FILE = "/var/lib/pipbox/encoder-mode"   # "hardware" (Standard) oder "software"; schreibt die Oberfläche (Menü Entwickler)
 BIN = os.environ.get("IRL4YOU_ENCODER", "/usr/bin/irl4you-encoder")
 BUFFER_NEED_MIN_MS = 600
 BUFFER_MIN_COPY_MS = 1350
@@ -235,6 +236,33 @@ def hold_delays(delays, buffer, big_key=None, big_lead=None, uniform=False, shif
     return {k: max(int(v), floor_big if k == big_key else floor) for k, v in delays.items()}
 
 
+def encoder_mode(path=None):
+    """Gewählte Kodierung: "hardware" (Videoeinheit des Chips, H.265) oder "software" (x264 auf den CPU-Kernen, H.264)."""
+    try:
+        with open(path or ENC_MODE_FILE) as f:
+            return "software" if f.read().strip().lower() == "software" else "hardware"
+    except OSError:
+        return "hardware"
+
+
+# Software-Kodierung (x264) für den Live-Betrieb auf dem RK3588 ohne Bildverzögerung:
+#  - zerolatency (keine B-Bilder, keine Vorausschau) und sliced-threads: jedes Bild wird auf mehrere Kerne verteilt,
+#    so liegt die Last gleichmäßig auf den Kernen statt auf einem Kern bei 100 %
+#  - kleiner vbv-Puffer für einen gleichmäßigen Bitstrom
+#  - die Bitrate stellt der Encoder (irl4you-encoder) über die Eigenschaft "bitrate" in kbit/s nach
+SW_ENCODER = ("x264enc name=venc tune=zerolatency speed-preset=superfast key-int-max=60 bitrate=12000 threads=6 sliced-threads=true "
+              "byte-stream=true option-string=\"vbv-maxrate=15000:vbv-bufsize=2500:nal-hrd=none:rc-lookahead=0\"")
+
+
+def venc_chain(q, mode=None):
+    """Kodier-Teil der Pipeline bis zum Muxer (ohne Schlusspunkt). Hardware: Videoeinheit des Chips (H.265).
+    Software: x264 (H.264), nur auf Wunsch (Menü Entwickler), belastet die CPU stark."""
+    if (mode or encoder_mode()) == "software":
+        return f"{SW_ENCODER} !\nh264parse config-interval=-1 ! {q} ! mux"
+    return ("mpph265enc zero-copy-pkt=0 qp-min=1 qp-min-i=1 qp-max=51 gop=60 name=venc !\n"
+            f"h265parse config-interval=-1 ! {q} ! mux")
+
+
 def build(c, base=RTMP_BASE, frame=None):
     """Pipeline-Datei für irl4you-encoder: [main] mischt und kodiert, jede Kamera läuft in einem eigenen Abschnitt [cam N]."""
     global FRAME_BUILT
@@ -253,8 +281,7 @@ def build(c, base=RTMP_BASE, frame=None):
             f"video/x-raw,format=NV12,width={CANVAS_W},height={CANVAS_H},framerate={FPS}/1,colorimetry=bt709 !\n"
             + ("pbround name=rnd !\n" if frame else "")
             + "queue max-size-time=500000000 max-size-buffers=4 leaky=downstream !\n"
-            "mpph265enc zero-copy-pkt=0 qp-min=1 qp-min-i=1 qp-max=51 gop=60 name=venc !\n"
-            f"h265parse config-interval=-1 ! {q} ! mux.",
+            + venc_chain(q) + ".",
             f"input-selector name=audiosel ! volume name=avol ! opusenc bitrate=128000 ! opusparse ! {q} ! mux.",
             f"audiotestsrc is-live=true wave=silence ! capsfilter caps=\"{AUDIO_CAPS}\" ! queue ! audiosel.sink_0"]
     n = SLOTS

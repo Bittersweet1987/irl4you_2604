@@ -4,5 +4,8 @@
 <button id="dev_pw" type="button" class="sec">Passwort anzeigen</button>
 <button id="dev_reset" type="button" class="sec">Passwort zurücksetzen</button></div>
 <div id="dev_msg" class="ph" role="status"></div>
+<div class="actions"><label for="enc_mode">Videokodierung</label>
+<select id="enc_mode"><option value="hardware">Hardware (Videoeinheit des Chips, empfohlen)</option><option value="software">Software (x264 auf der CPU)</option></select></div>
+<div id="enc_msg" class="ph" role="status">Software-Kodierung nutzt H.264 und belastet die CPU stark. Sie ist nur für den Fall gedacht, dass der Hardware-Encoder Probleme macht.</div>
 <div id="dev_pw_out" class="ph sens" role="status"></div>
 </details>
