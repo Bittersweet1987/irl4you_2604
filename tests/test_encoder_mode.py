@@ -49,13 +49,51 @@ class TestKodierkette(unittest.TestCase):
 
 
 class TestKameraEingang(unittest.TestCase):
-    def test_kamerakette_erkennt_h264_und_h265(self):
-        """Die Kamerazweige nehmen H.264 und H.265 (Enhanced RTMP) an: parsebin erkennt den Strom, der Hardware-Decoder dekodiert beides."""
-        live = irl("pipbox_live")
-        txt = live.build({"type": "pip", "main": "cam1", "pip": "cam2", "styles": {}})
-        text = str(txt)
-        self.assertIn("parsebin name=cam0_parse ! mppvideodec", text)
-        self.assertNotIn("h264parse name=cam0_parse", text)
+    """Kamerazweige: H.264 und H.265 (auch alte HEVC-Kennung der Handy-Apps) über pbflvfix, je ein Parser, funnel vor dem Dekoder."""
+
+    def setUp(self):
+        self.live = irl("pipbox_live")
+
+    def _build(self, flvfix):
+        old = os.environ.get("PIPBOX_FLVFIX")
+        os.environ["PIPBOX_FLVFIX"] = "1" if flvfix else "0"
+        try:
+            return str(self.live.build({"type": "pip", "main": "cam1", "pip": "cam2", "styles": {}}))
+        finally:
+            if old is None:
+                os.environ.pop("PIPBOX_FLVFIX", None)
+            else:
+                os.environ["PIPBOX_FLVFIX"] = old
+
+    def test_mit_baustein_beide_codecs(self):
+        t = self._build(True)
+        self.assertIn("rtmpsrc name=cam0_src location=rtmp://127.0.0.1:1935/publish/cam1 ! pbflvfix name=cam0_fix ! flvdemux name=cam0", t)
+        self.assertIn("cam0. ! video/x-h264 ! h264parse name=cam0_parse ! funnel name=cam0_vf", t)
+        self.assertIn("cam0. ! video/x-h265 ! h265parse name=cam0_parse5 ! video/x-h265,stream-format=byte-stream,alignment=au ! cam0_vf.", t)
+        self.assertIn("cam0_vf. ! queue name=cam0_vq", t)      # hier wirkt die Kameraverzögerung (min-threshold-time)
+        self.assertIn("cam0.audio !", t)
+
+    def test_ohne_baustein_wie_frueher(self):
+        t = self._build(False)
+        self.assertNotIn("pbflvfix", t)
+        self.assertIn("cam0.video ! queue name=cam0_vq", t)
+        self.assertIn("parsebin name=cam0_parse ! mppvideodec", t)
+
+    def test_baustein_erkennung(self):
+        with tempfile.TemporaryDirectory() as d:
+            so = os.path.join(d, "libgstpbpip.so")
+            open(so, "wb").write(b"xx pbround pbtap xx")
+            old = self.live.PLUGIN_SO
+            self.live.PLUGIN_SO = so
+            self.live._FLV.update(mtime=None, ok=False)
+            try:
+                self.assertFalse(self.live.flvfix_ok())
+                open(so, "wb").write(b"xx pbround pbtap pbflvfix xx")
+                os.utime(so, (1, 2))
+                self.assertTrue(self.live.flvfix_ok())
+            finally:
+                self.live.PLUGIN_SO = old
+                self.live._FLV.update(mtime=None, ok=False)
 
 
 class TestMenue(unittest.TestCase):

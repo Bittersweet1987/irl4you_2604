@@ -59,6 +59,24 @@ def frame_ok():
         return False
 
 
+_FLV = {"mtime": None, "ok": False}
+
+
+def flvfix_ok():
+    """Der Baustein pbflvfix (alte HEVC-Kennung der Handys in Enhanced-FLV umschreiben) ist im Plugin vorhanden."""
+    force = os.environ.get("PIPBOX_FLVFIX")
+    if force in ("0", "1"):
+        return force == "1"
+    try:
+        mt = os.stat(PLUGIN_SO).st_mtime
+        if _FLV["mtime"] != mt:
+            with open(PLUGIN_SO, "rb") as f:
+                _FLV.update(mtime=mt, ok=b"pbflvfix" in f.read())
+        return _FLV["ok"]
+    except OSError:
+        return False
+
+
 _ENG = {"mtime": None, "level": 0, "shift": False}
 COPY_LEVEL = 13
 
@@ -263,6 +281,19 @@ def venc_chain(q, mode=None):
             f"h265parse config-interval=-1 ! {q} ! mux")
 
 
+def cam_video_head(nm, flvfix):
+    """Eingang einer Kamera bis zum Dekoder. Mit pbflvfix versteht die Kette H.264 und H.265 (HEVC, auch mit der alten Kennung der
+    Handy-Apps): je ein Parser pro Codec, ein funnel führt beide vor dem Hardware-Dekoder zusammen (nur einer bekommt Daten).
+    H.265 geht als byte-stream/au in den Dekoder (hvc1 aus FLV nimmt er nicht an). Ohne den Baustein: wie früher nur H.264."""
+    if not flvfix:
+        return (f"rtmpsrc name={nm}_src location=@LOC@ ! flvdemux name={nm}\n"
+                f"{nm}.video ! queue name={nm}_vq max-size-time=4000000000 max-size-buffers=400 ! parsebin name={nm}_parse ! ")
+    return (f"rtmpsrc name={nm}_src location=@LOC@ ! pbflvfix name={nm}_fix ! flvdemux name={nm}\n"
+            f"{nm}. ! video/x-h264 ! h264parse name={nm}_parse ! funnel name={nm}_vf\n"
+            f"{nm}. ! video/x-h265 ! h265parse name={nm}_parse5 ! video/x-h265,stream-format=byte-stream,alignment=au ! {nm}_vf.\n"
+            f"{nm}_vf. ! queue name={nm}_vq max-size-time=4000000000 max-size-buffers=400 ! ")
+
+
 def build(c, base=RTMP_BASE, frame=None):
     """Pipeline-Datei für irl4you-encoder: [main] mischt und kodiert, jede Kamera läuft in einem eigenen Abschnitt [cam N]."""
     global FRAME_BUILT
@@ -270,6 +301,7 @@ def build(c, base=RTMP_BASE, frame=None):
     FRAME_BUILT = frame
     q = "queue max-size-time=10000000000 max-size-buffers=1000 max-size-bytes=41943040"
     keys = slot_keys(c)
+    flvfix = flvfix_ok()
     abuf = max(2000, buffer_ms(c) + 1000 + (max(delays_by_key(c).values() or [0]) if shift_ok() else 0)) * 1000000
     pads = [f"sink_{s}::alpha=0 sink_{s}::zorder={Z_BIG}" for s in range(SLOTS)]
     n = SLOTS
@@ -300,8 +332,7 @@ def build(c, base=RTMP_BASE, frame=None):
         main.append(f"appsrc name={nm}_ain ! queue name={nm}_aq2 max-size-time={abuf} max-size-buffers=0 max-size-bytes=0 ! audiosel.sink_{s + 1}")
         cams.append(
             f"[cam {s}]\n#idle\n"
-            f"rtmpsrc name={nm}_src location={base}/{key} ! flvdemux name={nm}\n"
-            f"{nm}.video ! queue name={nm}_vq max-size-time=4000000000 max-size-buffers=400 ! parsebin name={nm}_parse ! "
+            + cam_video_head(nm, flvfix).replace("@LOC@", f"{base}/{key}") +
             f"mppvideodec name={nm}_dec ! "
             f"queue name={nm}_lq max-size-buffers=45 max-size-bytes=0 max-size-time=0 leaky=downstream ! "
             f"videorate name={nm}_vr max-duplication-time=100000000 ! capsfilter name={nm}_c1 caps=\"video/x-raw,framerate={FPS}/1\" ! "

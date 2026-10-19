@@ -73,11 +73,12 @@ build_srs() {
 build_pbpip() {
     log "irl4you-pbpip (Bild-in-Bild-Baustein)"
     apt-get install -y -q --no-install-recommends gcc pkgconf libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev >/dev/null
-    local src="$HERE/../irl4you/gst-src/gstpbpip.c"
-    test -f "$src" || { echo "FEHLER: $src fehlt"; exit 1; }
+    local src="$HERE/../irl4you/gst-src/gstpbpip.c" src2="$HERE/../irl4you/gst-src/gstpbflv.c"
+    test -f "$src" && test -f "$src2" || { echo "FEHLER: $src oder $src2 fehlt"; exit 1; }
     rm -rf "$B/pbpip-st"; mkdir -p "$B/pbpip-st/opt/irl4you/gst"
-    gcc -O2 -Wall -fPIC -shared -DPACKAGE=\"irl4you\" "$src" -o "$B/pbpip-st/opt/irl4you/gst/libgstpbpip.so"         $(pkg-config --cflags --libs gstreamer-video-1.0 gstreamer-base-1.0 gstreamer-1.0)
+    gcc -O2 -Wall -fPIC -shared -DPACKAGE=\"irl4you\" "$src" "$src2" -o "$B/pbpip-st/opt/irl4you/gst/libgstpbpip.so"         $(pkg-config --cflags --libs gstreamer-video-1.0 gstreamer-base-1.0 gstreamer-1.0)
     GST_PLUGIN_PATH="$B/pbpip-st/opt/irl4you/gst" gst-inspect-1.0 pbpip | head -4
+    GST_PLUGIN_PATH="$B/pbpip-st/opt/irl4you/gst" gst-inspect-1.0 pbflvfix >/dev/null || { echo "FEHLER: pbflvfix fehlt im Plugin"; exit 1; }
     mkdeb irl4you-pbpip "1.0.$(date +%Y%m%d).${PKG_REV:-1}" "$B/pbpip-st" "libgstreamer1.0-0, libgstreamer-plugins-base1.0-0, libc6" "Bild-in-Bild-Baustein fuer IRL4YOU (eigene Entwicklung), nach /opt/irl4you/gst"
 }
 

@@ -2429,6 +2429,8 @@ static void pb_ctl_init(PbCtl *self) {
   self->live_written_rt = 0;
 }
 
+gboolean pb_flv_fix_register(GstPlugin *plugin);   /* gstpbflv.c */
+
 static gboolean plugin_init(GstPlugin *plugin) {
   GST_DEBUG_CATEGORY_INIT(pbpip_debug, "pbpip", 0, "IRL4YOU PiP");
   return gst_element_register(plugin, "pbpipsink", GST_RANK_NONE, pb_pip_sink_get_type()) &&
@@ -2436,7 +2438,8 @@ static gboolean plugin_init(GstPlugin *plugin) {
          gst_element_register(plugin, "pbpipsel", GST_RANK_NONE, pb_pip_sel_get_type()) &&
          gst_element_register(plugin, "pbtap", GST_RANK_NONE, pb_tap_get_type()) &&
          gst_element_register(plugin, "pbround", GST_RANK_NONE, pb_round_get_type()) &&
-         gst_element_register(plugin, "pbctl", GST_RANK_NONE, pb_ctl_get_type());
+         gst_element_register(plugin, "pbctl", GST_RANK_NONE, pb_ctl_get_type()) &&
+         pb_flv_fix_register(plugin);
 }
 
 #ifndef PACKAGE
