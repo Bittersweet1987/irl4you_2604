@@ -83,5 +83,14 @@ ln -sf /usr/share/irl4you/bootloader/irl4you-bootloader.sh /usr/local/sbin/irl4y
 # 11. Frühere Testeinstellung entfernen (Begrenzung der Netzkarten auf 100 Mbit/s, hat die Resets nicht behoben)
 rm -f /etc/NetworkManager/dispatcher.d/pipbox-lan-speed /etc/irl4you/lan-speed.conf
 
+# 12. Bluetooth-Firmware (TP-Link UB500 und andere Realtek-Sticks): Ubuntu liefert sie als .zst, der Kernel (ohne FW_LOADER_COMPRESS) findet nur die entpackte .bin
+for z in /lib/firmware/rtl_bt/*.bin.zst; do
+    [ -f "$z" ] || continue
+    [ -f "${z%.zst}" ] && continue
+    if command -v zstd >/dev/null 2>&1; then zstd -dq "$z" -o "${z%.zst}" || true
+    else python3 -c 'import sys; from compression import zstd; open(sys.argv[2], "wb").write(zstd.decompress(open(sys.argv[1], "rb").read()))' "$z" "${z%.zst}" || true; fi
+    [ -f "${z%.zst}" ] && changed=1
+done
+
 [ "$changed" = 1 ] && echo "system-base-fixes: Änderungen angewendet (Neustart empfohlen)" || echo "system-base-fixes: nichts zu tun"
 exit 0

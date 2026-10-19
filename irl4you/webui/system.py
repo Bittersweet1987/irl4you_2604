@@ -7,6 +7,11 @@ import subprocess
 import threading
 import time
 
+try:
+    import pwd
+except ImportError:  # Windows (nur Tests)
+    pwd = None
+
 from .common import belacoder_running, read, ttl_cached, ttl_cached_drop
 
 
@@ -297,6 +302,15 @@ class LogBundle:
             return None
 
 
+def first_login_user():
+    """Ohne Eintrag in system.json (frische Box): der erste normale Benutzer (UID 1000), bei dem man sich anmelden kann."""
+    try:
+        u = pwd.getpwuid(1000).pw_name
+    except (KeyError, AttributeError):
+        return ""
+    return u if re.fullmatch(r"[a-z_][a-z0-9_-]{0,31}", u) else ""
+
+
 class Developer:
     ACTIONS = ("start", "stop", "check", "reset")
     STATUS = "/run/pipbox-ssh/status.json"
@@ -318,7 +332,9 @@ class Developer:
                 u = json.load(f).get("ssh_user")
         except (OSError, ValueError, AttributeError):
             u = None
-        return u if isinstance(u, str) and self.USER_RE.fullmatch(u) else ""
+        if isinstance(u, str) and self.USER_RE.fullmatch(u):
+            return u
+        return first_login_user()
 
     def _ours(self):
         try:

@@ -55,7 +55,13 @@ def read_json(path, limit=65536):
 def ssh_user():
     own = read_json(f"{STATE}/system.json")
     user = own.get("ssh_user") if own is not None else None
-    return user if isinstance(user, str) and USER_RE.fullmatch(user) else None
+    if isinstance(user, str) and USER_RE.fullmatch(user):
+        return user
+    try:
+        user = pwd.getpwuid(1000).pw_name  # frische Box ohne system.json: erster normaler Benutzer
+    except KeyError:
+        return None
+    return user if USER_RE.fullmatch(user) else None
 
 
 def shadow_line(user):
