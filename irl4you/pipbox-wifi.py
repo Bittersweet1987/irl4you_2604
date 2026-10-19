@@ -394,13 +394,21 @@ def do_forget(req):
     if ssid not in saved_wifi():
         raise ValueError("Dieses WLAN ist nicht gespeichert")
     check_not_camera_profile(ssid)
-    nm("con", "delete", "id", ssid)
+    r = nm("con", "delete", "id", ssid)
+    if r.returncode != 0 or ssid in saved_wifi():
+        raise RuntimeError(f"„{ssid}“ ließ sich nicht löschen: " + ((r.stderr or r.stdout).strip()[:120] or "unbekannter Fehler"))
     return f"„{ssid}“ vergessen"
 
 
 def do_disconnect(req):
     check_client_iface(req.get("iface"))
-    nm("dev", "disconnect", req["iface"])
+    iface = req["iface"]
+    # Dauerhaft trennen: sonst verbindet NetworkManager nach dem nächsten Start (oder Auftauchen des Netzes) wieder von selbst.
+    # Das Profil bleibt gespeichert; "Verbinden" schaltet die automatische Verbindung wieder ein.
+    cur = next((d["connection"] for d in wifi_devices() if d["iface"] == iface), "")
+    if cur and cur in saved_wifi():
+        nm("con", "modify", "id", cur, "connection.autoconnect", "no")
+    nm("dev", "disconnect", iface)
     return "Getrennt"
 
 
