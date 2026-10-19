@@ -328,7 +328,7 @@ def build(c, base=RTMP_BASE, frame=None):
     for s in range(SLOTS):
         key = keys[s] or PLACEHOLDER % s
         nm = f"cam{s}"
-        main.append(f"appsrc name={nm}_vin ! queue name={nm}_q max-size-buffers={BRANCH_QUEUE_BUFFERS} max-size-bytes=0 max-size-time=0 ! mix.sink_{s}")
+        main.append(f"appsrc name={nm}_vin ! queue name={nm}_q max-size-buffers={BRANCH_QUEUE_BUFFERS} max-size-bytes=0 max-size-time=0 ! " + (f"pbtap name={nm}_tap ! " if frame else "") + f"mix.sink_{s}")
         main.append(f"appsrc name={nm}_ain ! queue name={nm}_aq2 max-size-time={abuf} max-size-buffers=0 max-size-bytes=0 ! audiosel.sink_{s + 1}")
         cams.append(
             f"[cam {s}]\n#idle\n"
@@ -340,7 +340,6 @@ def build(c, base=RTMP_BASE, frame=None):
             f"videoscale name={nm}_sc method=nearest-neighbour ! "
             f"capsfilter name={nm}_scc caps=\"video/x-raw,format=NV12,width={CANVAS_W},height={CANVAS_H}\" ! "
             f"capssetter name={nm}_c2 join=true replace=false caps=\"video/x-raw,colorimetry=bt709\" ! "
-            + (f"pbtap name={nm}_tap ! " if frame else "") +
             "appsink name=vout\n"
             f"{nm}.audio ! queue name={nm}_aq max-size-time={abuf} max-size-buffers=0 max-size-bytes=0 ! aacparse name={nm}_ap ! avdec_aac name={nm}_ad ! "
             f"audioconvert name={nm}_ac1 ! audioresample name={nm}_ar ! capsfilter name={nm}_ac2 caps=\"{AUDIO_CAPS}\" ! appsink name=aout\n")
