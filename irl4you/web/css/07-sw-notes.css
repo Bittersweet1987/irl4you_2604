@@ -303,7 +303,12 @@
   justify-content: space-between;
   gap: 10px;
 }
+.dcam .dsumk {
+  flex: none;
+  min-width: 5.5em;
+}
 .dcam .dsumtxt {
+  flex: 1;
   min-width: 0;
   overflow-wrap: anywhere;
   font-weight: 600;

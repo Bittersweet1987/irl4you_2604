@@ -58,8 +58,17 @@ function djiDynamic() {
     djiNearby(card);
     const wo = (d.wifi_options || []).find((o) => o.ifname === c.wifi_ifname),
       editing = !c.locked && (djiEdit[c.addr] || !c.wifi_ifname);
-    card.querySelector(".dsumtxt").textContent =
-      c.wifi_ifname === "manual" ? c.ssid || "Manuell: noch kein Netz" : c.wifi_ifname ? (wo && wo.ssid ? wo.ssid : c.wifi_ifname) : "Noch keine Verbindung gewählt";
+    const needNet = djiNeedsNet(c),
+      isNew = !!djiNew[c.addr] || (needNet && !(c.saved || []).length),
+      sig = (nearNets().find((n) => n.ssid === c.ssid) || {}).signal;
+    card.querySelector(".dsumtxt").textContent = c.wifi_ifname === "manual" ? "Manuell" : c.wifi_ifname ? (wo && wo.ssid ? wo.ssid : c.wifi_ifname) : "Noch keine Verbindung gewählt";
+    card.querySelector(".dsumwl").textContent = !c.wifi_ifname
+      ? ""
+      : needNet
+        ? c.ssid
+          ? c.ssid + (sig != null ? " · " + sig + " %" : "")
+          : "noch kein Netz eingetragen"
+        : "Name und Passwort setzt die Box selbst";
     const eb = card.querySelector(".d-wedit");
     eb.hidden = !!c.locked || !c.wifi_ifname;
     eb.textContent = editing ? "Fertig" : "Bearbeiten";
@@ -68,20 +77,24 @@ function djiDynamic() {
     card.querySelector(".dlock").hidden = !c.locked;
     card.querySelector(".dconn").disabled = !!c.locked;
     const ss = card.querySelector(".d-ssid");
-    if (ss && ss !== document.activeElement && !djiPend[c.addr] && ss.value !== (c.ssid || "")) ss.value = c.ssid || "";
+    if (ss && ss !== document.activeElement && !djiPend[c.addr] && !djiNew[c.addr] && ss.value !== (c.ssid || "")) ss.value = c.ssid || "";
+    card.querySelector(".d-nearrow").hidden = !isNew;
     const sv = card.querySelector(".d-saved");
     if (sv && sv !== document.activeElement) {
       const names = c.saved || [],
-        have = [...sv.options].slice(1).map((o) => o.value);
+        have = [...sv.options].slice(1, -1).map((o) => o.value);
       if (JSON.stringify(names) !== JSON.stringify(have))
         sv.innerHTML =
-          '<option value="">– gespeicherte Netze –</option>' + names.map((n) => `<option value="${esc(n)}">${esc(n)}</option>`).join("");
-      sv.value = names.includes(c.ssid) ? c.ssid : "";
+          '<option value="">– gespeicherte Netze –</option>' +
+          names.map((n) => `<option value="${esc(n)}">${esc(n)}</option>`).join("") +
+          '<option value="__new__">Weiteres Netz anlegen …</option>';
+      sv.value = djiNew[c.addr] ? "__new__" : names.includes(c.ssid) ? c.ssid : "";
       card.querySelector(".d-savedrow").hidden = !names.length;
+      card.querySelector(".d-saveddel").disabled = !!djiNew[c.addr] || !names.includes(c.ssid);
     }
     const pw = card.querySelector(".d-pw");
     if (pw && pw !== document.activeElement)
-      pw.placeholder = (c.saved || []).includes(c.ssid) ? "Passwort gespeichert – leer lassen, um es zu behalten" : "Passwort";
+      pw.placeholder = !djiNew[c.addr] && (c.saved || []).includes(c.ssid) ? "Passwort gespeichert – leer lassen, um es zu behalten" : "Passwort";
     card.querySelector(".dsum-video").textContent = `· ${c.resolution || ""} ${c.fps || 30} fps · ${(c.bitrate || 6000) / 1000} Mbit/s`;
     const au = card.querySelector(".d-auto");
     if (au !== document.activeElement) au.checked = !!c.autoconnect;

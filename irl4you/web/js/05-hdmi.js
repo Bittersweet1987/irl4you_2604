@@ -38,7 +38,13 @@ $("djicams").addEventListener("change", (e) => {
       card.querySelector(".d-pw").focus();
     }
   } else if (cl.contains("d-saved")) {
-    if (t.value) {
+    djiNew[addr] = t.value === "__new__";
+    if (djiNew[addr]) {
+      card.querySelector(".d-ssid").value = "";
+      card.querySelector(".d-pw").value = "";
+      card.querySelector(".d-ssid").focus();
+      djiDynamic();
+    } else if (t.value) {
       card.querySelector(".d-ssid").value = t.value;
       card.querySelector(".d-pw").value = "";
       djiCmd({ cmd: "use_saved", addr, ssid: t.value }).then(() => djiLoad());
@@ -83,6 +89,7 @@ $("djicams").addEventListener("click", async (e) => {
     }
   } else if (cl.contains("d-wedit")) {
     djiEdit[addr] = !djiEdit[addr];
+    if (!djiEdit[addr]) djiNew[addr] = false;
     djiDynamic();
     return;
   } else if (cl.contains("d-saveddel")) {
