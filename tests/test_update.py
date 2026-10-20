@@ -760,7 +760,7 @@ class TestShippedFiles(unittest.TestCase):
         version = U.Updater.assemble(REPO, dest, sha)
         m = U.Updater.read_manifest(dest, sha)
         self.assertEqual(m["version"], version)
-        self.assertEqual(m["restart"], ["pipbox.service", "pipbox-rtmpstat.service"])
+        self.assertEqual(m["restart"], ["pipbox.service", "pipbox-rtmpstat.service", "pipbox-dji.service", "pipbox-hdmi.service", "pipbox-health.service", "pipbox-arp.service"])
         for p in ("hooks/install", "hooks/health", "updater/irl4you_update.py", "updater/systemd/irl4you-update.path",
                   "install/system-install.sh", "install/zz-irl4you-boot", "VERSION"):
             self.assertTrue(os.path.isfile(os.path.join(dest, p)), p)

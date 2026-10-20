@@ -230,6 +230,7 @@ def write_pipeline(cfg):
     ensure_work()
     with open(f"{WORK}/pipeline", "w") as f:
         f.write(text)
+    print("send: Beschreibung der Sendekette:\n" + text, flush=True)    # fürs Protokoll (Kamera-Schlüssel werden beim Herunterladen der Protokolle bereinigt)
     try:
         vals = server.PipelineStore.delay_values(cfg)
         put_state_file("main-delay-ms", " ".join(map(str, vals)) + "\n")

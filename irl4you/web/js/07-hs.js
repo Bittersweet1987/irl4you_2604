@@ -26,12 +26,12 @@ function hsControls(c, busy) {
   const pwRow = pw ? `<div class="hsrow"><div class="pwshow" title="Klicken kopiert das Passwort">${esc(pw)}</div></div>` : "";
   if (c.camera_net) return on ? `<div class="hsrow">${label} <b>An</b> ${show}</div>${pwRow}` : "";
   return (
-    `<div class="hsrow">${label}<button type="button" class="hs-toggle hsw${on ? " on" : " sec"}" role="switch" aria-checked="${on}" title="${on ? "Hotspot ausschalten" : "Hotspot einschalten"}"${off}>${on ? "An" : "Aus"}</button>` +
+    `<div class="hsrow">${label}<button type="button" class="hs-toggle hsw${on ? " on" : " dangerbtn"}" role="switch" aria-checked="${on}" title="${on ? "Hotspot ausschalten" : "Hotspot einschalten"}"${off}>${on ? "An" : "Aus"}</button>` +
     (on
       ? show
       : `<button type="button" class="sec hs-edit"${hsOpen[c.iface] ? " disabled" : ""}${off}>Einstellen</button>` +
         (c.hotspot
-          ? ` <button type="button" class="sec hs-del" title="Entfernt den Hotspot dieser Karte ganz (Einstellungen und Profil), zum Beispiel um ihn auf einer anderen Karte einzurichten"${off}>Löschen</button>`
+          ? ` <button type="button" class="dangerbtn hs-del" title="Entfernt den Hotspot dieser Karte ganz (Einstellungen und Profil), zum Beispiel um ihn auf einer anderen Karte einzurichten"${off}>Löschen</button>`
           : "")) +
     `</div>` +
     (on ? pwRow : hsOpen[c.iface] ? hsPanel(c, busy) : "")

@@ -14,6 +14,8 @@ kommen aus dem Design-System (`css/00-ds-*.css`, Tokens, sechs Themes). Kein Bau
 | Hauptaktion einer Karte (Speichern, Hinzufügen) | `<button>` ohne Klasse | höchstens eine je Bereich |
 | Nebenaktion | `<button class="sec">` (klein: `sec small`) | |
 | Aktion mit Folgen (Neustart, Zugang öffnen) | `warnbtn`, Zerstörendes `dangerbtn` | |
+| Suchen, Neu anlegen (Netze suchen, Neuer Server) | `warnbtn` (gelb wie „Live gehen“) | |
+| Trennen, Vergessen, Löschen, Zustand „Aus“ des Hotspots | `dangerbtn` (rot wie „SSH ausschalten“) | Vergessen und Löschen als kleines Symbol: `dangerbtn small` |
 | Hinweis, Erklärung, Rückmeldung | `<div class="ph">`, Rückmeldung mit `role="status"` | kurze Sätze, nichts in Farbe hervorheben |
 | Status | `wstat` mit `wdot` | |
 | Ein/Aus und Mehrfachauswahl | Häkchen (`checkbox`) in `optlist` | |

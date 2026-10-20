@@ -48,7 +48,7 @@ function wifiDebug(d) {
   return `<details class="sens" open><summary class="muted">Technische Angaben zur Karte ${esc(d.scan.iface || "")} (die Suche hat nichts gefunden)</summary><pre>${esc(dbg.join("\n"))}</pre></details>`;
 }
 const wlTrash = (ssid) =>
-  `<button type="button" class="sec small wl-del" data-ssid="${esc(ssid)}" title="Netz vergessen" aria-label="Netz vergessen">🗑</button>`;
+  `<button type="button" class="dangerbtn small wl-del" data-ssid="${esc(ssid)}" title="Netz vergessen" aria-label="Netz vergessen">🗑</button>`;
 function wlRow(n, saved, sel) {
   const isSaved = saved.includes(n.ssid);
   return `<div class="wrow${n.in_use ? " cur" : ""}${sel === n.ssid ? " sel" : ""}${isSaved ? " wsv" : ""}" role="button" tabindex="0" data-ssid="${esc(n.ssid)}"><span class="wname">${esc(n.ssid)}</span>
@@ -65,7 +65,7 @@ function wlList(c, d, u, off) {
   const saved = d.saved || [],
     shown = wlScanShown(c, d),
     nets = shown ? d.scan.nets || [] : c.ssid ? [{ ssid: c.ssid, signal: c.signal, security: "", in_use: true }] : [];
-  let h = `<div class="actions"><button type="button" class="sec wl-scan"${off}>Netze suchen</button>${c.ip ? `<button type="button" class="sec wl-disc"${off}>Trennen</button>` : ""}</div>${wlMsg(c, d, u)}`;
+  let h = `<div class="actions"><button type="button" class="warnbtn wl-scan"${off}>Netze suchen</button>${c.ip ? `<button type="button" class="dangerbtn wl-disc"${off}>Trennen</button>` : ""}</div>${wlMsg(c, d, u)}`;
   if (nets.length)
     h += `<div class="muted">${shown ? "Gefundene Netze – Zeile anklicken zum Auswählen:" : "Verbunden mit"}</div><div class="wlist">${nets.map((n) => wlRow(n, saved, u.sel)).join("")}</div>`;
   else if (shown) h += wifiDebug(d);
@@ -81,7 +81,7 @@ function wlManual(c, d, u, off) {
   return `<div class="wform"><label class="muted">Netzname (SSID)<input class="wl-ssid" maxlength="32" autocomplete="off" value="${esc(u.ssid)}"></label>
     <label class="muted">Passwort<input class="wl-mpw" type="password" maxlength="64" autocomplete="new-password" value="${esc(u.mpw)}" placeholder="leer bei offenem Netz"></label></div>
     <label class="muted" style="display:block;margin:8px 0"><input type="checkbox" class="wl-hidden"${u.hidden ? " checked" : ""}> verstecktes Netz (Name wird nicht ausgesendet)</label>
-    <div class="actions"><button type="button" class="wl-go"${off}>Verbinden</button>${c.ip ? `<button type="button" class="sec wl-disc"${off}>Trennen</button>` : ""}</div>${wlMsg(c, d, u)}`;
+    <div class="actions"><button type="button" class="wl-go"${off}>Verbinden</button>${c.ip ? `<button type="button" class="dangerbtn wl-disc"${off}>Trennen</button>` : ""}</div>${wlMsg(c, d, u)}`;
 }
 function wlPanel(c, d, busy) {
   if (c.camera_net) return "";

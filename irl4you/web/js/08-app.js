@@ -255,7 +255,6 @@ async function pipeLoad() {
   pipCorners = d.corners;
   pipLive = d.live || {};
   if (pipeDirty || pipDelayDirty) {
-    $("pipeprev").textContent = d.preview || "";
     return;
   }
   if (document.activeElement.id !== "p_auto") $("p_auto").checked = c.auto_failover !== false;
@@ -299,7 +298,6 @@ async function pipeLoad() {
         .join(""),
     );
   }
-  $("pipeprev").textContent = d.preview || "(noch keine Hauptkamera gewählt)";
   let info = !c.main
     ? "Noch keine Pipeline gespeichert."
     : c.type === "pip"

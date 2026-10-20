@@ -306,6 +306,8 @@ button.sec {
 }
 button.warnbtn {
   background: var(--warn);
+  border-color: var(--warn);
+  color: #0f172a;
 }
 button:disabled {
   opacity: 0.45;

@@ -197,9 +197,14 @@ function srtlaFormReset() {
   srtlaEdit = null;
   $("srvform").reset();
   $("srv_save").textContent = "Server hinzufügen";
-  $("srv_cancel").hidden = true;
+  $("srvform").hidden = true;
   sidField(false);
 }
+$("srv_new").addEventListener("click", () => {
+  srtlaFormReset();
+  $("srvform").hidden = false;
+  $("s_name").focus();
+});
 $("s_sid").addEventListener("focus", (e) => {
   if (sidSaved && e.target.value === SID_MASK) e.target.select();
 });
@@ -226,7 +231,7 @@ $("srv_edit").addEventListener("click", () => {
   $("s_port").value = s.port;
   sidField(!!s.has_streamid);
   $("srv_save").textContent = "Änderungen speichern";
-  $("srv_cancel").hidden = false;
+  $("srvform").hidden = false;
   $("s_name").focus();
 });
 $("srv_cancel").addEventListener("click", srtlaFormReset);

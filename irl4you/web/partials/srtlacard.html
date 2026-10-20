@@ -5,14 +5,14 @@
 <div id="autostatus" class="ph" hidden></div>
 <details class="subsec" id="srt_srv" open><summary>SRTLA-Server</summary>
 <div class="ph" style="margin-top:0">SRTLA-Server speichern und per Auswahl umschalten. Die Stream-ID ist ein Zugangsschlüssel: sie wird auf der Box gespeichert und hier nie wieder angezeigt.</div>
-<div class="srvrow"><select id="srv_sel"></select><button id="srv_edit" type="button" class="sec">Bearbeiten</button><button id="srv_del" type="button" class="sec">Löschen</button></div>
-<form id="srvform" class="add" style="margin-top:10px">
+<div class="srvrow"><select id="srv_sel"></select><button id="srv_edit" type="button" class="sec">Bearbeiten</button><button id="srv_del" type="button" class="dangerbtn">Löschen</button><button id="srv_new" type="button" class="warnbtn">Neuer Server</button></div>
+<form id="srvform" class="add" style="margin-top:10px" hidden>
 <input id="s_name" placeholder="Name (z. B. Mein Server)" maxlength="40" required>
 <input id="s_host" placeholder="Adresse (z. B. srtla.example.de)" maxlength="253" required autocomplete="off">
 <input id="s_port" placeholder="Port" type="number" min="1" max="65535" required>
 <input id="s_sid" type="password" placeholder="Stream-ID (optional)" maxlength="512" autocomplete="new-password">
 <button type="submit" id="srv_save">Server hinzufügen</button>
-<button type="button" id="srv_cancel" class="sec" hidden>Abbrechen</button>
+<button type="button" id="srv_cancel" class="sec">Abbrechen</button>
 </form>
 </details>
 <details class="subsec" id="srt_lines"><summary>Leitungssteuerung</summary>
