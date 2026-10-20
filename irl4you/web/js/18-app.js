@@ -332,38 +332,40 @@
     g.setPointerCapture(e.pointerId);
     card.classList.add("drag");
     page.classList.add("dragging");
-    // Die gezogene Karte folgt dem Zeiger (transform); ihren Platz im Fluss nimmt sie dabei mit, die anderen rücken nach.
-    const off = e.clientY - card.getBoundingClientRect().top;
-    let dy = 0;
-    const place = (y) => {
-      const natural = card.getBoundingClientRect().top - dy;
-      dy = y - off - natural;
-      card.style.transform = "translateY(" + dy + "px)";
-    };
+    // Nichts wird während des Ziehens im DOM umgehängt (sonst verliert der Griff den Zeiger): die gezogene Karte folgt dem Zeiger,
+    // die anderen weichen per transform aus, erst beim Loslassen wird die Reihenfolge übernommen.
+    const cards = [...page.children],
+      from = cards.indexOf(card),
+      pageY = (y) => y + window.scrollY,
+      tops = cards.map((c) => pageY(c.getBoundingClientRect().top)),
+      mids = cards.map((c, i) => tops[i] + c.offsetHeight / 2),
+      slot = (tops[from + 1] || tops[from] + card.offsetHeight + 8) - tops[from],
+      off = Math.max(0, Math.min(card.offsetHeight, pageY(e.clientY) - tops[from]));
+    let to = from;
     const over = (ev) => {
-      if (ev.clientY < 60) window.scrollBy(0, -14);
+      if (ev.clientY < 90) window.scrollBy(0, -14);
       else if (ev.clientY > window.innerHeight - 60) window.scrollBy(0, 14);
-      place(ev.clientY);
-      const mid = card.getBoundingClientRect().top + card.offsetHeight / 2;
-      const next = [...page.children].find((o) => {
-        const r = o.getBoundingClientRect();
-        return o !== card && mid < r.top + r.height / 2;
+      const dy = pageY(ev.clientY) - off - tops[from],
+        center = tops[from] + dy + card.offsetHeight / 2;
+      to = cards.filter((c, i) => i !== from && mids[i] < center).length;
+      card.style.transform = "translateY(" + dy + "px)";
+      cards.forEach((c, i) => {
+        if (i === from) return;
+        const k = i < from ? i : i - 1,
+          shift = i < from ? (k >= to ? slot : 0) : k < to ? -slot : 0;
+        c.style.transform = shift ? "translateY(" + shift + "px)" : "";
       });
-      if (next !== card.nextSibling) {
-        page.insertBefore(card, next || null);
-        place(ev.clientY);
-      }
     };
-    place(e.clientY);
     const end = () => {
       if (!card.classList.contains("drag")) return;
       for (const [t, f] of [["pointermove", over], ["pointerup", end], ["pointercancel", end], ["mouseup", end]]) document.removeEventListener(t, f);
       g.removeEventListener("lostpointercapture", end);
+      cards.forEach((c) => (c.style.transform = ""));
       card.classList.remove("drag");
-      card.style.transform = "";
       page.classList.remove("dragging");
-      const ids = [...page.children].map((c) => c.dataset.id),
+      const ids = cards.filter((c) => c !== card).map((c) => c.dataset.id),
         v = views[edit];
+      ids.splice(to, 0, card.dataset.id);
       if (ids.join() === orderOf(v).filter((x) => ids.includes(x)).join()) return;
       v.order = ids.concat(orderOf(v).filter((x) => !ids.includes(x)));
       save(edit);

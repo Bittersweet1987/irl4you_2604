@@ -295,8 +295,10 @@ dialog#rdlg::backdrop {
 .mcard:not(.drag) {
   transition: transform 0.12s;
 }
-.minipage.dragging .msubs {
-  display: none;
+.mgrip,
+.mrow {
+  user-select: none;
+  -webkit-user-select: none;
 }
 .minipage.dragging .mcard:not(.drag) .mrow {
   opacity: 0.7;
