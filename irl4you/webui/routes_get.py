@@ -147,6 +147,7 @@ class GetRoutes:
                 since = 0
             out = self.chatreader.poll(since)
             out["account"] = self.twitchaccounts.status(self.headers.get("x-pb-owner", ""))
+            out["youtube"] = self.youtubechat.status() if self.youtubelogin.ready() else {"state": "aus", "mod": False}
             out["events"] = self.chatevents.status() if getattr(self, "chatevents", None) else {"state": "aus", "types": [], "error": ""}
             return self.reply(200, out)
         if path == "/api/youtube":

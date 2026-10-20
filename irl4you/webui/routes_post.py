@@ -278,6 +278,8 @@ class PostRoutes:
                         self.twitch.tries.clear()
                     return self.reply(200, r)
                 return self.reply(400, {"error": "Ungültige Anfrage"})
+            if path == "/api/chat/mod" and d.get("src") == "youtube":
+                return self.reply(200, self.youtubechat.moderate(d))
             if path == "/api/chat/mod":
                 key = self.headers.get("x-pb-owner", "")
                 role, acct = self.twitchaccounts.pick(key)

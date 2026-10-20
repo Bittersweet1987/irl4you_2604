@@ -160,6 +160,76 @@ class TestChat(unittest.TestCase):
         self.assertEqual(chat.reader.items[0]["src"], "youtube")
 
 
+class TestEingebauterClient(unittest.TestCase):
+    def test_anmeldung_nur_mit_dem_konto(self):
+        d = tempfile.TemporaryDirectory()
+        yt = irl("ytchat")
+        routes = {"https://oauth2.googleapis.com/device/code": [(200, {"device_code": "dc", "user_code": "AAAA-BBBB", "verification_url": "https://www.google.com/device", "expires_in": 1800, "interval": 5})]}
+        paths = FakePaths(routes)
+        login = yt.YoutubeLogin(os.path.join(d.name, "y.json"), paths=paths, sleep=lambda s: None)
+        login.builtin = ("projekt.apps.googleusercontent.com", "projekt-geheimnis")
+        login.state = login._base_state()
+        st = login.status()
+        self.assertEqual((st["state"], st["builtin"], st["has_client"]), ("bereit", True, True))
+        login.start()
+        sent = paths.calls[0][2].decode()
+        self.assertIn("projekt.apps.googleusercontent.com", sent)
+        self.assertIn("youtube.force-ssl", sent)           # lesen und moderieren
+        d.cleanup()
+
+    def test_ohne_client_klare_meldung(self):
+        d = tempfile.TemporaryDirectory()
+        yt = irl("ytchat")
+        login = yt.YoutubeLogin(os.path.join(d.name, "y.json"), paths=FakePaths({}))
+        login.builtin = ("", "")
+        with self.assertRaises(ValueError):
+            login.start()
+        d.cleanup()
+
+
+class TestModeration(unittest.TestCase):
+    def setUp(self):
+        self.d = tempfile.TemporaryDirectory()
+        routes = {"https://www.googleapis.com/youtube/v3/liveChat/messages": [(204, {})],
+                  "https://www.googleapis.com/youtube/v3/liveChat/bans": [(200, {"id": "BANID123"})]}
+        yt, paths, login = make(routes, self.d.name)
+        login.data = {"client_id": CID, "client_secret": "geheimnis-123", "refresh": "RT", "access": "AT", "expires_at": 9e12}
+        self.chat = yt.YoutubeChat(login, Reader(), paths=paths)
+        self.paths = paths
+
+    def tearDown(self):
+        self.d.cleanup()
+
+    def test_ohne_livechat_keine_moderation(self):
+        with self.assertRaises(ValueError):
+            self.chat.moderate({"action": "delete", "message_id": "abcde12345"})
+
+    def test_loeschen_timeout_bann_und_aufheben(self):
+        self.chat.chat_id = "CHAT1"
+        self.assertTrue(self.chat.moderate({"action": "delete", "message_id": "LCC.abc123"})["ok"])
+        self.assertEqual(self.paths.calls[-1][0], "DELETE")
+        self.assertIn("id=LCC.abc123", self.paths.calls[-1][1])
+        r = self.chat.moderate({"action": "timeout", "user_id": "UCabcdefghijklmnopqrstuv", "seconds": 600})
+        body = json.loads(self.paths.calls[-1][2].decode())["snippet"]
+        self.assertEqual((body["type"], body["banDuration"], body["liveChatId"], r["user_id"]), ("temporary", 600, "CHAT1", "BANID123"))
+        self.chat.moderate({"action": "ban", "user_id": "UCabcdefghijklmnopqrstuv"})
+        self.assertEqual(json.loads(self.paths.calls[-1][2].decode())["snippet"]["type"], "permanent")
+        self.chat.moderate({"action": "unban", "user_id": "BANID123"})
+        self.assertEqual((self.paths.calls[-1][0], "id=BANID123" in self.paths.calls[-1][1]), ("DELETE", True))
+
+    def test_ungueltige_eingaben(self):
+        self.chat.chat_id = "CHAT1"
+        for bad in ({"action": "delete", "message_id": "../x"}, {"action": "timeout", "user_id": "x", "seconds": 5},
+                    {"action": "timeout", "user_id": "UCabcdefghijklmnopqrstuv", "seconds": 0}, {"action": "kick"}):
+            with self.assertRaises(ValueError):
+                self.chat.moderate(bad)
+
+    def test_nachricht_traegt_autorkennung(self):
+        it = {"id": "m1", "snippet": {"type": "textMessageEvent", "displayMessage": "hi"}, "authorDetails": {"displayName": "Anna", "channelId": "UCabcdefghijklmnopqrstuv"}}
+        m = self.chat.parse(it)[0]
+        self.assertEqual((m["uid"], m["login"]), ("UCabcdefghijklmnopqrstuv", "Anna"))
+
+
 class TestLeser(unittest.TestCase):
     def test_twitch_nachrichten_tragen_herkunft(self):
         tw = irl("twitch")

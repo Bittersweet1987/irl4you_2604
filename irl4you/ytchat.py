@@ -3,7 +3,7 @@
 Der Livechat des laufenden Streams wird automatisch gefunden und in den Chat der Box gemischt (Herkunft "youtube", Twitch-Nachrichten tragen "twitch").
 Anmeldung nach dem Geräte-Ablauf von Google (OAuth "TVs and Limited Input devices"): Die Box zeigt einen Code, der Nutzer gibt ihn auf google.com/device ein.
 Die OAuth-Zugangsdaten (Client-ID und Geheimnis) legt jeder Betreiber in seinem eigenen Google-Cloud-Projekt an (YouTube Data API v3 einschalten); sie
-liegen nur auf der Box. Gelesen wird ausschließlich (Bereich youtube.readonly).
+liegen nur auf der Box. Ist im Programm eine eigene Client-ID des Projekts hinterlegt (youtube_client.json), genügt die Anmeldung mit dem Konto. Bereich youtube.force-ssl: Chat lesen und moderieren (Nachrichten löschen, Timeout, Bann).
 """
 
 import collections
@@ -17,12 +17,22 @@ import time
 from twitch.irc import ChatPaths
 
 
+def _builtin():
+    try:
+        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "youtube_client.json")) as f:
+            d = json.load(f)
+        cid, sec = str(d.get("client_id", "")).strip(), str(d.get("client_secret", "")).strip()
+        return (cid, sec) if cid and sec else ("", "")
+    except (OSError, ValueError, AttributeError):
+        return ("", "")
+
+
 class YoutubeLogin:
     DEVICE_URL = "https://oauth2.googleapis.com/device/code"
     TOKEN_URL = "https://oauth2.googleapis.com/token"
     REVOKE_URL = "https://oauth2.googleapis.com/revoke"
     API = "https://www.googleapis.com/youtube/v3/"
-    SCOPE = "https://www.googleapis.com/auth/youtube.readonly"
+    SCOPE = "https://www.googleapis.com/auth/youtube.force-ssl"
     GRANT = "urn:ietf:params:oauth:grant-type:device_code"
     ID_RE = re.compile(r"[A-Za-z0-9._-]{10,200}")
     SECRET_RE = re.compile(r"[A-Za-z0-9._~-]{8,120}")
@@ -36,13 +46,14 @@ class YoutubeLogin:
         self.clock, self.sleep = clock, sleep
         self.lock = threading.RLock()
         self.data = {}
+        self.builtin = _builtin()
         self.pending = None
         self.state, self.error, self.gen = "aus", "", 0
         try:
             with open(path) as f:
                 d = json.load(f)
             if isinstance(d, dict):
-                self.data = {k: d[k] for k in ("client_id", "client_secret", "refresh", "access", "expires_at", "channel") if k in d}
+                self.data = {k: d[k] for k in ("client_id", "client_secret", "refresh", "access", "expires_at", "channel", "via") if k in d}
         except (OSError, ValueError, TypeError):
             pass
         self.state = self._base_state()
@@ -50,7 +61,16 @@ class YoutubeLogin:
     def _base_state(self):
         if self.data.get("refresh"):
             return "angemeldet"
-        return "bereit" if self.data.get("client_id") and self.data.get("client_secret") else "kein-client"
+        return "bereit" if self._client()[0] else "kein-client"
+
+    def _client(self, via=None):
+        """(Client-ID, Geheimnis): eigene Zugangsdaten des Betreibers, sonst die im Programm hinterlegten. 'via' wählt die, mit der angemeldet wurde."""
+        own = (self.data.get("client_id", ""), self.data.get("client_secret", ""))
+        if via == "builtin":
+            return self.builtin
+        if via == "own":
+            return own
+        return own if own[0] and own[1] else self.builtin
 
     def _write(self):
         os.makedirs(os.path.dirname(os.path.abspath(self.path)), exist_ok=True)
@@ -77,7 +97,7 @@ class YoutubeLogin:
     def status(self):
         with self.lock:
             p, d = self.pending, self.data
-            out = {"state": self.state, "has_client": bool(d.get("client_id") and d.get("client_secret")), "client_id": str(d.get("client_id", ""))[:200],
+            out = {"state": self.state, "has_client": bool(self._client()[0]), "builtin": bool(self.builtin[0]), "client_id": str(d.get("client_id", ""))[:200],
                    "secret_set": bool(d.get("client_secret")), "channel": str(d.get("channel", ""))[:100], "error": self.error}
             if p and self.state == "wartet":
                 out.update(code=p["user_code"], uri=p["uri"], expires_in=max(0, int(p["expires_at"] - self.clock())))
@@ -108,8 +128,9 @@ class YoutubeLogin:
     def start(self):
         with self.lock:
             d = self.data
-            if not (d.get("client_id") and d.get("client_secret")):
-                raise ValueError("Bitte zuerst Client-ID und Client-Geheimnis eintragen")
+            cid, secret = self._client()
+            if not cid:
+                raise ValueError("Es ist noch keine Client-ID hinterlegt: unter „Eigene Zugangsdaten“ eintragen")
             if self.state == "wartet" and self.pending and self.pending["expires_at"] > self.clock():
                 return self.status()
             self.gen += 1
@@ -119,7 +140,7 @@ class YoutubeLogin:
                 self.pending = {"device_code": "demo", "user_code": "ABCD-EFGH-IJKL", "uri": "https://www.google.com/device", "expires_at": self.clock() + 1800, "interval": 5}
                 self.state = "wartet"
                 return self.status()
-            st, r = self._call(self.DEVICE_URL, {"client_id": d["client_id"], "scope": self.SCOPE})
+            st, r = self._call(self.DEVICE_URL, {"client_id": cid, "scope": self.SCOPE})
             if st != 200 or not all(isinstance(r.get(k), str) for k in ("device_code", "user_code", "verification_url")):
                 self.state = self._base_state() if not self.ready() else "angemeldet"
                 self.error = self.ERR_NET if st <= 0 else "Google hat die Anmeldung nicht angenommen: " + str(r.get("error_description") or r.get("error") or st)[:160]
@@ -155,7 +176,7 @@ class YoutubeLogin:
                     self.state, self.error, self.pending = self._base_state(), self.ERR_DENIED, None
                     return
                 wait, device = p["interval"], p["device_code"]
-                cid, secret = self.data["client_id"], self.data["client_secret"]
+                cid, secret = self._client()
             self.sleep(wait)
             st, r = self._call(self.TOKEN_URL, {"client_id": cid, "client_secret": secret, "device_code": device, "grant_type": self.GRANT}, once=True)
             with self.lock:
@@ -178,7 +199,8 @@ class YoutubeLogin:
             life = max(60, int(r.get("expires_in", 3600)))
         except (TypeError, ValueError):
             life = 3600
-        self.data.update(refresh=r["refresh_token"], access=r["access_token"], expires_at=self.clock() + life)
+        own = self.data.get("client_id") and self.data.get("client_secret")
+        self.data.update(refresh=r["refresh_token"], access=r["access_token"], expires_at=self.clock() + life, via="own" if own else "builtin")
         self.pending, self.error, self.state = None, "", "angemeldet"
         self._write()
         st, ch = self._call(self.API + "channels?part=snippet&mine=true", headers={"Authorization": "Bearer " + r["access_token"]})
@@ -199,8 +221,8 @@ class YoutubeLogin:
                 return d["access"]
             if self.demo:
                 return ""
-            st, r = self._call(self.TOKEN_URL, {"client_id": d.get("client_id", ""), "client_secret": d.get("client_secret", ""),
-                                                "refresh_token": d["refresh"], "grant_type": "refresh_token"}, once=True)
+            cid, secret = self._client(d.get("via"))
+            st, r = self._call(self.TOKEN_URL, {"client_id": cid, "client_secret": secret, "refresh_token": d["refresh"], "grant_type": "refresh_token"}, once=True)
             if st == 200 and isinstance(r.get("access_token"), str):
                 try:
                     life = max(60, int(r.get("expires_in", 3600)))
@@ -247,6 +269,7 @@ class YoutubeChat:
         self.thread = None
         self.gen = 0
         self.state, self.error, self.title = "aus", "", ""
+        self.chat_id = None
         self.seen = collections.deque(maxlen=600)
 
     def ready(self):
@@ -254,7 +277,7 @@ class YoutubeChat:
 
     def status(self):
         with self.lock:
-            return {"state": self.state, "error": self.error, "title": self.title}
+            return {"state": self.state, "error": self.error, "title": self.title, "mod": self.login.ready() and bool(self.chat_id)}
 
     def ensure(self):
         with self.lock:
@@ -319,10 +342,12 @@ class YoutubeChat:
                 if not chat_id:
                     chat_id, title = self.find()
                     if not chat_id:
+                        self.chat_id = None
                         self._set("kein-stream", "")
                         self._nap(self.FIND_EVERY, gen)
                         continue
                     token, first = "", True
+                    self.chat_id = chat_id
                     self._set("ok", "", title)
                 params = {"liveChatId": chat_id, "part": "snippet,authorDetails", "maxResults": 200}
                 if token:
@@ -331,7 +356,7 @@ class YoutubeChat:
                 if st != 200:
                     why = self._reason(d)
                     if why in ("liveChatEnded", "liveChatNotFound") or st == 404:
-                        chat_id = None
+                        chat_id = self.chat_id = None
                         self._set("kein-stream", "")
                         self._nap(30.0, gen)
                     elif why in ("quotaExceeded", "rateLimitExceeded", "dailyLimitExceeded"):
@@ -362,6 +387,72 @@ class YoutubeChat:
         with self.lock:
             if self.gen == gen:
                 self.state = "aus"
+
+    CH_RE = re.compile(r"[A-Za-z0-9_-]{10,60}")
+    ID_RE = re.compile(r"[A-Za-z0-9_.=-]{5,250}")
+    ERR_MOD = "Moderieren geht nur, solange ein YouTube-Livechat verbunden ist"
+
+    def _send(self, method, path, params, body=None):
+        import urllib.parse
+        tok = self.login.token()
+        if not tok:
+            raise ValueError("Bei YouTube nicht angemeldet")
+        hdr = {"Authorization": "Bearer " + tok, "User-Agent": "irl4you-box"}
+        data = None
+        if body is not None:
+            data = json.dumps(body).encode()
+            hdr["Content-Type"] = "application/json"
+        st, raw = self.paths.request(method, YoutubeLogin.API + path + "?" + urllib.parse.urlencode(params), data, hdr, once=True)
+        try:
+            out = json.loads(raw.decode("utf-8", "replace") or "{}")
+        except ValueError:
+            out = {}
+        out = out if isinstance(out, dict) else {}
+        if st <= 0:
+            raise ValueError("Keine Verbindung zu YouTube")
+        if st >= 300:
+            why = self._reason(out)
+            msg = {"forbidden": "Dafür fehlt die Berechtigung (nur Streamer und Moderatoren des Chats)", "liveChatBanInsertionNotAllowed": "Streamer und Moderatoren lassen sich nicht sperren"}.get(why)
+            raise ValueError(msg or "YouTube hat die Aktion abgelehnt (%s)" % (why or st))
+        return out
+
+    def moderate(self, req):
+        """Nachricht löschen, Timeout, Bann oder Bann aufheben im Livechat; req wie bei Twitch (action, message_id, user_id, seconds)."""
+        act = req.get("action")
+        with self.lock:
+            chat_id = self.chat_id
+        if act == "unban":
+            ban = str(req.get("user_id", ""))
+            if not self.ID_RE.fullmatch(ban):
+                raise ValueError("Ungültige Anfrage")
+            self._send("DELETE", "liveChat/bans", {"id": ban})
+            return {"ok": True, "message": "Bann aufgehoben"}
+        if not chat_id:
+            raise ValueError(self.ERR_MOD)
+        if act == "delete":
+            mid = str(req.get("message_id", ""))
+            if not self.ID_RE.fullmatch(mid):
+                raise ValueError("Ungültige Anfrage")
+            self._send("DELETE", "liveChat/messages", {"id": mid})
+            return {"ok": True, "message": "Gelöscht"}
+        if act in ("timeout", "ban"):
+            uid = str(req.get("user_id", ""))
+            if not self.CH_RE.fullmatch(uid):
+                raise ValueError("Ungültige Anfrage")
+            snip = {"liveChatId": chat_id, "bannedUserDetails": {"channelId": uid}}
+            if act == "timeout":
+                try:
+                    secs = int(req.get("seconds"))
+                except (TypeError, ValueError):
+                    raise ValueError("Ungültige Anfrage")
+                if not 1 <= secs <= 86400:
+                    raise ValueError("Ungültige Anfrage")
+                snip.update(type="temporary", banDuration=secs)
+            else:
+                snip["type"] = "permanent"
+            out = self._send("POST", "liveChat/bans", {"part": "snippet"}, {"snippet": snip})
+            return {"ok": True, "message": "Gesperrt", "user_id": str(out.get("id", ""))[:250]}
+        raise ValueError("Unbekannte Aktion")
 
     @staticmethod
     def _clean(text, limit):
@@ -394,7 +485,9 @@ class YoutubeChat:
             base["ts"] = ts
         text = self._clean(sn.get("displayMessage") or (sn.get("textMessageDetails") or {}).get("messageText"), 500)
         if kind == "textMessageEvent":
-            return [dict(base, type="msg", name=name, color="", text=text, badges=badges, mid=mid)] if text else []
+            ch = str(au.get("channelId", ""))[:60]
+            extra = {"uid": ch, "login": name} if self.CH_RE.fullmatch(ch) else {}
+            return [dict(base, type="msg", name=name, color="", text=text, badges=badges, mid=mid, **extra)] if text else []
         if kind in ("superChatEvent", "superStickerEvent"):
             det = sn.get("superChatDetails") or sn.get("superStickerDetails") or {}
             amount = self._clean(det.get("amountDisplayString"), 30)

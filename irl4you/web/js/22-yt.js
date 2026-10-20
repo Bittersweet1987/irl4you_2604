@@ -1,8 +1,9 @@
 // YouTube-Chat: Zugangsdaten, Anmeldung mit dem YouTube-Konto (Geräte-Ablauf), Status des Livechats. Die Nachrichten selbst kommen über den normalen Chat (chat.js).
 let ytData = null,
-  ytTimer = null;
+  ytTimer = null,
+  ytOwnShown = false;
 const YT_STATE = {
-  "kein-client": "Noch keine Zugangsdaten eingetragen.",
+  "kein-client": "Für die Anmeldung fehlt noch die Client-ID. Sie wird unter „Eigene Zugangsdaten (erweitert)“ eingetragen.",
   bereit: "Nicht angemeldet.",
   wartet: "Warte auf die Bestätigung bei Google …",
   fehler: "Anmeldung fehlgeschlagen.",
@@ -23,6 +24,10 @@ function ytRender(d) {
   if (document.activeElement.id !== "yt_secret") $("yt_secret").placeholder = d.secret_set ? "gespeichert" : "";
   $("yt_login").hidden = on || wait;
   $("yt_login").disabled = !d.has_client && !($("yt_cid").value && $("yt_secret").value);
+  if (!d.builtin && !d.has_client && !ytOwnShown) {
+    $("yt_own").open = true;
+    ytOwnShown = true;
+  }
   $("yt_logout").hidden = !on;
   $("yt_cancel").hidden = !wait;
   $("yt_code").hidden = !wait;
