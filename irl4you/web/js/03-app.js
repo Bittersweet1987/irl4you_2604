@@ -214,7 +214,7 @@ function nearAutoScan() {
   if (
     typeof wifiData === "undefined" ||
     !wifiData ||
-    !$("w_if").value ||
+    !wifiDefaultIface() ||
     nearNets().length ||
     nearAuto ||
     (typeof sendData !== "undefined" && sendData && sendData.active) ||
@@ -222,7 +222,7 @@ function nearAutoScan() {
   )
     return;
   nearAuto = Date.now();
-  srtlaCall("POST", "/api/wifi", { action: "scan", iface: $("w_if").value })
+  srtlaCall("POST", "/api/wifi", { action: "scan", iface: wifiDefaultIface() })
     .then(() => [3000, 8000].forEach((ms) => setTimeout(wifiLoad, ms)))
     .catch(() => {});
 }

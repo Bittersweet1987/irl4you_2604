@@ -88,12 +88,12 @@ $("djicams").addEventListener("click", async (e) => {
       msg = row.querySelector(".d-nearmsg");
     nearAuto = Date.now();
     row.querySelector(".d-nearby").dataset.sig = "";
-    if (!$("w_if").value) {
+    if (!wifiDefaultIface()) {
       msg.textContent = "Keine WLAN-Karte gefunden. Name und Passwort lassen sich auch von Hand eintragen.";
       return;
     }
     msg.textContent = "Suche läuft …";
-    const err = await wifiDo({ action: "scan", iface: $("w_if").value }, "Suche läuft …");
+    const err = await wifiDo({ action: "scan", iface: wifiDefaultIface() }, "Suche läuft …");
     if (err) {
       msg.textContent = err;
       return;

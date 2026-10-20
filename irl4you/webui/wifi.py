@@ -2,6 +2,7 @@
 
 import json
 import os
+import re
 import secrets
 import stat
 import subprocess
@@ -113,6 +114,23 @@ class Wifi:
             c.pop("hotspot_running", None)
         return out
 
+    def saved_networks(self):
+        """Gespeicherte WLAN-Netze (Profilname = Netzname, ohne Hotspot-Profile) direkt aus dem NetworkManager, damit die Liste nie veraltet ist."""
+        def raw():
+            try:
+                r = subprocess.run(["nmcli", "-t", "-f", "NAME,TYPE", "con", "show"], capture_output=True, text=True, timeout=5)
+            except (OSError, subprocess.TimeoutExpired):
+                return None
+            out = []
+            for line in r.stdout.splitlines():
+                name, _, typ = line.rpartition(":")
+                if typ == "802-11-wireless":
+                    name = re.sub(r"\\(.)", r"\1", name)
+                    if name and not name.startswith(self.HS_PREFIX):
+                        out.append(name)
+            return sorted(out)
+        return ttl_cached("wifi_saved", 3.0, raw)
+
     def _name(self, card):
         card["key"] = DeviceNames.key(card.get("usb_id", ""), card["iface"])
         default = dji.device_label(card.get("name", ""), card.get("vendor", ""), card.get("usb_id", ""))
@@ -171,9 +189,11 @@ class Wifi:
                 h = json.load(f)
         except (OSError, ValueError):
             h = {}
+        saved = self.saved_networks()
         return {"helper_installed": os.path.exists("/etc/systemd/system/pipbox-wifi.path"), "cards": self.cards(),
                 "state": h.get("state", "idle"), "message": h.get("message", ""), "action": h.get("action", ""), "scan": h.get("scan") or {},
-                "saved": h.get("saved") or [], "time": h.get("time", 0), "driver": self.driver_status()}
+                "saved": saved if saved is not None else (h.get("saved") or []),
+                "time": h.get("time", 0), "driver": self.driver_status()}
 
     def _hotspot_request(self, d, st, card):
         action, iface = d.get("action"), card["iface"]

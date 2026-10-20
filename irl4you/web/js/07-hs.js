@@ -1,16 +1,5 @@
-function devRow(c, ups) {
-  const head = `<b>${esc(c.iface)}</b>${devInfo(c)}`;
-  if (c.camera_net)
-    return `<div class="wstat${hsOn0(c) ? " ok" : ""}"><span class="wdot"></span><span class="wgrow">${head} · Kameranetz${hsOn0(c) ? " · Hotspot <b>" + esc(c.hotspot.ssid) + "</b> läuft · " + esc(c.ip) : ""} (hier nicht änderbar)</span></div>`;
-  if (hsOn0(c))
-    return `<div class="wstat ok"><span class="wdot"></span><span class="wgrow">${head} · Hotspot <b>${esc(c.hotspot.ssid)}</b> läuft · ${esc(c.ip)}</span></div>`;
-  return (
-    `<div class="wstat${c.ip ? " ok" : ""}"><span class="wdot"></span><span class="wgrow">${head} · ${c.ip ? `verbunden${c.ssid ? " mit <b>" + esc(c.ssid) + "</b>" : ""}· ${esc(c.ip)}${c.signal != null ? " · Signal " + c.signal + " %" : ""}` : "nicht verbunden"}</span>` +
-    (c.ip
-      ? `<label title="Sendet die Box auch über dieses Netz. Danach Sendekette neu starten."><input type="checkbox" data-wup="${esc(c.iface)}"${ups.includes(c.iface) ? " checked" : ""}> Zum Senden verwenden</label>`
-      : "") +
-    `</div>`
-  );
+function hsHead(c) {
+  return `<div class="hshead"><b>${esc(c.iface)}</b>${devInfo(c)}</div>`;
 }
 function hsDefaults(c) {
   const h = c.hotspot;
@@ -47,20 +36,6 @@ function hsControls(c, busy) {
     `</div>` +
     (on ? pwRow : hsOpen[c.iface] ? hsPanel(c, busy) : "")
   );
-}
-function renderWifiDev(d, force) {
-  const ups = ((srtlaData && srtlaData.settings) || {}).uplinks || [],
-    busy = !d.helper_installed || d.state === "working";
-  const html = d.cards.length
-    ? d.cards.map((c) => `<div class="wcard" data-iface="${esc(c.iface)}">${devRow(c, ups)}${hsControls(c, busy)}</div>`).join("")
-    : '<div class="ph">Keine WLAN-Karte gefunden.</div>';
-  const el = $("wifidev"),
-    a = document.activeElement;
-  if (!force && a && el.contains(a) && /^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName)) return;
-  if (el._html !== html) {
-    el.innerHTML = html;
-    el._html = html;
-  }
 }
 function hsCard(iface) {
   return ((wifiData && wifiData.cards) || []).find((x) => x.iface === iface);
@@ -145,7 +120,7 @@ async function hsShow(iface) {
   }
   renderWifiDev(wifiData, true);
 }
-$("wifidev").addEventListener("click", (e) => {
+$("hsdev").addEventListener("click", (e) => {
   const t = e.target.closest && e.target.closest("button");
   if (!t) return;
   const card = t.closest(".wcard");
@@ -183,7 +158,7 @@ $("wifidev").addEventListener("click", (e) => {
     setHsMsg("Neues Passwort eingetragen. Mit „Speichern“ wird es übernommen; bitte notieren.");
   }
 });
-$("wifidev").addEventListener("input", (e) => {
+$("hsdev").addEventListener("input", (e) => {
   const card = e.target.closest && e.target.closest(".wcard");
   const dr = card && hsDraft[card.dataset.iface];
   if (!dr) return;
@@ -200,73 +175,6 @@ $("wifidev").addEventListener("input", (e) => {
       .join("");
   } else if (c.contains("hs-ch")) dr.ch = parseInt(e.target.value, 10) || 0;
 });
-function wifiDebug(d) {
-  const dbg = (d.scan && d.scan.debug) || [];
-  if (!dbg.length || d.state === "working") return "";
-  return `<details class="sens" open><summary class="muted">Technische Angaben zur Karte ${esc(d.scan.iface || "")} (die Suche hat nichts gefunden)</summary><pre>${esc(dbg.join("\n"))}</pre></details>`;
-}
-function wifiPwHint() {
-  const saved = ((wifiData && wifiData.saved) || []).includes($("w_ssid").value);
-  $("w_pw").placeholder = saved ? "leer = gespeichertes Passwort verwenden" : "leer bei offenem Netz";
-}
-async function wifiDo(body, busy) {
-  $("wifimsg").textContent = busy;
-  try {
-    await srtlaCall("POST", "/api/wifi", body);
-  } catch (x) {
-    $("wifimsg").textContent = x.message;
-    return x.message || "Fehler";
-  }
-  clearTimeout(wifiTimer);
-  wifiTimer = setTimeout(wifiLoad, 1200);
-  [6000, 14000].forEach((ms) => setTimeout(wifiLoad, ms));
-  return "";
-}
-$("w_scan").addEventListener("click", () => wifiDo({ action: "scan", iface: $("w_if").value }, "Suche läuft …"));
-$("w_connect").addEventListener("click", async () => {
-  const body = {
-    action: "connect",
-    iface: $("w_if").value,
-    ssid: $("w_ssid").value,
-    password: $("w_pw").value,
-    hidden: $("w_hidden").checked,
-  };
-  await wifiDo(body, "Verbinde …");
-  $("w_pw").value = "";
-});
-$("w_disc").addEventListener("click", () => wifiDo({ action: "disconnect", iface: $("w_if").value }, "Trenne …"));
-$("w_ssid").addEventListener("input", wifiPwHint);
-$("wificard").addEventListener("change", async (e) => {
-  const iface = e.target.dataset && e.target.dataset.wup;
-  if (!iface || !srtlaData) return;
-  const st = srtlaData.settings,
-    ups = new Set(st.uplinks);
-  e.target.checked ? ups.add(iface) : ups.delete(iface);
-  try {
-    await srtlaCall("POST", "/api/srtla/settings", { uplinks: [...ups] });
-    $("wifimsg").textContent =
-      (e.target.checked ? "Zum Senden gespeichert" : "Nicht mehr zum Senden") +
-      ". Die Änderung wirkt innerhalb weniger Sekunden, ohne Neustart.";
-  } catch (x) {
-    $("wifimsg").textContent = x.message;
-    e.target.checked = !e.target.checked;
-  }
-  srtlaLoad();
-});
-$("wificard").addEventListener("click", (e) => {
-  const a = e.target.closest("a");
-  if (!a) return;
-  e.preventDefault();
-  if (a.dataset.ssid !== undefined) {
-    $("w_ssid").value = a.dataset.ssid;
-    wifiPwHint();
-  }
-  if (a.dataset.forget !== undefined) wifiDo({ action: "forget", ssid: a.dataset.forget }, "Wird vergessen …");
-});
-wifiLoad();
-setInterval(() => {
-  if (due("wifi", "netcard", 60000) && !["w_if", "w_ssid", "w_pw"].includes(document.activeElement.id)) wifiLoad();
-}, 10000);
 const FREE_ID = "5";
 let posFree = { 1: { x: 500, y: 500 }, 2: { x: 500, y: 500 }, 3: { x: 500, y: 500 } };
 const STYLE_DEF = () => ({

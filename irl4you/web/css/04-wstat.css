@@ -121,7 +121,7 @@
 }
 .wrow {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto auto;
+  grid-template-columns: minmax(0, 1fr) auto auto auto auto;
   gap: 12px;
   align-items: center;
   padding: 7px 10px;
@@ -134,9 +134,33 @@
 .wrow:hover {
   border-color: var(--accent);
 }
-.wrow.cur {
-  border-color: var(--ok);
+.wrow.cur {
+  border-color: var(--ok);
 }
+.wrow.sel {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent) inset;
+}
+.wrow {
+  cursor: pointer;
+}
+.wlpanel {
+  margin: 6px 0 4px 18px;
+}
+.wlpanel .seg {
+  margin-bottom: 8px;
+}
+.wlsel {
+  margin: 8px 0;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg);
+}
+.hshead {
+  margin: 8px 0 0;
+}
+
 .wname {
   font-weight: 600;
   overflow: hidden;
