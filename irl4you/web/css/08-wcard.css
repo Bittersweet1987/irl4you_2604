@@ -217,62 +217,60 @@ dialog#rdlg::backdrop {
   margin: 0 0 2px;
 }
 .minipage {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
   padding: 10px;
   margin: 8px 0;
-  border: 1px solid var(--line);
   border-radius: 12px;
   background: color-mix(in srgb, var(--muted) 8%, transparent);
 }
 .minipage.mobile {
-  grid-template-columns: 1fr;
-  max-width: 240px;
-  margin-left: auto;
-  margin-right: auto;
+  max-width: 300px;
 }
 .mcard {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  padding: 6px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--card);
-  min-width: 0;
-}
-.minipage.desktop .mcard.wide {
-  grid-column: 1 / -1;
+  margin-bottom: 8px;
 }
 .msubs {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: 6px;
+  margin: 6px 0 0 22px;
+}
+.msubs.flat {
+  margin-left: 0;
 }
 .mtile {
   font: inherit;
   font-size: 12px;
   line-height: 1.25;
-  text-align: left;
-  padding: 4px 8px;
+  padding: 3px 9px;
   border: 1px solid var(--accent);
-  border-radius: 6px;
+  border-radius: 99px;
   background: color-mix(in srgb, var(--accent) 14%, transparent);
   color: inherit;
   cursor: pointer;
   min-height: 28px;
-  overflow-wrap: anywhere;
 }
 .mtile.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
+  text-align: left;
   font-weight: 600;
-  font-size: 13px;
+  font-size: 14px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--card);
 }
 .mtile.off {
   border-style: dashed;
   border-color: var(--muted);
   background: transparent;
   color: var(--muted);
+}
+.mtile.sub.off {
   text-decoration: line-through;
 }
 .mtile.dim {

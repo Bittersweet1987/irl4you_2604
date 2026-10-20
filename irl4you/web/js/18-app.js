@@ -210,7 +210,14 @@
       t.className = "mtile " + cls + (off ? " off" : "") + (parentOff ? " dim" : "");
       t.dataset.id = id;
       t.setAttribute("aria-pressed", String(!off));
-      t.textContent = txt;
+      if (cls === "head") {
+        const n = document.createElement("span");
+        n.textContent = txt;
+        const e = document.createElement("span");
+        e.setAttribute("aria-hidden", "true");
+        e.textContent = off ? "○" : "●";
+        t.append(n, e);
+      } else t.textContent = txt;
       return t;
     };
     const page = document.createElement("div");
@@ -227,7 +234,9 @@
       }
       c.appendChild(head);
       const subs =
-        el.id === "c_layout"
+        v.hidden.includes(el.id) && el.id !== "c_layout"
+          ? []
+          : el.id === "c_layout"
           ? ["opt_design", "opt_order"].map((id) => $(id)).filter(Boolean)
           : hideable(el.id)
             ? [...el.querySelectorAll("details.subsec[id],#statdet")]
@@ -235,7 +244,7 @@
       if (subs.length) {
         const w = document.createElement("div");
         w.className = "msubs";
-        subs.forEach((sub) => w.appendChild(tile(sub.id, label(sub), "sub", el.id !== "c_layout" && v.hidden.includes(el.id))));
+        subs.forEach((sub) => w.appendChild(tile(sub.id, label(sub), "sub", false)));
         c.appendChild(w);
       }
       page.appendChild(c);
@@ -248,40 +257,14 @@
       box.appendChild(h);
     }
     {
-      const g = document.createElement("div");
-      g.className = "optgrp";
-      row(g, "sm_btn", "Streammodus", false);
-      box.appendChild(g);
-    }
-    {
-      const g = document.createElement("div");
-      g.className = "optgrp";
-      row(g, "hlp_btn", "Hilfe-Knöpfe (i)", false);
-      box.appendChild(g);
-    }
-    {
-      const g = document.createElement("div");
-      g.className = "optgrp";
-      row(g, "heads", "Überschriften von Chat und Vorschau", false);
-      const b = document.createElement("button");
-      b.type = "button";
-      b.className = "helpbtn";
-      b.textContent = "i";
-      b.setAttribute("aria-label", "Erklärung zeigen");
-      b.setAttribute("aria-expanded", "false");
-      g.firstChild.appendChild(b);
-      const h = document.createElement("div");
-      h.className = "ph";
-      h.hidden = true;
-      h.textContent =
-        "Blendet bei Chat und Vorschau die Überschrift und die Kopfzeile aus, um Platz zu sparen. Die Knöpfe (Einstellungen des Chats, Start und Stop der Vorschau) bleiben als kleine Symbole oben rechts über dem Inhalt.";
-      b.addEventListener("click", (ev) => {
-        ev.preventDefault();
-        h.hidden = !h.hidden;
-        b.setAttribute("aria-expanded", String(!h.hidden));
-      });
-      g.appendChild(h);
-      box.appendChild(g);
+      const w = document.createElement("div");
+      w.className = "msubs flat";
+      [
+        ["sm_btn", "Streammodus"],
+        ["hlp_btn", "Hilfe-Knöpfe (i)"],
+        ["heads", "Überschriften von Chat und Vorschau"],
+      ].forEach(([id, txt]) => w.appendChild(tile(id, txt, "sub", false)));
+      box.appendChild(w);
     }
     window.pbFootRows(box);
   }
