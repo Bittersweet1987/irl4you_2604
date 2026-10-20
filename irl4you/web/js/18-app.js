@@ -331,18 +331,35 @@
     g.setPointerCapture(e.pointerId);
     card.classList.add("drag");
     page.classList.add("dragging");
+    // Die gezogene Karte folgt dem Zeiger (transform); ihren Platz im Fluss nimmt sie dabei mit, die anderen rücken nach.
+    const off = e.clientY - card.getBoundingClientRect().top;
+    let dy = 0;
+    const place = (y) => {
+      const natural = card.getBoundingClientRect().top - dy;
+      dy = y - off - natural;
+      card.style.transform = "translateY(" + dy + "px)";
+    };
     const over = (ev) => {
+      if (ev.clientY < 60) window.scrollBy(0, -14);
+      else if (ev.clientY > window.innerHeight - 60) window.scrollBy(0, 14);
+      place(ev.clientY);
+      const mid = card.getBoundingClientRect().top + card.offsetHeight / 2;
       const next = [...page.children].find((o) => {
         const r = o.getBoundingClientRect();
-        return o !== card && ev.clientY < r.top + r.height / 2;
+        return o !== card && mid < r.top + r.height / 2;
       });
-      if (next !== card.nextSibling) page.insertBefore(card, next || null);
+      if (next !== card.nextSibling) {
+        page.insertBefore(card, next || null);
+        place(ev.clientY);
+      }
     };
+    place(e.clientY);
     const end = () => {
       if (!card.classList.contains("drag")) return;
       for (const [t, f] of [["pointermove", over], ["pointerup", end], ["pointercancel", end], ["mouseup", end]]) document.removeEventListener(t, f);
       g.removeEventListener("lostpointercapture", end);
       card.classList.remove("drag");
+      card.style.transform = "";
       page.classList.remove("dragging");
       const ids = [...page.children].map((c) => c.dataset.id),
         v = views[edit];

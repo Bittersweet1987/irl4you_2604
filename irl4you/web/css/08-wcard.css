@@ -288,6 +288,14 @@ dialog#rdlg::backdrop {
 .minipage.dragging {
   user-select: none;
 }
+.mcard.drag {
+  position: relative;
+  z-index: 5;
+  pointer-events: none;
+}
+.mcard:not(.drag) {
+  transition: transform 0.12s;
+}
 .minipage.dragging .msubs {
   display: none;
 }
