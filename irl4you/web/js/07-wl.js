@@ -37,22 +37,25 @@ function wlRow(n, saved, sel) {
     <span class="wsig">${n.signal != null ? wlBars(n.signal) + " " + n.signal + " %" : ""}</span>
     <span class="wsec">${n.security ? (n.security !== "offen" ? "🔒 " + esc(n.security) : "offen") : ""}${isSaved ? (n.security ? " · " : "") + "gespeichert" : ""}</span>${n.in_use ? '<span class="wuse">verbunden</span>' : ""}${isSaved ? wlTrash(n.ssid) : ""}</div>`;
 }
+const WL_LIST_S = 180;
+// Ergebnisliste einer Suche: nur während und bis 3 Minuten nach der Suche offen, danach nur das verbundene Netz
+function wlScanShown(c, d) {
+  if (!d.scan || d.scan.iface !== c.iface) return false;
+  return d.state === "working" && d.action === "scan" ? true : (d.now || 0) - (d.scan.scanned || 0) < WL_LIST_S;
+}
 function wlList(c, d, u, off) {
-  const nets = d.scan && d.scan.iface === c.iface ? d.scan.nets || [] : [],
-    saved = d.saved || [],
-    near = new Set(nets.map((n) => n.ssid)),
-    rest = saved.filter((s) => !near.has(s));
+  const saved = d.saved || [],
+    shown = wlScanShown(c, d),
+    nets = shown ? d.scan.nets || [] : c.ssid ? [{ ssid: c.ssid, signal: c.signal, security: "", in_use: true }] : [];
   let h = `<div class="actions"><button type="button" class="sec wl-scan"${off}>Netze suchen</button>${c.ip ? `<button type="button" class="sec wl-disc"${off}>Trennen</button>` : ""}</div>`;
   if (nets.length)
-    h += `<div class="muted">Gefundene Netze – Zeile anklicken zum Auswählen:</div><div class="wlist">${nets.map((n) => wlRow(n, saved, u.sel)).join("")}</div>`;
-  else if (d.scan && d.scan.iface === c.iface) h += wifiDebug(d);
-  if (rest.length)
-    h += `<div class="muted" style="margin-top:6px">Gespeicherte Netze</div><div class="wlist">${rest.map((s) => wlRow({ ssid: s }, saved, u.sel)).join("")}</div>`;
+    h += `<div class="muted">${shown ? "Gefundene Netze – Zeile anklicken zum Auswählen:" : "Verbunden mit"}</div><div class="wlist">${nets.map((n) => wlRow(n, saved, u.sel)).join("")}</div>`;
+  else if (shown) h += wifiDebug(d);
   if (u.sel) {
     const sv = saved.includes(u.sel);
     h += `<div class="wlsel"><div class="muted">Gewähltes Netz: <b>${esc(u.sel)}</b></div>
       <label class="muted">Passwort<input class="wl-pw" type="password" maxlength="64" autocomplete="new-password" value="${esc(u.pw)}" placeholder="${sv ? "leer = gespeichertes Passwort verwenden" : "leer bei offenem Netz"}"></label>
-      <div class="actions"><button type="button" class="wl-go"${off}>Verbinden</button></div></div>`;
+      <div class="actions"><button type="button" class="wl-go"${off}>Verbinden</button><button type="button" class="sec wl-cancel">Abbrechen</button></div></div>`;
   }
   return h;
 }
@@ -70,6 +73,7 @@ function wlPanel(c, d, busy) {
     on = (m) => (u.mode === m ? " on" : "");
   return `<div class="wlpanel"><div class="seg" role="group"><button type="button" class="wl-mode${on("list")}" data-m="list" aria-pressed="${u.mode === "list"}">Aus Liste wählen</button><button type="button" class="wl-mode${on("manual")}" data-m="manual" aria-pressed="${u.mode === "manual"}">Manuell eingeben</button></div>${u.mode === "manual" ? wlManual(c, u, off) : wlList(c, d, u, off)}</div>`;
 }
+let wlExpire = null;
 function renderWifiDev(d, force) {
   const ups = ((srtlaData && srtlaData.settings) || {}).uplinks || [],
     busy = !d.helper_installed || d.state === "working",
@@ -83,6 +87,9 @@ function renderWifiDev(d, force) {
       })
       .join("") || (d.cards.length ? '<div class="ph">Kein WLAN-Stick kann einen Hotspot aufbauen.</div>' : none);
   const a = document.activeElement;
+  clearTimeout(wlExpire);
+  const left = d.cards.filter((c) => !c.camera_net && wlScanShown(c, d) && d.state !== "working").map((c) => WL_LIST_S - ((d.now || 0) - d.scan.scanned));
+  if (left.length) wlExpire = setTimeout(() => renderWifiDev(wifiData, true), Math.max(1, Math.min(...left)) * 1000 + 300);
   for (const [id, html] of [["wifidev", cl], ["hsdev", hs]]) {
     const el = $(id);
     if (!force && a && el.contains(a) && /^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName)) continue;
@@ -160,8 +167,7 @@ function wlConnect(iface) {
     return;
   }
   const pw = manual ? u.mpw : u.pw;
-  if (manual) u.mpw = "";
-  else u.pw = "";
+  u.mpw = u.pw = u.sel = "";
   wifiRerender();
   wifiDo({ action: "connect", iface, ssid, password: pw, hidden: manual && u.hidden }, "Verbinde …");
 }
@@ -184,10 +190,14 @@ $("wifidev").addEventListener("click", (e) => {
       wifiDo({ action: "forget", ssid }, "Wird vergessen …");
     }
   } else if (c.contains("wl-go")) wlConnect(iface);
-  else if (c.contains("wrow")) {
-    u.sel = t.dataset.ssid;
+  else if (c.contains("wl-cancel")) {
+    u.sel = u.pw = "";
+    wifiRerender();
+  } else if (c.contains("wrow")) {
+    const same = u.sel === t.dataset.ssid;
+    u.sel = same ? "" : t.dataset.ssid;
     u.pw = "";
-    wifiRerender(".wl-pw");
+    wifiRerender(same ? "" : ".wl-pw");
   }
 });
 $("wifidev").addEventListener("keydown", (e) => {

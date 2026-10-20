@@ -22,7 +22,7 @@ PARTIALS = os.path.join(ROOT, "irl4you", "web", "partials")
 class Umschalter(unittest.TestCase):
     """docs/DESIGN.md: Wahl zwischen 2 bis 4 kurzen festen Optionen ist ein Umschalter (.seg), kein Auswahlfeld und keine eigene Knopfgruppe."""
     # Auswahlfelder mit festen Optionen, die bewusst Auswahlfelder bleiben (lange Beschreibungen)
-    AUSNAHMEN = {"hdmi_audio", "hdmi_fmt", "p_audio", "p_swap", "b_spread"}
+    AUSNAHMEN = {"hdmi_audio", "hdmi_fmt", "p_audio", "b_spread"}
 
     def test_feste_kurze_auswahl_ist_umschalter(self):
         for p in glob.glob(os.path.join(PARTIALS, "*.html")):

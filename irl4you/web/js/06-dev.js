@@ -183,13 +183,29 @@ async function srtlaLoad() {
     ? `Gewählter Server: ${cur.name} (${cur.host}:${cur.port}). `
     : "Legen Sie einen Server an, um ihn später zum Senden zu wählen.";
 }
+// Gespeicherte Stream-ID beim Bearbeiten: das Feld zeigt Sterne. Sterne stehen lassen = behalten, anderen Wert eintippen = ersetzen, Feld leeren = entfernen.
+const SID_MASK = "********";
+let sidSaved = false;
+function sidField(saved) {
+  const f = $("s_sid");
+  sidSaved = saved;
+  f.type = saved ? "text" : "password";
+  f.value = saved ? SID_MASK : "";
+  f.placeholder = saved ? "leer = Stream-ID wird beim Speichern entfernt" : "Stream-ID (optional)";
+}
 function srtlaFormReset() {
   srtlaEdit = null;
   $("srvform").reset();
   $("srv_save").textContent = "Server hinzufügen";
   $("srv_cancel").hidden = true;
-  $("s_sid").placeholder = "Stream-ID (optional)";
+  sidField(false);
 }
+$("s_sid").addEventListener("focus", (e) => {
+  if (sidSaved && e.target.value === SID_MASK) e.target.select();
+});
+$("s_sid").addEventListener("input", (e) => {
+  if (sidSaved) e.target.type = e.target.value && e.target.value !== SID_MASK ? "password" : "text";
+});
 $("srv_sel").addEventListener("change", async (e) => {
   if (!e.target.value) return;
   try {
@@ -208,8 +224,7 @@ $("srv_edit").addEventListener("click", () => {
   $("s_name").value = s.name;
   $("s_host").value = s.host;
   $("s_port").value = s.port;
-  $("s_sid").value = "";
-  $("s_sid").placeholder = s.has_streamid ? "Stream-ID (leer lassen = behalten)" : "Stream-ID (optional)";
+  sidField(!!s.has_streamid);
   $("srv_save").textContent = "Änderungen speichern";
   $("srv_cancel").hidden = false;
   $("s_name").focus();
@@ -231,7 +246,9 @@ $("srv_del").addEventListener("click", async () => {
 $("srvform").addEventListener("submit", async (e) => {
   e.preventDefault();
   $("srtlaerr").textContent = "";
-  const body = { name: $("s_name").value, host: $("s_host").value, port: +$("s_port").value, streamid: $("s_sid").value };
+  const sid = $("s_sid").value,
+    body = { name: $("s_name").value, host: $("s_host").value, port: +$("s_port").value, streamid: sidSaved && sid === SID_MASK ? "" : sid };
+  if (sidSaved && sid === "") body.clear_streamid = true;
   try {
     if (srtlaEdit) await srtlaCall("POST", "/api/srtla/" + srtlaEdit, body);
     else await srtlaCall("POST", "/api/srtla", body);

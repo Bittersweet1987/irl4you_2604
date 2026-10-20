@@ -21,18 +21,15 @@ const DL_ENGINE_MAX = 750;
 function dlWarn() {
   const el = $("dl_warn");
   if (!el) return;
-  const pip = $("p_type").value === "pip",
-    always = !!($("p_always") && $("p_always").checked),
-    vals = [+$("n_delay").value || 0];
-  if (pip)
-    [
+  const vals = [+$("n_delay").value || 0];
+  [
       ["p_pip", "n_delay1"],
       ["p_pip2", "n_delay2"],
       ["p_pip3", "n_delay3"],
     ].forEach(([s, n]) => {
       if ($(s).value) vals.push(+$(n).value || 0);
     });
-  el.hidden = !(pip && always && Math.max(...vals) > DL_ENGINE_MAX);
+  el.hidden = !(Math.max(...vals) > DL_ENGINE_MAX);
 }
 const pipOpt = (k, sel) =>
   `<option value="${esc(k.key)}"${k.key === sel ? " selected" : ""}>${esc(k.name)}${pipCams.filter((x) => x.name === k.name).length > 1 ? " (" + esc(k.key) + ")" : ""}${k.state === "live" ? " · sendet" : ""}</option>`;
@@ -261,10 +258,7 @@ async function pipeLoad() {
     $("pipeprev").textContent = d.preview || "";
     return;
   }
-  if (document.activeElement.id !== "p_type") $("p_type").value = c.type;
   if (document.activeElement.id !== "p_auto") $("p_auto").checked = c.auto_failover !== false;
-  if (document.activeElement.id !== "p_swap") $("p_swap").value = String(c.swap_cams || 0);
-  if (document.activeElement.id !== "p_always") $("p_always").checked = !!c.always_ready;
   posFree = { 1: { x: c.x ?? 500, y: c.y ?? 500 }, 2: { x: c.x2 ?? 500, y: c.y2 ?? 500 }, 3: { x: c.x3 ?? 500, y: c.y3 ?? 500 } };
   [1, 2, 3].forEach((k) => {
     pipStyles[k] = Object.assign(STYLE_DEF(), (c.styles || {})[k] || {});
@@ -305,7 +299,6 @@ async function pipeLoad() {
         .join(""),
     );
   }
-  document.querySelectorAll(".piponly").forEach((e) => (e.hidden = $("p_type").value !== "pip"));
   $("pipeprev").textContent = d.preview || "(noch keine Hauptkamera gewählt)";
   let info = !c.main
     ? "Noch keine Pipeline gespeichert."
@@ -317,9 +310,6 @@ async function pipeLoad() {
     info += " Bild-in-Bild braucht den Überlagerungs-Baustein, der noch nicht auf der Box installiert ist.";
   $("pipeinfo").textContent = info;
 }
-$("p_type").addEventListener("change", () =>
-  document.querySelectorAll(".piponly").forEach((e) => (e.hidden = $("p_type").value !== "pip")),
-);
 $("pipecard").addEventListener("input", (e) => {
   const id = e.target.id || "";
   if (/^p_size\d$/.test(id)) renderPreview();
@@ -392,8 +382,8 @@ async function pipSave() {
     size_pct3: +$("p_size3").value,
     audio: $("p_audio").value,
     auto_failover: $("p_auto").checked,
-    swap_cams: +$("p_swap").value,
-    always_ready: $("p_always").checked,
+    swap_cams: 4,
+    always_ready: true,
     styles: pipStyles,
     ...delayBody(),
   };

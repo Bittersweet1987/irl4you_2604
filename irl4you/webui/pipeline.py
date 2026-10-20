@@ -17,6 +17,8 @@ class PipelineStore(PipelineBuild):
                "pip2": "", "corner2": 2, "pip3": "", "corner3": 0, "x": 500, "y": 500, "x2": 500, "y2": 500, "x3": 500, "y3": 500, "main_delay_ms": DEFAULT_MAIN_DELAY_MS,
                "pip_delay_ms": DEFAULT_PIP_DELAY_MS, "pip2_delay_ms": DEFAULT_PIP_DELAY_MS,
                "pip3_delay_ms": DEFAULT_PIP_DELAY_MS, "auto_failover": True, "swap_cams": 0, "always_ready": False, "facecam": ""}
+    # Bildaufbau ist immer Bild-in-Bild; ohne kleines Bild (eine Kamera) bleibt der Typ "single". Mit kleinem Bild gilt immer "Alle Kameras immer bereit"
+    # und der Tausch des Hauptbilds über alle Kameras (keine Einstellung mehr in der Oberfläche).
 
     SLOTS = ("main", "pip", "pip2", "pip3")
 
@@ -140,26 +142,20 @@ class PipelineStore(PipelineBuild):
             return shown
 
     def set(self, req, camera_keys):
-        t = req.get("type")
-        if t not in ("single", "pip"):
+        if req.get("type", "pip") not in ("single", "pip"):
             raise ValueError("Art des Bildaufbaus unbekannt")
         main = str(req.get("main", ""))
         if main not in camera_keys:
             raise ValueError("Hauptkamera: bitte eine vorhandene Kamera wählen")
+        t = "pip" if str(req.get("pip", "") or "") else "single"     # eine Kamera: kein kleines Bild nötig
         cfg = {"type": t, "main": main, "pip": "", "corner": 3, "size_pct": 25, "size_pct2": 25, "size_pct3": 25, "audio": "main",
                "pip2": "", "corner2": 2, "pip3": "", "corner3": 0, "x": 500, "y": 500, "x2": 500, "y2": 500, "x3": 500, "y3": 500, "main_delay_ms": DEFAULT_MAIN_DELAY_MS,
                "pip_delay_ms": DEFAULT_PIP_DELAY_MS, "pip2_delay_ms": DEFAULT_PIP_DELAY_MS,
                "pip3_delay_ms": DEFAULT_PIP_DELAY_MS, "auto_failover": req.get("auto_failover", True) is not False, "swap_cams": 0,
-               "always_ready": t == "pip" and req.get("always_ready") is True}
+               "always_ready": t == "pip"}
         cfg["styles"] = clean_styles(req.get("styles"), self.cfg.get("styles"), strict=True)
         if t == "pip":
-            try:
-                swap = int(req.get("swap_cams", 0) or 0)
-            except (TypeError, ValueError):
-                raise ValueError("Tausch: aus, 2 oder 4 Kameras")
-            if swap not in (0, 2, 4):
-                raise ValueError("Tausch: aus, 2 oder 4 Kameras")
-            cfg["swap_cams"] = swap
+            cfg["swap_cams"] = 4
             pipk = str(req.get("pip", ""))
             if pipk not in camera_keys or pipk == main:
                 raise ValueError("Kleines Bild: eine andere vorhandene Kamera wählen")

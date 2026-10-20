@@ -38,7 +38,6 @@ setInterval(() => {
     ![
       "p_main",
       "p_pip",
-      "p_type",
       "p_corner",
       "p_pip2",
       "p_corner2",
@@ -48,7 +47,6 @@ setInterval(() => {
       "p_size2",
       "p_size3",
       "p_auto",
-      "p_always",
       "p_delay",
       "n_delay",
       "p_delay1",

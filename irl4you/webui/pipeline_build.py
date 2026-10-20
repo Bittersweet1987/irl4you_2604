@@ -31,11 +31,9 @@ class PipelineBuild:
             num(k, 0, 1000)
         for k in ("main_delay_ms", "pip_delay_ms", "pip2_delay_ms", "pip3_delay_ms"):
             num(k, 0, 3000)
-        num("swap_cams", 0, 4)
-        if out["swap_cams"] not in (2, 4):
-            out["swap_cams"] = 0
-        out["always_ready"] = out.get("always_ready") is True and out.get("type") == "pip"
         out["type"] = "pip" if out.get("type") == "pip" else "single"
+        out["swap_cams"] = 4 if out["type"] == "pip" else 0
+        out["always_ready"] = out["type"] == "pip"
         fc = out.get("facecam")
         out["facecam"] = fc if (out["type"] == "pip" and isinstance(fc, str) and KEY_RE.match(fc) and fc in [out.get(s) for s in cls.SLOTS]) else ""
         out["styles"] = clean_styles(out.get("styles"))

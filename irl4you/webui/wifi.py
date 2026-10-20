@@ -179,8 +179,8 @@ class Wifi:
                 c["hotspot"] = {"ssid": h["ssid"], "band": h["band"], "channel": h["channel"], "running": h.get("running", True)} if h else None
                 self._name(c)
                 cards.append(c)
-            return {"helper_installed": True, "cards": cards,
-                    "state": "done" if self.fake_msg[0] else "idle", "message": self.fake_msg[1], "action": self.fake_msg[0], "scan": {"iface": "wlan0", "nets": [
+            return {"helper_installed": True, "cards": cards, "now": int(time.time()),
+                    "state": "done" if self.fake_msg[0] else "idle", "message": self.fake_msg[1], "action": self.fake_msg[0], "scan": {"iface": "wlan0", "scanned": int(time.time()), "nets": [
                         {"ssid": "Demo-Hotspot", "signal": 80, "security": "WPA2", "in_use": False},
                         {"ssid": "Mein Handy", "signal": 62, "security": "WPA2 WPA3", "in_use": False},
                         {"ssid": "Gast", "signal": 31, "security": "offen", "in_use": False}]}, "saved": []}
@@ -193,7 +193,7 @@ class Wifi:
         return {"helper_installed": os.path.exists("/etc/systemd/system/pipbox-wifi.path"), "cards": self.cards(),
                 "state": h.get("state", "idle"), "message": h.get("message", ""), "action": h.get("action", ""), "scan": h.get("scan") or {},
                 "saved": saved if saved is not None else (h.get("saved") or []),
-                "time": h.get("time", 0), "driver": self.driver_status()}
+                "time": h.get("time", 0), "now": int(time.time()), "driver": self.driver_status()}
 
     def _hotspot_request(self, d, st, card):
         action, iface = d.get("action"), card["iface"]
