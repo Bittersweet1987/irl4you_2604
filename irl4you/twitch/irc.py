@@ -219,7 +219,7 @@ class ChatPaths:
                 self.fail(src, 120.0)
         raise last
 
-    def request(self, method, url, data=None, headers=None, timeout=15.0, limit=200_000, once=False, prefer=False):
+    def request(self, method, url, data=None, headers=None, timeout=15.0, limit=200_000, once=False, prefer=False, rh=None):
         import http.client
         import urllib.parse
         u = urllib.parse.urlsplit(url)
@@ -244,6 +244,8 @@ class ChatPaths:
                     conn.request(method, target, body=data, headers=headers or {})
                     r = conn.getresponse()
                     status = r.status
+                    if rh is not None:
+                        rh.update({k.lower(): v for k, v in r.getheaders()})
                     try:
                         return status, r.read(limit)
                     except (OSError, http.client.HTTPException, ValueError):

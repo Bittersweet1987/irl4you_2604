@@ -8,6 +8,7 @@ import time
 import controller_keys
 import pipbox_modem
 import ytchat
+import ytweb
 from twitch import (ChatPaths, HelixChat, ModSessions, SysAlerts, TwitchAccounts, TwitchBotLogin, TwitchChat, TwitchEvents,
                     TwitchLogin, TwitchMod, TwitchNotifier, TwitchReader, TwitchSender, TwitchStore)
 
@@ -125,7 +126,9 @@ def main():
     Handler.chatsender = TwitchSender(Handler.twitch.store, chat=TwitchChat(paths=Handler.chatpaths), demo_reader=Handler.chatreader if args.demo else None, mod=Handler.chatmod, helix=Handler.chathelix)
     Handler.twitchaccounts.check = Handler.chatmod.is_moderator
     Handler.youtubelogin = ytchat.YoutubeLogin(os.path.join(args.state, "youtube.json"), demo=args.demo, paths=Handler.chatpaths)
-    Handler.youtubechat = ytchat.YoutubeChat(Handler.youtubelogin, Handler.chatreader)
+    Handler.youtubeapi = ytchat.YoutubeChat(Handler.youtubelogin, Handler.chatreader)
+    Handler.youtubepublic = ytweb.YoutubePublic(os.path.join(args.state, "youtube-public.json"), Handler.chatreader, paths=Handler.chatpaths)
+    Handler.youtubechat = ytweb.YoutubeRouter(Handler.youtubeapi, Handler.youtubepublic)
     if not args.demo:
         Handler.chatreader.youtube = Handler.youtubechat
     Handler.chatevents = TwitchEvents(Handler.twitch.store, Handler.twitchlogin, Handler.chatmod, Handler.chatreader, paths=Handler.chatpaths)
