@@ -134,6 +134,7 @@ let djiData = { available: false, cameras: [], wifi_options: [], scan: [] },
   djiStruct = "",
   djiRecv = Date.now(),
   djiOpen = {},
+  djiEdit = {},
   djiPend = {};
 try {
   djiOpen = JSON.parse(localStorage.getItem("pbDjiOpen") || "{}") || {};
@@ -172,8 +173,9 @@ function djiCardHtml(c) {
   <div class="dbody">
     <div class="dsub muted">${esc(c.model || "")} <span class="ddetail"></span></div>
     <div class="dstep dstep-conn"><span class="dnum">1</span><div class="dfl"><h4>WLAN der Kamera <span class="dlock" title="Gesperrt, solange die Kamera verbunden ist" aria-hidden="true" hidden>🔒</span></h4>
+      <div class="dsumrow"><span class="dsumtxt"></span><button type="button" class="sec small d-wedit">Bearbeiten</button></div>
       <div class="ph d-lockhint" hidden>Die Kamera ist verbunden. Die Verbindung lässt sich erst nach dem Trennen ändern.</div>
-      <fieldset class="dconn">
+      <div class="dedit" hidden><fieldset class="dconn">
       <label class="f">Verbindung der Kamera<select class="d-wifi"><option value="">– wählen –</option>${netOpts}${missing}<option value="manual"${c.wifi_ifname === "manual" ? " selected" : ""}>Manuell (WLAN-Name, Passwort, Adresse)</option></select></label>
       <div class="ph" style="margin-top:4px">Ein WLAN-Hotspot oder -Netz der Box: Die Kamera bekommt Name und Passwort selbst. Jede andere Verbindung (Ethernet, USB-Router, Modem): Hier den WLAN-Namen und das Passwort eintragen, dem die Kamera beitreten soll. Die Adresse der Box kommt aus der gewählten Verbindung.</div>
       <div class="d-manual dnet"${djiNeedsNet(c) ? "" : " hidden"}>
@@ -182,7 +184,7 @@ function djiCardHtml(c) {
         <label class="f">WLAN-Name der Kamera<input class="d-ssid" maxlength="32" autocomplete="off" value="${esc(c.ssid || "")}"></label>
         <label class="f">WLAN-Passwort<input class="d-pw" type="password" maxlength="63" autocomplete="new-password" placeholder=""></label>
         <label class="f d-iprow"${other ? " hidden" : ""}>Adresse der Box in diesem Netz<input class="d-ip" maxlength="45" value="${esc(c.ip || "")}"></label>
-      </div></fieldset>
+      </div></fieldset></div>
     </div></div>
     <div class="dstep dstep-video"><span class="dnum">2</span><div class="dfl"><h4>Bild und Stream <span class="muted dsum-video"></span></h4>
       <div class="dgrid"><label class="f">Auflösung<select class="d-res">${res}</select></label>

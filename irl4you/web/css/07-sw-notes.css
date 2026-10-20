@@ -297,6 +297,21 @@
   align-items: center;
   gap: 6px;
 }
+.dcam .dsumrow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.dcam .dsumtxt {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-weight: 600;
+}
+.dcam .dedit[hidden],
+.dcam .d-wedit[hidden] {
+  display: none;
+}
 .dcam fieldset.dconn {
   border: 0;
   margin: 0;

@@ -56,6 +56,14 @@ function djiDynamic() {
     });
     card.querySelector(".d-auto").closest("label").hidden = !!c.status_only;
     djiNearby(card);
+    const wo = (d.wifi_options || []).find((o) => o.ifname === c.wifi_ifname),
+      editing = !c.locked && (djiEdit[c.addr] || !c.wifi_ifname);
+    card.querySelector(".dsumtxt").textContent =
+      c.wifi_ifname === "manual" ? c.ssid || "Manuell: noch kein Netz" : c.wifi_ifname ? (wo && wo.ssid ? wo.ssid : c.wifi_ifname) : "Noch keine Verbindung gewählt";
+    const eb = card.querySelector(".d-wedit");
+    eb.hidden = !!c.locked || !c.wifi_ifname;
+    eb.textContent = editing ? "Fertig" : "Bearbeiten";
+    card.querySelector(".dedit").hidden = !editing;
     card.querySelector(".d-lockhint").hidden = !c.locked;
     card.querySelector(".dlock").hidden = !c.locked;
     card.querySelector(".dconn").disabled = !!c.locked;

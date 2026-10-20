@@ -25,6 +25,7 @@ $("djicams").addEventListener("change", (e) => {
     const other = (djiData.wifi_options || []).some((o) => o.ifname === t.value && (o.type === "other" || o.secret_missing));
     card.querySelector(".d-manual").hidden = !(t.value === "manual" || other);
     card.querySelector(".d-iprow").hidden = other;
+    djiEdit[addr] = true;
     djiUpdate(addr, { wifi_ifname: t.value });
   } else if (cl.contains("d-nearby")) {
     if (t.value) {
@@ -80,6 +81,10 @@ $("djicams").addEventListener("click", async (e) => {
       tick();
       djiLoad();
     }
+  } else if (cl.contains("d-wedit")) {
+    djiEdit[addr] = !djiEdit[addr];
+    djiDynamic();
+    return;
   } else if (cl.contains("d-saveddel")) {
     const sel = e.target.closest(".d-savedrow").querySelector(".d-saved");
     if (sel.value && confirm("Dieses gespeicherte Netz löschen?")) await djiCmd({ cmd: "delete_saved", addr, ssid: sel.value });
