@@ -215,6 +215,19 @@ class PostRoutes:
                 return self.reply(200, self.uiaccess.set(d.get("block_client_wifi"), self.local_ip()))
             if path == "/api/previewaccess":
                 return self.reply(200, dict(self.previewaccess.set(d.get("external")), origin=self.origin()))
+            if path == "/api/youtube":
+                act = d.get("action")
+                if act == "client":
+                    self.youtubelogin.save_client(d.get("client_id"), d.get("client_secret"))
+                elif act == "login":
+                    self.youtubelogin.start()
+                elif act == "cancel":
+                    self.youtubelogin.cancel()
+                elif act == "logout":
+                    self.youtubelogin.logout()
+                else:
+                    return self.reply(400, {"error": "Unbekannte Aktion"})
+                return self.reply(200, dict(self.youtubelogin.status(), chat=self.youtubechat.status()))
             if path == "/api/twitch/login":
                 act = d.get("action")
                 key = d.get("owner") or self.headers.get("x-pb-owner", "")

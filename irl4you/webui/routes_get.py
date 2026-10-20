@@ -149,6 +149,8 @@ class GetRoutes:
             out["account"] = self.twitchaccounts.status(self.headers.get("x-pb-owner", ""))
             out["events"] = self.chatevents.status() if getattr(self, "chatevents", None) else {"state": "aus", "types": [], "error": ""}
             return self.reply(200, out)
+        if path == "/api/youtube":
+            return self.reply(200, dict(self.youtubelogin.status(), chat=self.youtubechat.status()))
         if path == "/api/hdmi":
             return self.reply(200, self.hdmi.status())
         if path == "/api/network":

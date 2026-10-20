@@ -6,11 +6,22 @@
 <div class="accrow" id="tw_accpanel" hidden><span id="tw_acc_t2" class="muted" translate="no"></span><span id="tw_acc_ev_on" class="muted" hidden>Ereignisse an</span><button type="button" id="tw_acc_mod" class="sec small" hidden>Moderation einschalten</button><button type="button" id="tw_acc_modoff" class="sec small" hidden>Moderation ausschalten</button><button type="button" id="tw_acc_ev" class="sec small" hidden>Ereignisse einschalten</button><button type="button" id="tw_acc_out" class="sec small">Abmelden</button></div>
 <label><input type="checkbox" data-opt="ts" checked> Uhrzeit</label>
 <label><input type="checkbox" data-opt="badge" checked> Abzeichen</label>
+<label><input type="checkbox" data-opt="src" checked> Herkunft (Twitch / YouTube)</label>
 <label><input type="checkbox" data-opt="emote" checked> Emotes als Bild</label>
 <label><input type="checkbox" data-opt="line" checked> Trennlinien</label>
 <label><input type="checkbox" data-opt="sig"> Signal bei Ereignissen</label>
 <label>Schrift <select data-opt="size" data-seg><option value="s">klein</option><option value="m" selected>normal</option><option value="l">groß</option></select></label>
 </div>
+<details class="subsec" id="yt_sec"><summary>YouTube-Chat <span id="yt_sum" class="muted">· aus</span></summary>
+<div class="ph" data-hlp>Holt den Livechat deines YouTube-Streams automatisch und zeigt ihn zusammen mit dem Twitch-Chat, jede Nachricht mit einem Abzeichen für ihre Herkunft. Die Box liest nur mit (Bereich „youtube.readonly“), sie schreibt nichts.</div>
+<div class="ph" data-hlp>Einmalig bei Google einrichten: In der Google Cloud Console ein Projekt anlegen, die „YouTube Data API v3“ aktivieren, den OAuth-Zustimmungsbildschirm ausfüllen und unter „Zugangsdaten“ eine „OAuth-Client-ID“ vom Typ „Fernseher und Geräte mit eingeschränkter Eingabe“ erstellen. Client-ID und Geheimnis hier eintragen, dann anmelden. Steht die App bei Google im Status „Test“, läuft die Anmeldung nach 7 Tagen ab: für den eigenen Gebrauch auf „In Produktion“ stellen. Die Schnittstelle hat ein Tageskontingent, das für Streams von mehreren Stunden reicht.</div>
+<div class="wform"><label class="muted">Client-ID<input id="yt_cid" maxlength="200" autocomplete="off"></label>
+<label class="muted">Client-Geheimnis<input id="yt_secret" type="password" maxlength="120" autocomplete="new-password"></label></div>
+<div class="actions"><button type="button" id="yt_save" class="sec">Zugangsdaten speichern</button><button type="button" id="yt_login" class="warnbtn">Mit YouTube anmelden</button><button type="button" id="yt_cancel" class="sec" hidden>Abbrechen</button><button type="button" id="yt_logout" class="dangerbtn" hidden>Abmelden</button></div>
+<div id="yt_code" class="twcode" hidden><div class="twcode_txt"><div>Öffne <a id="yt_link" href="#" target="_blank" rel="noopener">google.com/device</a> und gib diesen Code ein:</div><div class="twcode_big" id="yt_codetxt" translate="no"></div></div></div>
+<div id="yt_status" class="ph" role="status"></div>
+<div id="yt_err" class="err"></div>
+</details>
 <div id="tw_acc_code" class="twcode" hidden>
 <div id="tw_qr"></div>
 <div class="twcode_txt"><div class="twcode_big" id="tw_code" translate="no"></div><a id="tw_link" href="#" target="_blank" rel="noopener">twitch.tv/activate</a>

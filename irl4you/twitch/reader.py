@@ -32,6 +32,7 @@ class TwitchReader:
         if hasattr(self.third, "on_user"):
             self.third.on_user = self._user_ready
         self.events = None
+        self.youtube = None
         self.store, self.demo = store, demo
         self.host, self.port, self.tls, self.context = host or self.HOST, port or self.PORT, tls, context
         self.clock, self.wall, self.sleep = clock, wall, sleep
@@ -150,6 +151,7 @@ class TwitchReader:
             item["login"] = self._clean(nick, 25).lower()
             names = [b.partition("/")[0] for b in tags.get("badges", "").split(",")[:20]]
             item["badges"] = [b for b in self.BADGES if b in names]
+        item["src"] = "twitch"
         if item["text"] and cmd == "PRIVMSG":
             self.third.ensure(tags.get("room-id", ""))
             self.third.mark(item)
@@ -209,13 +211,18 @@ class TwitchReader:
             self._demo(now)
             ch = ch or "demo"
             state = "ok"
-        elif not ch:
+        elif not ch and not (self.youtube is not None and self.youtube.ready()):
             return {"state": "kein-kanal", "channel": "", "items": [], "last": 0}
         else:
-            self._ensure(ch)
-            state = self.state
-            if self.events is not None:
-                self.events.ensure()
+            if ch:
+                self._ensure(ch)
+                state = self.state
+                if self.events is not None:
+                    self.events.ensure()
+            else:
+                state = "ok"
+            if self.youtube is not None and self.youtube.ready():
+                self.youtube.ensure()
         with self.lock:
             last = self.next_id - 1
             if since > last:
