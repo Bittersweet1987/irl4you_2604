@@ -247,15 +247,86 @@
   margin-top: 10px;
   font-size: 14px;
 }
-.dcam .dsec {
+.dcam .dleft {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.dcam .ddot {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--muted);
+}
+.dcam .dstep {
+  display: flex;
+  gap: 12px;
+  padding: 12px 0 2px;
   border-top: 1px solid var(--line);
   margin-top: 10px;
-  padding-top: 6px;
 }
-.dcam .dsec > summary {
-  cursor: pointer;
+.dcam .dstep[hidden],
+.dcam .dact2[hidden],
+.dcam .dact3[hidden],
+.dcam .d-connect[hidden] {
+  display: none;
+}
+.dcam .dnum {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  color: var(--accent);
   font-size: 13px;
-  padding: 4px 0;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.dcam .dfl {
+  flex: 1;
+  min-width: 0;
+}
+.dcam .dfl h4 {
+  font-size: 15px;
+  margin: 2px 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.dcam fieldset.dconn {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+.dcam fieldset.dconn:disabled {
+  opacity: 0.55;
+}
+.dcam .dact {
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+  margin-top: 10px;
+}
+.dcam .dact .d-connect {
+  width: 100%;
+  min-height: 44px;
+  font-size: 15px;
+}
+.dcam .dact2 {
+  display: flex;
+  gap: 8px;
+}
+.dcam .dact2 button {
+  flex: 1;
+  min-height: 44px;
+}
+.dcam .dact3 {
+  text-align: right;
+  margin-top: 8px;
 }
 .subsec > summary {
   display: block;

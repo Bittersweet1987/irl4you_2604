@@ -24,6 +24,8 @@ function djiDynamic() {
     const e = card.querySelector(".dstate");
     e.textContent = txt;
     e.style.color = col;
+    card.querySelector(".ddot").style.background =
+      c.state === "streaming" || c.state === "status" ? "var(--ok)" : c.state === "idle" || c.state === "error" ? "var(--crit)" : "var(--warn)";
     if (!card.querySelector(".d-name").matches(":focus")) {
       const nm = djiName(c);
       card.querySelector(".dname").textContent = nm;
@@ -42,18 +44,21 @@ function djiDynamic() {
     const dt = card.querySelector(".ddetail");
     dt.textContent = det ? "· " + det : "";
     dt.style.color = c.state === "error" ? "var(--crit)" : "";
-    const active = c.state !== "idle" || c.publishing;
-    card.querySelector(".d-connect").disabled = c.state === "streaming" || c.state === "status";
+    const active = (c.state !== "idle" && !(c.state === "error" && !c.autoconnect)) || c.publishing;
+    card.querySelector(".d-connect").hidden = active;
+    card.querySelector(".dact2").hidden = !active;
+    card.querySelector(".dact3").hidden = active;
     const so = card.querySelector(".d-statusonly");
     if (so !== document.activeElement) so.checked = !!c.status_only;
     so.disabled = !!(c.mode_locked !== undefined ? c.mode_locked : c.locked);
-    card.querySelectorAll(".dsec").forEach((x) => {
+    card.querySelectorAll(".dstep-conn,.dstep-video").forEach((x) => {
       x.hidden = !!c.status_only;
     });
     card.querySelector(".d-auto").closest("label").hidden = !!c.status_only;
-    card.querySelector(".d-disconnect").disabled = !active;
     djiNearby(card);
     card.querySelector(".d-lockhint").hidden = !c.locked;
+    card.querySelector(".dlock").hidden = !c.locked;
+    card.querySelector(".dconn").disabled = !!c.locked;
     const ss = card.querySelector(".d-ssid");
     if (ss && ss !== document.activeElement && !djiPend[c.addr] && ss.value !== (c.ssid || "")) ss.value = c.ssid || "";
     const sv = card.querySelector(".d-saved");
@@ -69,9 +74,6 @@ function djiDynamic() {
     const pw = card.querySelector(".d-pw");
     if (pw && pw !== document.activeElement)
       pw.placeholder = (c.saved || []).includes(c.ssid) ? "Passwort gespeichert – leer lassen, um es zu behalten" : "Passwort";
-    const wo = (d.wifi_options || []).find((o) => o.ifname === c.wifi_ifname);
-    card.querySelector(".dsum-conn").textContent =
-      c.wifi_ifname === "manual" ? "· " + (c.ssid || "–") : c.wifi_ifname ? "· " + (wo && wo.ssid ? wo.ssid : c.wifi_ifname) : "";
     card.querySelector(".dsum-video").textContent = `· ${c.resolution || ""} ${c.fps || 30} fps · ${(c.bitrate || 6000) / 1000} Mbit/s`;
     const au = card.querySelector(".d-auto");
     if (au !== document.activeElement) au.checked = !!c.autoconnect;
