@@ -81,6 +81,8 @@ class GetRoutes:
             return self.reply(200, self.layout.get())
         if path == "/api/deck":
             return self.reply(200, self.deck.get())
+        if path == "/api/hub":
+            return self.reply(200, dict(self.hub.get(), port=self.hub_port))
         if path == "/api/btdriver":
             return self.reply(200, self.btdriver.status())
         if path == "/api/logs":

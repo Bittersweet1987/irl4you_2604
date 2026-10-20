@@ -265,10 +265,10 @@ main {
   padding: 2px 8px;
   line-height: 1.3;
 }
-html.nohead :is(#c_chat, #c_prev, #c_deck) {
+html.nohead :is(#c_chat, #c_hub, #c_prev, #c_deck) {
   position: relative;
 }
-html.nohead :is(#c_chat, #c_prev, #c_deck) > summary {
+html.nohead :is(#c_chat, #c_hub, #c_prev, #c_deck) > summary {
   position: absolute;
   top: 8px;
   right: 8px;
@@ -277,11 +277,11 @@ html.nohead :is(#c_chat, #c_prev, #c_deck) > summary {
   pointer-events: none;
   gap: 6px;
 }
-html.nohead :is(#c_chat, #c_prev, #c_deck) > summary > .sumh,
-html.nohead :is(#c_chat, #c_deck) > summary > :is(.sig, .camdots) {
+html.nohead :is(#c_chat, #c_hub, #c_prev, #c_deck) > summary > .sumh,
+html.nohead :is(#c_chat, #c_hub, #c_deck) > summary > :is(.sig, .camdots) {
   display: none;
 }
-html.nohead :is(#c_chat, #c_prev, #c_deck) > summary :is(button, .prevctl) {
+html.nohead :is(#c_chat, #c_hub, #c_prev, #c_deck) > summary :is(button, .prevctl) {
   pointer-events: auto;
 }
 html.nohead #c_prev .prevctl {

@@ -78,7 +78,7 @@ function fitMsg(m) {
     if (v === "always" || v === "hide" || v === "off") mode = v;
   } catch (e) {}
   const shown = () =>
-    ["c_chat", "c_prev", "c_deck"].some((id) => {
+    ["c_chat", "c_hub", "c_prev", "c_deck"].some((id) => {
       const e = $(id);
       return !!e && e.open && e.offsetParent !== null;
     });
@@ -121,7 +121,7 @@ function fitMsg(m) {
     scrollHid = false;
     apply();
   });
-  ["c_chat", "c_prev", "c_deck"].forEach((id) => {
+  ["c_chat", "c_hub", "c_prev", "c_deck"].forEach((id) => {
     const e = $(id);
     if (e) e.addEventListener("toggle", apply);
   });

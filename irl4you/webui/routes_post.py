@@ -71,6 +71,8 @@ class PostRoutes:
                 return self.reply(200, self.stats_status())
             if path == "/api/deck":
                 return self.reply(200, self.deck.put(d))
+            if path == "/api/hub":
+                return self.reply(200, dict(self.hub.put(d), port=self.hub_port))
             if path == "/api/layout":
                 if isinstance(d.get("init"), dict):
                     return self.reply(200, self.layout.init(d["init"]))

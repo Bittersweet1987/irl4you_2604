@@ -104,7 +104,7 @@
     const compact = st.hidden.includes("heads");
     document.documentElement.classList.toggle("nohead", compact);
     if (compact)
-      ["c_chat", "c_prev", "c_deck"].forEach((id) => {
+      ["c_chat", "c_hub", "c_prev", "c_deck"].forEach((id) => {
         const e = document.getElementById(id);
         if (e) e.open = true;
       });

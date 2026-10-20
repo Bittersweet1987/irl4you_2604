@@ -231,11 +231,13 @@ body.camdrag * {
   background: var(--card);
 }
 #c_chat > summary,
+#c_hub > summary,
 #c_deck > summary {
   flex-wrap: nowrap;
   gap: 6px;
 }
 #c_chat > summary .sumh,
+#c_hub > summary .sumh,
 #c_deck > summary .sumh {
   white-space: nowrap;
 }
@@ -368,4 +370,17 @@ body.camdrag * {
   gap: 6px;
   margin-left: auto;
   min-width: 0;
+}
+
+.hubwrap {
+  background: #1a1a1a;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.hubwrap iframe {
+  display: block;
+  border: 0;
+  width: 100%;
+  background: transparent;
+  color-scheme: light;
 }

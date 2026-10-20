@@ -24,6 +24,7 @@ from .encoder_mode import EncoderMode
 from .camservices import DjiService, HdmiService
 from .common import APP_DIR, iface_ips
 from .handler import Handler
+from .hubproxy import HubStore, make_server as make_hub_server
 from .httpserver import LimitedHTTPServer
 from .layout import DeckStore, LayoutStore
 from .netstate import IfaceMemory, NetChoice, SrtlaStore
@@ -48,6 +49,7 @@ def main():
     ap.add_argument("--state", default=os.path.join(APP_DIR, "state"),
                     help="Ordner für Passwort-Hash und Kameraliste")
     ap.add_argument("--bela-config", default="", help=argparse.SUPPRESS)      # veraltet, ohne Wirkung (alte Dienstdateien nennen es noch)
+    ap.add_argument("--hub-port", type=int, default=8782, help="Port des Weiterleiters für den Streamerhub-Chat (0 = aus)")
     ap.add_argument("--extra-port", type=int, default=0, help="zusätzlicher Port (z. B. 80), gleiche Oberfläche")
     ap.add_argument("--rtmp-port", type=int, default=1935, help="RTMP-Port, den Kameras nutzen")
     ap.add_argument("--rtmp-app", default="publish", help="nginx-rtmp-Applikation")
@@ -73,6 +75,8 @@ def main():
     Handler.names = DeviceNames(args.state)
     Handler.layout = LayoutStore(args.state)
     Handler.deck = DeckStore(args.state)
+    Handler.hub = HubStore(args.state)
+    Handler.hub_port = args.hub_port
     Handler.statsshare = StatsShare(args.state, demo=args.demo)
     Handler.fpsprobe = FpsProbe("rtmp://127.0.0.1:%d/%s" % (args.rtmp_port, args.rtmp_app), os.path.join(args.state, "gst-registry.bin"), demo=args.demo)
     Handler.statsserver = StatsServer(Handler.statsshare, Handler.stats_snapshot_now)
@@ -151,6 +155,12 @@ def main():
     LimitedHTTPServer.ui_access = Handler.uiaccess
     LimitedHTTPServer.allow_public = args.allow_public
     srv = LimitedHTTPServer((args.host, args.port), Handler)
+    if args.hub_port:
+        try:
+            hub = make_hub_server(LimitedHTTPServer, args.host, args.hub_port, Handler.auth, Handler.hub)
+            threading.Thread(target=hub.serve_forever, daemon=True).start()
+        except OSError as e:
+            print(f"Port {args.hub_port} für den Streamerhub-Chat nicht verfügbar: {e}", flush=True)
     if args.extra_port and args.extra_port != args.port:
         def serve_extra():
             # Port 80 kann beim Start noch belegt sein (z. B. nginx-Beispielseite): weiter versuchen, bis die Oberfläche auch ohne Port erreichbar ist
