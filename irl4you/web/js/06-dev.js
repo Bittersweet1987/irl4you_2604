@@ -183,13 +183,38 @@ async function srtlaLoad() {
     ? `Gewählter Server: ${cur.name} (${cur.host}:${cur.port}). `
     : "Legen Sie einen Server an, um ihn später zum Senden zu wählen.";
 }
+// Gespeicherte Stream-ID beim Bearbeiten: bleibt unverändert (keep), wird ersetzt (change) oder entfernt (clear)
+let sidMode = "keep";
+function sidRender() {
+  const saved = !!srtlaEdit && !!(srtlaData && srtlaData.servers.find((x) => x.id === srtlaEdit && x.has_streamid)),
+    inp = $("s_sid");
+  $("sid_row").hidden = !saved;
+  inp.hidden = saved && sidMode !== "change";
+  inp.placeholder = saved ? "Neue Stream-ID" : "Stream-ID (optional)";
+  if (!saved) return;
+  $("sid_state").textContent = { keep: "gespeichert, bleibt unverändert", change: "wird ersetzt durch:", clear: "wird beim Speichern entfernt" }[sidMode];
+  $("sid_change").textContent = sidMode === "change" ? "Beibehalten" : "Ändern";
+  $("sid_clear").textContent = sidMode === "clear" ? "Rückgängig" : "Entfernen";
+}
 function srtlaFormReset() {
   srtlaEdit = null;
+  sidMode = "keep";
   $("srvform").reset();
   $("srv_save").textContent = "Server hinzufügen";
   $("srv_cancel").hidden = true;
-  $("s_sid").placeholder = "Stream-ID (optional)";
+  sidRender();
 }
+$("sid_change").addEventListener("click", () => {
+  sidMode = sidMode === "change" ? "keep" : "change";
+  $("s_sid").value = "";
+  sidRender();
+  if (sidMode === "change") $("s_sid").focus();
+});
+$("sid_clear").addEventListener("click", () => {
+  sidMode = sidMode === "clear" ? "keep" : "clear";
+  $("s_sid").value = "";
+  sidRender();
+});
 $("srv_sel").addEventListener("change", async (e) => {
   if (!e.target.value) return;
   try {
@@ -209,7 +234,8 @@ $("srv_edit").addEventListener("click", () => {
   $("s_host").value = s.host;
   $("s_port").value = s.port;
   $("s_sid").value = "";
-  $("s_sid").placeholder = s.has_streamid ? "Stream-ID (leer lassen = behalten)" : "Stream-ID (optional)";
+  sidMode = "keep";
+  sidRender();
   $("srv_save").textContent = "Änderungen speichern";
   $("srv_cancel").hidden = false;
   $("s_name").focus();
@@ -231,7 +257,12 @@ $("srv_del").addEventListener("click", async () => {
 $("srvform").addEventListener("submit", async (e) => {
   e.preventDefault();
   $("srtlaerr").textContent = "";
-  const body = { name: $("s_name").value, host: $("s_host").value, port: +$("s_port").value, streamid: $("s_sid").value };
+  const body = { name: $("s_name").value, host: $("s_host").value, port: +$("s_port").value, streamid: sidMode === "keep" || sidMode === "clear" ? "" : $("s_sid").value };
+  if (sidMode === "clear") body.clear_streamid = true;
+  if (sidMode === "change" && !body.streamid.trim()) {
+    $("srtlaerr").textContent = "Bitte die neue Stream-ID eingeben oder „Beibehalten“ wählen.";
+    return;
+  }
   try {
     if (srtlaEdit) await srtlaCall("POST", "/api/srtla/" + srtlaEdit, body);
     else await srtlaCall("POST", "/api/srtla", body);

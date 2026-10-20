@@ -10,6 +10,8 @@
 <input id="s_name" placeholder="Name (z. B. Mein Server)" maxlength="40" required>
 <input id="s_host" placeholder="Adresse (z. B. srtla.example.de)" maxlength="253" required autocomplete="off">
 <input id="s_port" placeholder="Port" type="number" min="1" max="65535" required>
+<div id="sid_row" class="sidrow" hidden><span class="muted">Stream-ID</span> <b id="sid_state"></b>
+<button type="button" id="sid_change" class="sec small">Ändern</button><button type="button" id="sid_clear" class="sec small">Entfernen</button></div>
 <input id="s_sid" type="password" placeholder="Stream-ID (optional)" maxlength="512" autocomplete="new-password">
 <button type="submit" id="srv_save">Server hinzufügen</button>
 <button type="button" id="srv_cancel" class="sec" hidden>Abbrechen</button>
