@@ -1,16 +1,9 @@
-// YouTube-Chat: Kanal eintragen (öffentlicher Chat ohne Anmeldung) und optional Anmeldung mit dem YouTube-Konto für die Moderation.
-// Die Nachrichten selbst kommen über den normalen Chat (chat.js).
+// YouTube-Chat: Kanal eintragen (öffentlicher Chat ohne Anmeldung). Die Nachrichten selbst kommen über den normalen Chat (chat.js).
 let ytData = null,
   ytTimer = null;
-const YT_STATE = {
-  "kein-client": "Die Anmeldung mit dem YouTube-Konto ist in dieser Version noch nicht freigeschaltet.",
-  wartet: "Warte auf die Bestätigung bei Google …",
-  fehler: "Anmeldung fehlgeschlagen.",
-};
 const YT_CHAT = {
   ok: "Livechat verbunden",
   "kein-stream": "Kein laufender YouTube-Stream gefunden. Die Box sucht jede Minute, solange der Chat geöffnet ist.",
-  kontingent: "Das Tageskontingent der YouTube-Schnittstelle ist aufgebraucht.",
   fehler: "Keine Verbindung zu YouTube.",
   verbinde: "Verbinde mit YouTube …",
 };
@@ -24,32 +17,16 @@ function ytLines(el, lines) {
 }
 function ytRender(d) {
   ytData = d;
-  const on = d.state === "angemeldet",
-    wait = d.state === "wartet",
-    chat = d.chat || {};
-  $("yt_sum").textContent = on ? "· " + (d.channel || "angemeldet") : d.handle ? "· " + d.handle : "· aus";
+  const chat = d.chat || {};
+  $("yt_sum").textContent = d.handle ? "· " + d.handle : "· aus";
   if (document.activeElement.id !== "yt_chan") $("yt_chan").value = d.handle || "";
-  $("yt_login").hidden = on || wait;
-  $("yt_login").disabled = !d.has_client;
-  $("yt_logout").hidden = !on;
-  $("yt_cancel").hidden = !wait;
-  $("yt_code").hidden = !wait;
-  if (wait) {
-    $("yt_codetxt").textContent = d.code || "";
-    const a = $("yt_link");
-    a.href = d.uri || "https://www.google.com/device";
-    a.textContent = (d.uri || "https://www.google.com/device").replace(/^https:\/\//, "");
-  }
-  const head = on ? (d.channel ? "Angemeldet als " + d.channel : "Angemeldet") : d.handle ? "Kanal " + d.handle : "Noch kein Kanal eingetragen.";
-  const known = on || d.handle;
-  const live = known && chat.state && YT_CHAT[chat.state] ? (chat.state === "ok" && chat.title ? "Livechat verbunden: " + chat.title : YT_CHAT[chat.state]) : "";
-  ytLines($("yt_status"), [head, live, known ? chat.error : ""]);
-  ytLines($("yt_loginmsg"), [on ? "" : YT_STATE[d.state] || "", d.error]);
+  const live = d.handle && chat.state && YT_CHAT[chat.state] ? (chat.state === "ok" && chat.title ? "Livechat verbunden: " + chat.title : YT_CHAT[chat.state]) : "";
+  ytLines($("yt_status"), [d.handle ? "Kanal " + d.handle : "Noch kein Kanal eingetragen.", live, d.handle ? chat.error : ""]);
   clearTimeout(ytTimer);
-  ytTimer = setTimeout(ytLoad, wait ? 3000 : 15000);
+  ytTimer = setTimeout(ytLoad, 15000);
 }
 async function ytLoad() {
-  if (!$("yt_sec").open && !(ytData && ytData.state === "wartet")) {
+  if (!$("yt_sec").open) {
     clearTimeout(ytTimer);
     ytTimer = setTimeout(ytLoad, 15000);
     return;
@@ -74,11 +51,6 @@ $("yt_chan").addEventListener("keydown", (e) => {
     e.preventDefault();
     $("yt_chan_save").click();
   }
-});
-$("yt_login").addEventListener("click", () => ytPost({ action: "login" }));
-$("yt_cancel").addEventListener("click", () => ytPost({ action: "cancel" }));
-$("yt_logout").addEventListener("click", () => {
-  if (confirm("Von YouTube abmelden?\n\nModerieren geht dann nicht mehr. Der eingetragene Kanal bleibt gespeichert.")) ytPost({ action: "logout" });
 });
 $("yt_sec").addEventListener("toggle", () => {
   if ($("yt_sec").open) ytLoad();

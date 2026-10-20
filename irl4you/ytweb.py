@@ -2,8 +2,7 @@
 
 Der Nutzer trägt nur seinen Kanal ein (@name, Kanal-Link oder UC-Kennung). Die Box ruft die öffentliche Livechat-Seite von YouTube auf (wie ein Browser ohne
 Konto), findet den laufenden Stream des Kanals selbst, holt dessen Chat und sucht nach dem Ende automatisch den nächsten Stream. Es gibt keine Anmeldung, keine
-Google-Zugangsdaten und keine Moderation. Das ist eine inoffizielle Schnittstelle von YouTube und kann sich ändern; die offizielle Anmeldung (ytchat.py) bleibt
-als Alternative mit Moderation.
+Google-Zugangsdaten und keine Moderation. Das ist eine inoffizielle Schnittstelle von YouTube und kann sich ändern.
 """
 
 import collections
@@ -295,29 +294,3 @@ class YoutubePublic:
                 sub = self._runs(r.get("headerSubtext"), 200)
                 return [dict(base, type="sub", name="", color="", text=(name + ": " if name else "") + (sub or "Neues Mitglied"))]
         return []
-
-
-class YoutubeRouter:
-    """Wählt die Quelle: mit Google-Anmeldung der offizielle Weg (mit Moderation), sonst der öffentliche Chat des eingetragenen Kanals."""
-
-    def __init__(self, api, public):
-        self.api, self.public = api, public
-
-    def _cur(self):
-        return self.api if self.api.ready() else self.public
-
-    def ready(self):
-        return self.api.ready() or self.public.ready()
-
-    def ensure(self):
-        self._cur().ensure()
-
-    def status(self):
-        s = dict(self._cur().status())
-        s["source"] = "konto" if self.api.ready() else ("kanal" if self.public.ready() else "")
-        return s
-
-    def moderate(self, req):
-        if not self.api.ready():
-            raise ValueError("Moderieren geht nur mit der Anmeldung beim YouTube-Konto")
-        return self.api.moderate(req)

@@ -219,15 +219,9 @@ class PostRoutes:
                 act = d.get("action")
                 if act == "channel":
                     self.youtubepublic.set_channel(d.get("channel"))
-                elif act == "login":
-                    self.youtubelogin.start()
-                elif act == "cancel":
-                    self.youtubelogin.cancel()
-                elif act == "logout":
-                    self.youtubelogin.logout()
                 else:
                     return self.reply(400, {"error": "Unbekannte Aktion"})
-                return self.reply(200, dict(self.youtubelogin.status(), chat=self.youtubechat.status(), handle=self.youtubepublic.channel))
+                return self.reply(200, {"chat": self.youtubepublic.status(), "handle": self.youtubepublic.channel})
             if path == "/api/twitch/login":
                 act = d.get("action")
                 key = d.get("owner") or self.headers.get("x-pb-owner", "")
@@ -279,7 +273,7 @@ class PostRoutes:
                     return self.reply(200, r)
                 return self.reply(400, {"error": "Ungültige Anfrage"})
             if path == "/api/chat/mod" and d.get("src") == "youtube":
-                return self.reply(200, self.youtubechat.moderate(d))
+                return self.reply(400, {"error": "YouTube-Nachrichten lassen sich nicht moderieren"})
             if path == "/api/chat/mod":
                 key = self.headers.get("x-pb-owner", "")
                 role, acct = self.twitchaccounts.pick(key)

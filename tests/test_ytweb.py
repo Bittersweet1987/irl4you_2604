@@ -190,37 +190,5 @@ class TestLauf(unittest.TestCase):
         d.cleanup()
 
 
-class TestWahl(unittest.TestCase):
-    def test_konto_hat_vorrang_und_moderation_nur_damit(self):
-        d = tempfile.TemporaryDirectory()
-        yw, paths, pub = make({}, d.name)
-
-        class Api:
-            on = False
-
-            def ready(self):
-                return self.on
-
-            def status(self):
-                return {"state": "ok", "mod": True}
-
-            def ensure(self):
-                pass
-
-            def moderate(self, req):
-                return {"ok": True}
-        api = Api()
-        router = yw.YoutubeRouter(api, pub)
-        self.assertFalse(router.ready())
-        pub.channel = "@kanal"
-        self.assertEqual((router.ready(), router.status()["source"], router.status()["mod"]), (True, "kanal", False))
-        with self.assertRaises(ValueError):
-            router.moderate({"action": "delete"})
-        api.on = True
-        self.assertEqual((router.status()["source"], router.status()["mod"]), ("konto", True))
-        self.assertTrue(router.moderate({"action": "delete"})["ok"])
-        d.cleanup()
-
-
 if __name__ == "__main__":
     unittest.main()
