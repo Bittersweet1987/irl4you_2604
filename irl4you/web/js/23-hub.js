@@ -3,11 +3,13 @@
   const wrap = $("hub_wrap"),
     msg = $("hub_msg"),
     inU = $("hub_in"),
+    inW = $("hub_w"),
     inH = $("hub_h"),
+    inMW = $("hub_mw"),
     inMH = $("hub_mh"),
     box = $("hub_optbox"),
     gear = $("hub_opt");
-  let saved = { url: "", height: 600, mobile_height: 500, port: 8782 },
+  let saved = { url: "", width: 500, height: 500, mobile_width: 500, mobile_height: 500, port: 8782 },
     shown = null,
     loaded = false;
   const clean = (v) => {
@@ -22,10 +24,15 @@
     return v.length <= 500 && u.protocol === "https:" && u.hostname && !u.username && !u.password ? u.href : null;
   };
   const mob = () => window.pbViews && window.pbViews.used() === "mobile",
-    high = () => (mob() ? saved.mobile_height : saved.height);
+    high = () => (mob() ? saved.mobile_height : saved.height),
+    wide = () => (mob() ? saved.mobile_width : saved.width);
   function note(t) {
     msg.hidden = !t;
     msg.textContent = t || "";
+  }
+  function size(f) {
+    f.style.height = high() + "px";
+    f.style.width = wide() + "px";
   }
   function src() {
     const u = new URL(saved.url),
@@ -36,7 +43,7 @@
     const k = saved.url + "|" + location.hostname;
     if (!force && k === shown) {
       const f = wrap.querySelector("iframe");
-      if (f) f.style.height = high() + "px";
+      if (f) size(f);
       return;
     }
     shown = k;
@@ -51,17 +58,26 @@
     f.loading = "lazy";
     f.referrerPolicy = "no-referrer";
     f.setAttribute("sandbox", "allow-scripts allow-same-origin allow-forms");
-    f.style.height = high() + "px";
+    size(f);
     wrap.appendChild(f);
   }
   function fill() {
     inU.value = saved.url;
+    inW.value = saved.width;
     inH.value = saved.height;
+    inMW.value = saved.mobile_width;
     inMH.value = saved.mobile_height;
   }
   function take(d) {
     if (!d || typeof d !== "object") return;
-    saved = { url: d.url || "", height: +d.height || 600, mobile_height: +d.mobile_height || 500, port: +d.port || 8782 };
+    saved = {
+      url: d.url || "",
+      width: +d.width || 500,
+      height: +d.height || 500,
+      mobile_width: +d.mobile_width || 500,
+      mobile_height: +d.mobile_height || 500,
+      port: +d.port || 8782,
+    };
     if (box.hidden) fill();
   }
   async function load() {
@@ -92,7 +108,7 @@
     const u = clean(inU.value);
     if (u === null) return note("Die Adresse muss mit https:// beginnen.");
     try {
-      take(await srtlaCall("POST", "/api/hub", { url: u, height: +inH.value || 600, mobile_height: +inMH.value || 500 }));
+      take(await srtlaCall("POST", "/api/hub", { url: u, width: +inW.value || 500, height: +inH.value || 500, mobile_width: +inMW.value || 500, mobile_height: +inMH.value || 500 }));
     } catch (e) {
       return note("Nicht auf der Box gespeichert: " + ((e && e.message) || "keine Verbindung"));
     }
@@ -101,7 +117,7 @@
     render(true);
   };
   $("hub_save").addEventListener("click", save);
-  for (const x of [inU, inH, inMH])
+  for (const x of [inU, inW, inH, inMW, inMH])
     x.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
         e.preventDefault();

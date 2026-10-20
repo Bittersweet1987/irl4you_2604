@@ -25,7 +25,7 @@ HTML_SHIM = (b'<script>if(typeof apiFetch==="undefined"){window.apiFetch=functio
 
 
 class HubStore(DeckStore):
-    SIZE = {"height": (200, 4000, 600), "mobile_height": (200, 4000, 500)}
+    SIZE = {"width": (200, 4000, 500), "height": (200, 4000, 500), "mobile_width": (200, 4000, 500), "mobile_height": (200, 4000, 500)}
     FILE = "streamerhub.json"
 
     def __init__(self, state_dir):

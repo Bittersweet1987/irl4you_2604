@@ -380,7 +380,7 @@ body.camdrag * {
 .hubwrap iframe {
   display: block;
   border: 0;
-  width: 100%;
+  max-width: 100%;
   background: transparent;
   color-scheme: light;
 }

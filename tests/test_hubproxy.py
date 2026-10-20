@@ -147,7 +147,7 @@ class TestWeiterleiter(unittest.TestCase):
         self.assertEqual(s.get()["url"], "")
         s.put({"url": "https://streamerhub.app/chat-overlay?id=21927f4e", "height": 640})
         got = s.get()
-        self.assertEqual((got["url"], got["height"], got["mobile_height"]), ("https://streamerhub.app/chat-overlay?id=21927f4e", 640, 500))
+        self.assertEqual((got["url"], got["height"], got["width"]), ("https://streamerhub.app/chat-overlay?id=21927f4e", 640, 500))
         with self.assertRaises(ValueError):
             s.put({"url": "http://streamerhub.app/x"})
         d.cleanup()
