@@ -270,6 +270,9 @@ body.camdrag * {
   border-radius: 10px;
   font-size: 13px;
 }
+.chatopts > .subsec {
+  flex: 1 1 100%;
+}
 .chatopts label {
   display: inline-flex;
   align-items: center;
