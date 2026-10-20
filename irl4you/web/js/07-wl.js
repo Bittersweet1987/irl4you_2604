@@ -38,7 +38,8 @@ function wlUplink(c, ups) {
 }
 // Rückmeldung zur letzten Aktion dieses Sticks, direkt unter den Knöpfen
 function wlMsg(c, d, u) {
-  const mine = d.iface === c.iface && d.time !== u.base && (d.now || 0) - (d.time || 0) < 300 && !String(d.action || "").startsWith("hotspot_");
+  const mine =
+    (d.iface === c.iface || (!d.iface && d.action === u.act)) && d.time !== u.base && (d.now || 0) - (d.time || 0) < 300 && !String(d.action || "").startsWith("hotspot_");
   const t = mine ? (d.state === "working" ? "Läuft …" : d.message || "") : u.msg || "";
   return t ? `<div class="ph wlmsg" role="status">${esc(t)}</div>` : "";
 }
@@ -124,18 +125,19 @@ function wifiRerender(focus) {
     if (f) f.focus();
   }
 }
-function wlSay(iface, text) {
+function wlSay(iface, text, act) {
   if (!iface) {
     $("wifimsg").textContent = text;
     return;
   }
   const u = wlOf(iface);
   u.msg = text;
+  u.act = act || "";
   u.base = wifiData ? wifiData.time : 0;
   wifiRerender();
 }
 async function wifiDo(body, busy) {
-  wlSay(body.iface, busy);
+  wlSay(body.iface, busy, body.action);
   try {
     await srtlaCall("POST", "/api/wifi", body);
   } catch (x) {

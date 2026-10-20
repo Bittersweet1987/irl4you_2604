@@ -193,7 +193,7 @@ class Wifi:
         return {"helper_installed": os.path.exists("/etc/systemd/system/pipbox-wifi.path"), "cards": self.cards(),
                 "state": h.get("state", "idle"), "message": h.get("message", ""), "action": h.get("action", ""), "scan": h.get("scan") or {},
                 "saved": saved if saved is not None else (h.get("saved") or []),
-                "time": h.get("time", 0), "now": int(time.time()), "driver": self.driver_status()}
+                "time": h.get("time", 0), "now": int(time.time()), "iface": h.get("iface", ""), "driver": self.driver_status()}
 
     def _hotspot_request(self, d, st, card):
         action, iface = d.get("action"), card["iface"]

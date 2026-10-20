@@ -52,5 +52,18 @@ class TestGespeicherteNetze(unittest.TestCase):
             self.assertEqual(w.saved_networks(), ["Bittersweet 5G", "Gast:Netz"])
 
 
+class TestStatusMitStick(unittest.TestCase):
+    def test_status_nennt_den_stick_der_aktion(self):
+        wifi = irl("webui.wifi")
+        d = tempfile.mkdtemp()
+        w = wifi.Wifi(d, False, mock.Mock(iface=""))
+        status = os.path.join(d, "status.json")
+        open(status, "w").write('{"state": "done", "message": "x", "action": "forget", "iface": "wlan1", "time": 5}')
+        w.STATUS = status
+        with mock.patch.object(w, "cards", return_value=[]), mock.patch.object(w, "saved_networks", return_value=[]),                 mock.patch.object(wifi.os.path, "exists", return_value=True):
+            st = w.status()
+        self.assertEqual((st["iface"], st["action"]), ("wlan1", "forget"))
+
+
 if __name__ == "__main__":
     unittest.main()
