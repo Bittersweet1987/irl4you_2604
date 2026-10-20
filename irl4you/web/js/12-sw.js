@@ -243,7 +243,7 @@ async function swLoad(force, fresh) {
     dot.hidden = !d.newer;
     if (d.newer) {
       const t =
-        (d.latest ? `Neue Version v${d.latest_version ? d.latest_version + " (" + d.latest + ")" : d.latest} verfügbar (jetzt v${d.current}).` : `Neue Version verfügbar (jetzt v${d.current}).`) +
+        (d.latest ? `Neue Version v${d.latest_version || d.latest} verfügbar (jetzt v${d.current}).` : `Neue Version verfügbar (jetzt v${d.current}).`) +
         " " +
         (d.sending ? "Einspielen geht nicht während der Übertragung." : "Zum Software-Update.");
       dot.title = t;
@@ -257,7 +257,7 @@ async function swLoad(force, fresh) {
   $("sw_cur").textContent = "v" + d.current + (d.stage ? " (" + d.stage + ")" : "");
   window.swCurVer = d.current || "";
   $("sw_curinfo").hidden = !d.current;
-  $("sw_latest").textContent = d.latest ? "v" + (d.latest_version ? d.latest_version + " (" + d.latest + ")" : d.latest) : d.error ? "–" : "wird geprüft …";
+  $("sw_latest").textContent = d.latest ? "v" + (d.latest_version || d.latest) : d.error ? "–" : "wird geprüft …";
   $("sw_badge").textContent = busy ? "läuft …" : d.error ? "unbekannt" : d.newer ? "Update verfügbar" : "aktuell";
   $("sw_badge").className = "badge " + (d.newer || busy ? "attn" : "ok");
   const n = $("sw_notes");

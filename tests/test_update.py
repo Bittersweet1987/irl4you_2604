@@ -377,7 +377,7 @@ class TestInstall(Base):
         self.assertEqual(self.hooks(), ["install 2.0.0 prev="])
         self.assertIn("restart pipbox.service", self.calls())
         s = self.status()
-        self.assertEqual((s["state"], s["progress"], s["version"]), ("done", 100, "2.0.0 (%s)" % c["sha"][:7]))
+        self.assertEqual((s["state"], s["progress"], s["version"]), ("done", 100, "2.0.0"))
         self.assertEqual(self.on_disk(), [rid])
 
     def test_update_and_prune(self):
@@ -397,7 +397,7 @@ class TestInstall(Base):
         c = self.gh.add("0.1.0")
         self.assertEqual(self.u.run("install"), 0)
         self.assertEqual(self.u.active_id(), self.rid(c))
-        self.assertEqual(self.status()["version"], "0.1.0 (%s)" % c["sha"][:7])
+        self.assertEqual(self.status()["version"], "0.1.0")
         self.assertEqual(self.hooks()[-1].split()[:2], ["install", "0.1.0"])
 
     def test_dritte_stelle_zaehlt_commits_seit_release(self):

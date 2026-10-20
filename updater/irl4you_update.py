@@ -242,11 +242,11 @@ class Updater:
         return self.manifest_of(rid).get("commit") if rid else None
 
     def label(self, rid):
-        """Anzeigename: 'VERSION (Commit)'."""
+        """Anzeigename: nur die Versionsnummer (die Commit-Kennung nur, wenn es keine gibt)."""
         if not rid:
             return "-"
         v = self.manifest_of(rid).get("version")
-        return "%s (%s)" % (v, rid[:7]) if v else rid[:7]
+        return v if v else rid[:7]
 
     def installed_versions(self):
         """Ids der vorhandenen Versionen, zuletzt eingerichtete zuerst."""
@@ -706,31 +706,32 @@ class Updater:
 
     # ---------- Aktionen ----------
 
-    def _newer_than_active(self, commits):
+    def _newer_than_active(self, commits, name=None):
         """(Commit, Hinweistext) des Zweigspitzenstands, wenn er neu und freigegeben ist, sonst (None, Grund)."""
         tip, cur = commits[0], self.active_commit()
+        name = name or short(tip["sha"])
         if cur == tip["sha"]:
             return None, "IRL4YOU ist aktuell."
         if self.cfg.require_ci:
             st = self.ci_state(tip)
             if st == "pending":
-                return None, "Neuer Stand %s wird noch von GitHub geprüft." % short(tip["sha"])
+                return None, "Neue Version %s wird noch von GitHub geprüft." % name
             if st == "failed":
-                return None, "Neuer Stand %s hat fehlgeschlagene Prüfungen und wird nicht installiert." % short(tip["sha"])
-        return tip, "Neuer Stand %s ist verfügbar." % short(tip["sha"])
+                return None, "Neue Version %s hat fehlgeschlagene Prüfungen und wird nicht installiert." % name
+        return tip, "Neue Version %s ist verfügbar." % name
 
     def check(self):
         cur = self.active_commit()
         self.status(state="checking", step="Frage GitHub nach neuen Versionen", message="")
         commits = self.commits()
-        tip, msg = self._newer_than_active(commits)
+        labels = self.versions_of(commits)
+        tip, msg = self._newer_than_active(commits, labels[0])
         notes = []
         for c in commits:
             if c["sha"] == cur:
                 break
             lines = clean_message(c["message"]).splitlines()
             notes.append("- " + lines[0] if lines else "- (ohne Text)")
-        labels = self.versions_of(commits)
         self.status(state="idle", step="", version=self.label(self.active_id()), commit=(cur or "")[:12],
                     latest=short(commits[0]["sha"]), latest_version=labels[0], available=bool(tip), checked=int(self.now()),
                     notes="\n".join(notes)[:4000] if tip else "",
@@ -748,7 +749,7 @@ class Updater:
             raise Refuse("Zu wenig freier Speicher für das Update")
         work = tempfile.mkdtemp(dir=self.cfg.releases, prefix=".dl-")
         try:
-            self.status(step="Lade Commit %s" % short(sha), progress=5)
+            self.status(step="Lade neue Version", progress=5)
             tree_info = self._json("/repos/%s/git/trees/%s?recursive=1" % (self.cfg.repo, sha))
             if tree_info.get("truncated"):
                 raise Refuse("Der Dateibaum des Commits ist zu groß für die Prüfung")
@@ -776,7 +777,8 @@ class Updater:
         self.status(state="installing", step="Frage GitHub nach dem Stand", message="", frm=self.label(cur),
                     to=target or "", progress=2)
         if target is None:
-            tip, msg = self._newer_than_active(self.commits(1))
+            one = self.commits(1)
+            tip, msg = self._newer_than_active(one, self.versions_of(one)[0])
             if tip is None:
                 raise Refuse(msg if "aktuell" not in msg else "Keine neuere Version (installiert %s)" % self.label(cur))
             commit = tip
@@ -791,7 +793,8 @@ class Updater:
             commit = self.resolve(target)
             if commit["id"] == cur:
                 raise Refuse("Version %s ist schon installiert" % self.label(cur))
-        self.status(to=short(commit["sha"]))
+        name = (self.versions_of([commit]) or [None])[0] or short(commit["sha"])
+        self.status(to=name)
         self._fetch(commit, None)
         new = commit["id"]
         ok = self.switch_to(new, cur, "install")
@@ -800,7 +803,7 @@ class Updater:
             if cur:
                 shutil.rmtree(os.path.join(self.cfg.releases, new), ignore_errors=True)
             self.status(state="failed", step="", progress=0, version=self.label(self.active_id()),
-                        message="%s startete nicht, %s ist wieder aktiv." % (short(commit["sha"]), self.label(cur)))
+                        message="%s startete nicht, %s ist wieder aktiv." % (name, self.label(cur)))
             return False
         self.log("Update auf %s abgeschlossen" % self.label(new))
         m = self.manifest_of(new)

@@ -708,7 +708,7 @@ class TestSendekette(unittest.TestCase):
         A, B, C = "a" * 12, "b" * 12, "c" * 12      # aktiv, vorherige, neuester
         try:
             rel = os.path.join(d, "releases")
-            for rid, v in ((A, "2.0.0"), (B, "2.0.0")):
+            for rid, v in ((A, "2.0.0"), (B, "1.9.0")):
                 os.makedirs(os.path.join(rel, rid))
                 with open(os.path.join(rel, rid, "manifest.json"), "w") as f:
                     json.dump({"version": v, "commit": rid * 4}, f)
@@ -721,7 +721,7 @@ class TestSendekette(unittest.TestCase):
             with open(os.path.join(d, "previous"), "w") as f:
                 f.write(B + "\n")
             stf = os.path.join(d, "status.json")
-            releases = [{"version": C[:7], "commit": C * 3 + C[:4], "published": "2026-10-20T10:00:00Z", "prerelease": False, "notes": "Neuer Stand"},
+            releases = [{"version": C[:7], "commit": C * 3 + C[:4], "label": "2.1.0", "published": "2026-10-20T10:00:00Z", "prerelease": False, "notes": "Neuer Stand"},
                         {"version": A[:7], "commit": A * 3 + A[:4], "published": "2026-10-18T10:00:00Z", "prerelease": False, "notes": "Aktueller Stand"},
                         {"version": "dddddd1", "commit": "d" * 40, "published": "2026-10-10T10:00:00Z", "prerelease": False, "notes": "Alt"}]
             with open(stf, "w") as f:
@@ -738,11 +738,11 @@ class TestSendekette(unittest.TestCase):
             if not link_ok:
                 u.current_id = lambda: A
             st = u.status()
-            self.assertEqual((st["latest"], st["newer"], st["state"], st["current"]), (C[:7], True, "idle", "2.0.0 (aaaaaaa)"))
+            self.assertEqual((st["latest"], st["newer"], st["state"], st["current"]), (C[:7], True, "idle", "2.0.0"))
             rel_of = {x["id"]: x["relation"] for x in st["versions"]}
             self.assertEqual((rel_of[C], rel_of[A], rel_of["d" * 12], rel_of[B]), ("neuer", "aktuell", "älter", "älter"))
             self.assertTrue([x for x in st["versions"] if x["id"] == B][0]["local"])
-            self.assertEqual(st["backup_version"], "2.0.0 (bbbbbbb)")
+            self.assertEqual(st["backup_version"], "1.9.0")
             self.assertIn("nicht installiert", st["error"])
             with self.assertRaises(ValueError):
                 u.request("install", True)       # ohne Helfer
@@ -751,6 +751,10 @@ class TestSendekette(unittest.TestCase):
             self.assertEqual(open(u.req).read(), "install\n")
             u.request("switch", True, C[:7])
             self.assertEqual(open(u.req).read(), "switch\n" + C + "\n")
+            u.request("switch", True, "v2.1.0")      # auch per Versionsnummer
+            self.assertEqual(open(u.req).read(), "switch\n" + C + "\n")
+            self.assertEqual([x["version"] for x in st["versions"] if x["id"] == C], ["2.1.0"])
+            self.assertFalse([x for x in st["versions"] if re.search(r"[(][0-9a-f]{7}[)]", x["version"] + x["label"])])
             with self.assertRaises(ValueError):
                 u.request("switch", True, A[:7])         # schon aktiv
             with self.assertRaises(ValueError):

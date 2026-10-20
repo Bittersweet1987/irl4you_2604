@@ -54,8 +54,7 @@ class SwUpdate:
         return n if self.ID_RE.match(n) else ""
 
     def label(self):
-        cid = self.current_id()
-        return "%s (%s)" % (self.version, cid[:7]) if cid else self.version
+        return self.version
 
     def _status_file(self):
         try:
@@ -105,7 +104,7 @@ class SwUpdate:
                         v = str(json.load(f).get("version") or "")
                 except (OSError, ValueError):
                     v = ""
-                out.append((os.stat(m).st_mtime, n, "%s (%s)" % (v, n[:7]) if v else n[:7]))
+                out.append((os.stat(m).st_mtime, n, v if v else n[:7]))
         return [(n, lab) for _, n, lab in sorted(out, reverse=True)]
 
     def previous_id(self):
@@ -144,7 +143,16 @@ class SwUpdate:
         cur = self.current_id()
         inst = dict(self.installed())
         rels = [r for r in (st.get("releases") or []) if isinstance(r, dict) and self.HEX_RE.match(str(r.get("version", "")))]
-        res, seen = [], set()
+        res, seen, used = [], set(), set()
+
+        def shown(num, rid):
+            """Angezeigte Versionsnummer (X.Y.Z); nur wenn keine bekannt ist oder sie doppelt vorkommt, hilft die Commit-Kennung."""
+            num = num if re.match(r"^\d+\.\d+\.\d+", num or "") else ""
+            s = num or rid[:7]
+            if s in used:
+                s = "%s (%s)" % (s, rid[:7])
+            used.add(s)
+            return s
         pos = {str(r.get("commit") or r["version"])[:12]: i for i, r in enumerate(rels)}
         cur_pos = pos.get(cur)
         for r in rels:
@@ -152,14 +160,15 @@ class SwUpdate:
             rid = full[:12]
             seen.add(rid)
             relation = "aktuell" if rid == cur else ("neuer" if cur_pos is None or pos[rid] < cur_pos else "älter")
-            res.append({"version": rid[:7], "id": rid, "label": inst.get(rid) or rid[:7], "local": rid in inst, "github": True,
+            num = shown(str(r.get("label") or "") or inst.get(rid, ""), rid)
+            res.append({"version": num, "id": rid, "label": num, "local": rid in inst, "github": True,
                         "current": rid == cur, "date": str(r.get("published", ""))[:10], "notes": str(r.get("notes", ""))[:300], "relation": relation})
         for rid, lab in inst.items():
             if rid not in seen:
-                res.append({"version": rid[:7], "id": rid, "label": lab, "local": True, "github": False, "current": rid == cur,
+                res.append({"version": shown(lab, rid), "id": rid, "label": lab, "local": True, "github": False, "current": rid == cur,
                             "date": "", "notes": "", "relation": "aktuell" if rid == cur else "älter"})
         if cur and cur not in seen and cur not in inst:
-            res.append({"version": cur[:7], "id": cur, "label": self.label(), "local": False, "github": False, "current": True, "date": "", "notes": "", "relation": "aktuell"})
+            res.append({"version": shown(self.version, cur), "id": cur, "label": self.label(), "local": False, "github": False, "current": True, "date": "", "notes": "", "relation": "aktuell"})
         return res
 
     @staticmethod
@@ -232,10 +241,12 @@ class SwUpdate:
         if action == "rollback" and not st["backup_version"]:
             raise ValueError("Es gibt keine vorherige Version")
         if action == "switch":
-            v = str(version or "").strip().lower()
-            if not self.HEX_RE.match(v):
-                raise ValueError("Bitte einen Stand aus der Liste wählen (Commit, mindestens 7 Zeichen)")
-            known = [x for x in st["versions"] if x["id"].startswith(v[:12]) or v.startswith(x["id"])]
+            v = str(version or "").strip().lower().lstrip("v")
+            known = [x for x in st["versions"] if x["version"].lower() == v]
+            if not known and self.HEX_RE.match(v):
+                known = [x for x in st["versions"] if x["id"].startswith(v[:12]) or v.startswith(x["id"])]
+            if not known and not self.HEX_RE.match(v) and not re.match(r"^\d+\.\d+\.\d+", v):
+                raise ValueError("Bitte eine Version aus der Liste wählen")
             if not known or not (known[0]["local"] or known[0]["github"]):
                 raise ValueError("Dieser Stand ist weder auf der Box noch auf GitHub bekannt")
             if known[0]["current"]:
