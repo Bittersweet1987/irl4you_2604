@@ -222,9 +222,6 @@ dialog#rdlg::backdrop {
   border-radius: 12px;
   background: color-mix(in srgb, var(--muted) 8%, transparent);
 }
-.minipage.mobile {
-  max-width: 300px;
-}
 .mcard {
   margin-bottom: 8px;
 }
