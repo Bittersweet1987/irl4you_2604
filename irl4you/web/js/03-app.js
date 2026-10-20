@@ -174,16 +174,17 @@ function djiCardHtml(c) {
   <div class="dbody">
     <div class="dsub muted">${esc(c.model || "")} <span class="ddetail"></span></div>
     <details class="dstep dstep-conn" data-sec="s1"${st.s1 !== false ? " open" : ""}><summary><span class="dnum">1</span><span class="dtitle">WLAN der Kamera <span class="dlock" title="Gesperrt, solange die Kamera verbunden ist" aria-hidden="true" hidden>🔒</span></span></summary><div class="dfl">
-      <div class="dsumrow"><span class="dsumk muted">Verbindung</span><b class="dsumtxt"></b><span class="dsumk muted dwlk">WLAN</span><span class="dsumtxt dsumwl"></span><button type="button" class="sec small d-wedit">Bearbeiten</button></div>
+      <div class="dsumrow"><span class="dsumk muted">Verbindung</span><b class="dsumtxt"></b><span class="dsumk muted dwlk">WLAN</span><span class="dsumtxt dsumwl"></span></div>
       <div class="ph d-lockhint" hidden>Die Kamera ist verbunden. Die Verbindung lässt sich erst nach dem Trennen ändern.</div>
-      <div class="dedit" hidden><fieldset class="dconn">
+      <div class="dedit"><fieldset class="dconn">
       <label class="f">Verbindung der Kamera<select class="d-wifi"><option value="">– wählen –</option>${netOpts}${missing}<option value="manual"${c.wifi_ifname === "manual" ? " selected" : ""}>Manuell (WLAN-Name, Passwort, Adresse)</option></select></label>
       <div class="ph" style="margin-top:4px">Ein WLAN-Hotspot oder -Netz der Box: Die Kamera bekommt Name und Passwort selbst. Jede andere Verbindung (Ethernet, USB-Router, Modem): Hier den WLAN-Namen und das Passwort eintragen, dem die Kamera beitreten soll. Die Adresse der Box kommt aus der gewählten Verbindung.</div>
       <div class="d-manual dnet"${djiNeedsNet(c) ? "" : " hidden"}>
-        <div class="f d-savedrow"${(c.saved || []).length ? "" : " hidden"}><span class="flh"><span>Gespeicherte Netze</span><button type="button" class="flb crit d-saveddel">Löschen</button></span><select class="d-saved"><option value="">– gespeicherte Netze –</option>${saved}<option value="__new__">Weiteres Netz anlegen …</option></select></div>
+        <div class="f d-savedrow"${(c.saved || []).length ? "" : " hidden"}><span class="flh"><span>Gespeicherte Netze</span><span class="dflbs"><button type="button" class="flb d-wedit" hidden>Bearbeiten</button><button type="button" class="flb crit d-saveddel">Löschen</button></span></span><select class="d-saved"><option value="">– gespeicherte Netze –</option>${saved}<option value="__new__">Neue Verbindung anlegen …</option></select></div>
         <div class="f d-nearrow"><span class="flh"><span>Netze in der Nähe</span><button type="button" class="flb d-nearscan">Netze suchen</button></span><select class="d-nearby"><option value="">– Netz wählen –</option></select><div class="d-nearmsg" role="status"></div></div>
+        <div class="d-fields" hidden>
         <label class="f">WLAN-Name der Kamera<input class="d-ssid" maxlength="32" autocomplete="off" value="${esc(c.ssid || "")}"></label>
-        <label class="f">WLAN-Passwort<input class="d-pw" type="password" maxlength="63" autocomplete="new-password" placeholder=""></label>
+        <label class="f">WLAN-Passwort<input class="d-pw" type="password" maxlength="63" autocomplete="new-password" placeholder=""></label></div>
         <label class="f d-iprow"${other ? " hidden" : ""}>Adresse der Box in diesem Netz<input class="d-ip" maxlength="45" value="${esc(c.ip || "")}"></label>
       </div></fieldset></div>
     </div></details>

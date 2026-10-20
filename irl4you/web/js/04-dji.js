@@ -56,8 +56,8 @@ function djiDynamic() {
     });
     card.querySelector(".d-auto").closest("label").hidden = !!c.status_only;
     djiNearby(card);
-    const wo = (d.wifi_options || []).find((o) => o.ifname === c.wifi_ifname),
-      editing = !c.locked && (djiEdit[c.addr] || !c.wifi_ifname);
+    const wo = (d.wifi_options || []).find((o) => o.ifname === c.wifi_ifname);
+    if (djiNew[c.addr] && c.ssid !== djiNew[c.addr].base && (c.saved || []).includes(c.ssid)) djiNew[c.addr] = null;
     const needNet = djiNeedsNet(c),
       isNew = !!djiNew[c.addr] || (needNet && !(c.saved || []).length),
       sig = (nearNets().find((n) => n.ssid === c.ssid) || {}).signal;
@@ -70,10 +70,13 @@ function djiDynamic() {
           : "noch kein Netz eingetragen"
         : "Name und Passwort setzt die Box selbst";
     card.querySelector(".dwlk").hidden = !c.wifi_ifname;
-    const eb = card.querySelector(".d-wedit");
-    eb.hidden = !!c.locked || !c.wifi_ifname;
-    eb.textContent = editing ? "Fertig" : "Bearbeiten";
-    card.querySelector(".dedit").hidden = !editing;
+    const names0 = c.saved || [],
+      hasSaved = !djiNew[c.addr] && names0.includes(c.ssid),
+      eb = card.querySelector(".d-wedit");
+    eb.hidden = !hasSaved;
+    eb.textContent = djiEdit[c.addr] ? "Fertig" : "Bearbeiten";
+    card.querySelector(".d-fields").hidden = !(isNew || (hasSaved && djiEdit[c.addr]));
+    card.querySelector(".dedit").hidden = !!c.locked;
     card.querySelector(".d-lockhint").hidden = !c.locked;
     card.querySelector(".dlock").hidden = !c.locked;
     card.querySelector(".dconn").disabled = !!c.locked;
@@ -88,7 +91,7 @@ function djiDynamic() {
         sv.innerHTML =
           '<option value="">– gespeicherte Netze –</option>' +
           names.map((n) => `<option value="${esc(n)}">${esc(n)}</option>`).join("") +
-          '<option value="__new__">Weiteres Netz anlegen …</option>';
+          '<option value="__new__">Neue Verbindung anlegen …</option>';
       sv.value = djiNew[c.addr] ? "__new__" : names.includes(c.ssid) ? c.ssid : "";
       card.querySelector(".d-savedrow").hidden = !names.length;
       card.querySelector(".d-saveddel").disabled = !!djiNew[c.addr] || !names.includes(c.ssid);

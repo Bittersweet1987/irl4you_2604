@@ -25,7 +25,6 @@ $("djicams").addEventListener("change", (e) => {
     const other = (djiData.wifi_options || []).some((o) => o.ifname === t.value && (o.type === "other" || o.secret_missing));
     card.querySelector(".d-manual").hidden = !(t.value === "manual" || other);
     card.querySelector(".d-iprow").hidden = other;
-    djiEdit[addr] = true;
     djiUpdate(addr, { wifi_ifname: t.value });
   } else if (cl.contains("d-nearby")) {
     if (t.value) {
@@ -38,13 +37,14 @@ $("djicams").addEventListener("change", (e) => {
       card.querySelector(".d-pw").focus();
     }
   } else if (cl.contains("d-saved")) {
-    djiNew[addr] = t.value === "__new__";
+    djiNew[addr] = t.value === "__new__" ? { base: ((djiData.cameras || []).find((x) => x.addr === addr) || {}).ssid || "" } : null;
     if (djiNew[addr]) {
       card.querySelector(".d-ssid").value = "";
       card.querySelector(".d-pw").value = "";
       card.querySelector(".d-ssid").focus();
       djiDynamic();
     } else if (t.value) {
+      djiEdit[addr] = false;
       card.querySelector(".d-ssid").value = t.value;
       card.querySelector(".d-pw").value = "";
       djiCmd({ cmd: "use_saved", addr, ssid: t.value }).then(() => djiLoad());

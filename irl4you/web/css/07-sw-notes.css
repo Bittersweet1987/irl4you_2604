@@ -349,7 +349,12 @@
 .dcam .dsumk.dwlk {
   margin-left: 6px;
 }
+.dcam .dflbs {
+  display: inline-flex;
+  gap: 12px;
+}
 .dcam .dedit[hidden],
+.dcam .d-fields[hidden],
 .dcam .d-wedit[hidden] {
   display: none;
 }
