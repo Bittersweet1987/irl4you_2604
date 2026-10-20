@@ -1294,6 +1294,7 @@ class Daemon:
             if cam.mode_locked() and isinstance(req.get("status_only"), bool) and req["status_only"] != bool(cam.cfg.get("status_only")):
                 return {"error": "Der Modus lässt sich nicht ändern, solange die Kamera verbunden ist. Zuerst trennen."}
             prev_if = cam.cfg.get("wifi_ifname")
+            prev_stab = cam.cfg.get("stabilization")
             for k, t in SETTINGS_ALLOWED.items():
                 if k in req and isinstance(req[k], t) and not (t is int and isinstance(req[k], bool)):
                     if k == "password" and req[k] == "":
@@ -1315,6 +1316,11 @@ class Daemon:
                 if not cam.running():
                     cam.start()
             self.save()
+            if cam.cfg.get("stabilization") != prev_stab and cam.locked() and not cam.cfg.get("status_only") and not cam.switch_wait():
+                # Die Stabilisierung wird beim Einrichten des Streams an die Kamera geschickt: bei laufender Verbindung neu verbinden
+                cam.switch_until = time.monotonic() + SWITCH_LOCK_S
+                asyncio.ensure_future(cam.restart())
+                return {"ok": True, "reconnect": True}
             return {"ok": True}
         if cmd in ("use_saved", "delete_saved"):
             ssid = str(req.get("ssid", ""))

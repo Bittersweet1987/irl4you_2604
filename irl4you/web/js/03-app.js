@@ -192,7 +192,7 @@ function djiCardHtml(c) {
         <label class="f">Bildrate<select class="d-fps"><option value="25"${c.fps === 25 ? " selected" : ""}>25 fps</option><option value="30"${c.fps !== 25 ? " selected" : ""}>30 fps</option></select></label>
         <label class="f">Bitrate (Mbit/s)<input class="d-br" type="number" min="0.5" max="16" step="0.5" value="${(c.bitrate || 6000) / 1000}"></label>
         <label class="f">Stabilisierung<select class="d-stab">${stab}</select></label></div>
-      <div class="ph">Die Kamera sendet auf den Schlüssel <code>${esc(c.rtmp_key || "")}</code>. Bildrate: 25 oder 30 (60 gibt es beim DJI-Livestream nicht).</div>
+      <div class="ph">Die Kamera sendet auf den Schlüssel <code>${esc(c.rtmp_key || "")}</code>. Bildrate: 25 oder 30 (60 gibt es beim DJI-Livestream nicht). Ändert man die Stabilisierung, während die Kamera verbunden ist, verbindet sie automatisch neu.</div>
     </details>
   </div></details>`;
 }
