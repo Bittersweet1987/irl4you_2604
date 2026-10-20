@@ -144,6 +144,16 @@
 .wrow {
   cursor: pointer;
 }
+.wrow .wl-del {
+  justify-self: end;
+  align-self: center;
+  min-width: 40px;
+}
+@media (max-width: 560px) {
+  .wrow .wl-del {
+    grid-column: 1/-1;
+  }
+}
 .wlpanel {
   margin: 6px 0 4px 18px;
 }
