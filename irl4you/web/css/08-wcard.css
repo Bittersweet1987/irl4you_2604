@@ -279,8 +279,20 @@ dialog#rdlg::backdrop {
   line-height: 1;
   color: var(--muted);
 }
-.mcard.drag {
-  opacity: 0.6;
+.mcard.drag .mrow {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 22%, var(--card));
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+  cursor: grabbing;
+}
+.minipage.dragging {
+  user-select: none;
+}
+.minipage.dragging .msubs {
+  display: none;
+}
+.minipage.dragging .mcard:not(.drag) .mrow {
+  opacity: 0.7;
 }
 .meye {
   flex: none;

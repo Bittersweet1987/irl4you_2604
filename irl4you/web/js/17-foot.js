@@ -90,18 +90,6 @@ window.pbFootRows = function (box) {
         h.hidden = !h.hidden;
         b.setAttribute("aria-expanded", String(!h.hidden));
       });
-      const l2 = document.createElement("label");
-      l2.className = "optrow";
-      const c = document.createElement("input");
-      c.type = "checkbox";
-      c.id = "foot_info";
-      c.checked = window.pbFootInfoGet ? window.pbFootInfoGet() : true;
-      c.addEventListener("change", () => window.pbFootInfo && window.pbFootInfo(c.checked));
-      l2.appendChild(c);
-      const t2 = document.createElement("span");
-      t2.textContent = "Info-Knopf (ⓘ) in der Fußleiste anzeigen";
-      l2.appendChild(t2);
-      g.appendChild(l2);
       box.appendChild(g);
     }
 };

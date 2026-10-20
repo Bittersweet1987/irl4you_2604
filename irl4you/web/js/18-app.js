@@ -194,7 +194,7 @@
       v = views[edit];
     box.textContent = "";
     const tile = (id, txt) => {
-      const off = v.hidden.includes(id),
+      const off = id === "foot_info" ? !(window.pbFootInfoGet && window.pbFootInfoGet()) : v.hidden.includes(id),
         t = document.createElement("button");
       t.type = "button";
       t.className = "mtile sub" + (off ? " off" : "");
@@ -271,6 +271,7 @@
         ["sm_btn", "Streammodus"],
         ["hlp_btn", "Hilfe-Knöpfe (i)"],
         ["heads", "Überschriften von Chat und Vorschau"],
+        ["foot_info", "Info-Knopf (ⓘ) in der Fußleiste"],
       ].forEach(([id, txt]) => w.appendChild(tile(id, txt)));
       box.appendChild(w);
     }
@@ -308,7 +309,8 @@
   $("lay_list").addEventListener("click", (e) => {
     const t = e.target.closest("button.mtile[data-id],button.meye[data-id]");
     if (!t || t.disabled) return;
-    setHidden(t.dataset.id, !views[edit].hidden.includes(t.dataset.id));
+    if (t.dataset.id === "foot_info") window.pbFootInfo(!window.pbFootInfoGet());
+    else setHidden(t.dataset.id, !views[edit].hidden.includes(t.dataset.id));
     buildList();
     const again = [...$("lay_list").querySelectorAll("button.mtile,button.meye")].find((x) => x.dataset.id === t.dataset.id);
     if (again) again.focus();
@@ -328,6 +330,7 @@
     e.preventDefault();
     g.setPointerCapture(e.pointerId);
     card.classList.add("drag");
+    page.classList.add("dragging");
     const over = (ev) => {
       const next = [...page.children].find((o) => {
         const r = o.getBoundingClientRect();
@@ -340,6 +343,7 @@
       for (const [t, f] of [["pointermove", over], ["pointerup", end], ["pointercancel", end], ["mouseup", end]]) document.removeEventListener(t, f);
       g.removeEventListener("lostpointercapture", end);
       card.classList.remove("drag");
+      page.classList.remove("dragging");
       const ids = [...page.children].map((c) => c.dataset.id),
         v = views[edit];
       if (ids.join() === orderOf(v).filter((x) => ids.includes(x)).join()) return;
