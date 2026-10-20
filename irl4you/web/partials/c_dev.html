@@ -4,10 +4,11 @@
 <button id="dev_pw" type="button" class="sec">Passwort anzeigen</button>
 <button id="dev_reset" type="button" class="sec">Passwort zurücksetzen</button></div>
 <div id="dev_msg" class="ph" role="status"></div>
-<div class="sech" style="margin:18px 0 6px">Encoder</div>
+<details class="subsec" id="dev_enc" open><summary>Encoder</summary>
 <div class="seg" id="enc_seg" role="group" aria-label="Encoder wählen"><button type="button" data-mode="hardware">Hardware</button><button type="button" data-mode="software">Software</button></div>
 <div class="ph" style="margin-top:8px">Hardware: Videoeinheit des Chips (H.265), geringe CPU-Last, empfohlen.</div>
 <div class="ph">Software: x264 auf den CPU-Kernen (H.264), hohe CPU-Last, nur bei Problemen mit dem Hardware-Encoder.</div>
 <div id="enc_msg" class="ph" role="status"></div>
+</details>
 <div id="dev_pw_out" class="ph sens" role="status"></div>
 </details>

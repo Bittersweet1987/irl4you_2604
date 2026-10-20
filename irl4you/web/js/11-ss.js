@@ -128,11 +128,11 @@ async function rLoad() {
   } else if (!d.connected) add(login ? "Neuen Anmeldelink holen" : "Verbinden", "login", "");
   else {
     if (!d.serve) add("Oberfläche im privaten Netz freigeben", "serve_on", "");
-    else add("Freigabe beenden", "serve_off", "sec");
+    else add("Freigabe beenden", "serve_off", "");
     if (d.funnel) add("Öffentliche Freigabe beenden", "funnel_off", "");
     else add("Öffentlich im Internet freigeben (Funnel) …", "funnel_on", "sec", FUNNEL_ASK, { public: true });
-    add("Verbindung trennen", "down", "sec", "Verbindung zu Tailscale trennen? Der Fernzugriff geht dann nicht mehr.");
-    add("Vom Konto abmelden", "logout", "sec", "Diese Box aus Ihrem Tailscale-Konto abmelden? Danach müssen Sie sich neu anmelden.");
+    add("Verbindung trennen", "down", "dangerbtn", "Verbindung zu Tailscale trennen? Der Fernzugriff geht dann nicht mehr.");
+    add("Vom Konto abmelden", "logout", "dangerbtn", "Diese Box aus Ihrem Tailscale-Konto abmelden? Danach müssen Sie sich neu anmelden.");
   }
   let msg = d.message || "";
   if (!d.helper_installed) msg = "Der Fernzugriff-Helfer ist nicht installiert. Bitte install.sh einmal erneut ausführen.";

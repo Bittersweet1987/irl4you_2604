@@ -6,15 +6,17 @@
 <div id="upinfo" class="ph"></div>
 </details>
 <details class="subsec" id="net_wifi"><summary>WLAN-Verbindungen (z. B. Handy-Hotspot, auch zum Senden nutzbar)</summary><div class="sens"><div id="wificard">
-<div class="sech">WLAN-Adapter</div>
+<details class="subsec" id="wl_adapt" open><summary>WLAN-Adapter</summary>
 <div class="ph" data-hlp>Verbindet die Box mit einem WLAN, zum Beispiel dem Hotspot eines Handys. Danach in der Zeile der WLAN-Karte „Zum Senden verwenden“ ankreuzen (wird sofort gespeichert). Das Passwort wird nur an das Netzwerk-Programm der Box übergeben und nicht gespeichert.</div>
 <div id="wifidev"></div>
 <div id="wifidriver" class="ph" style="margin:8px 0" role="status"></div>
 <div id="wifimsg" class="ph" style="margin:8px 0" role="status"></div>
-<div class="sech">Hotspot-Modus</div>
+</details>
+<details class="subsec" id="wl_hs"><summary>Hotspot-Modus</summary>
 <div class="ph" data-hlp>Macht aus dem Stick ein eigenes WLAN der Box, zum Beispiel für DJI-Kameras oder ein Handy. Der Stick ist dann nicht mehr mit einem anderen WLAN verbunden.</div>
 <div id="hsdev"></div>
 <div id="hsmsg" class="ph" style="margin:6px 0" role="status"></div>
+</details>
 </div></div>
 </details>
 <details class="subsec" id="net_modem"><summary>Mobilfunk-Modems (USB-Sticks, M.2)</summary>
@@ -30,18 +32,20 @@
 <div id="btdrvmsg" class="ph" role="status"></div>
 <div class="actions"><button id="btdrv_go" type="button" disabled>Treiber jetzt einrichten</button></div>
 <div class="ph" data-hlp>Baut und lädt den Bluetooth-Treiber für Sticks, die der Kernel nicht kennt (zum Beispiel TP-Link UB500 oder UGREEN BT6.0). Das dauert einige Minuten, Bluetooth fehlt dabei kurz. Während einer Übertragung wartet die Box damit bis zum Ende. Auf der ROCK 5B Plus richtet der Knopf außerdem den Bluetooth-Chip des Boards ein, wenn er noch nicht läuft.</div>
-<div class="sech">Handyverbindungen</div>
+<details class="subsec" id="bt_phones"><summary>Handyverbindungen</summary>
 <div class="ph" data-hlp>Zeigt den Akkustand gekoppelter Handys. Die Box fragt alle 10 Minuten kurz nach und trennt danach wieder, es gibt keine Dauerverbindung. Android meldet den Akku in Schritten von 20 %, ein iPhone in Schritten von etwa 10 %. Das Handy muss in der Nähe sein und Bluetooth an haben.</div>
 <div id="phonecard"></div>
 <div class="actions"><button id="ph_pair" type="button">Handy koppeln</button></div>
 <div id="ph_msg" class="ph"></div>
-<div class="sech">Controller</div>
+</details>
+<details class="subsec" id="bt_ctrl"><summary>Controller</summary>
 <div class="ph" data-hlp>Bluetooth-Controller mit Tasten, zum Beispiel ein Mini-Tastenfeld oder ein Gamepad. Controller einschalten, in den Kopplungsmodus bringen, nah an die Box legen und suchen. Funktionen für die Tasten folgen später.</div>
 <div id="ctrlcard"></div>
 <div class="actions"><button id="ct_scan" type="button">Nach Controllern suchen</button>
 <label class="chk"><input type="checkbox" id="ct_all"> Alle Geräte zeigen</label></div>
 <div id="ctrlfound"></div>
 <div id="ct_msg" class="ph"></div>
+</details>
 </details>
 <details class="subsec" id="net_ua"><summary>Zugriff auf diese Oberfläche</summary>
 <label class="chk"><input type="checkbox" id="ua_block"> Über fremde WLANs sperren</label>
