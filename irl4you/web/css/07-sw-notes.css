@@ -261,11 +261,38 @@
   background: var(--muted);
 }
 .dcam .dstep {
-  display: flex;
-  gap: 12px;
-  padding: 12px 0 2px;
+  padding: 8px 0 2px;
   border-top: 1px solid var(--line);
   margin-top: 10px;
+}
+.dcam .dstep > summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  list-style: none;
+  font-size: 15px;
+  font-weight: 600;
+}
+.dcam .dstep > summary::-webkit-details-marker {
+  display: none;
+}
+.dcam .dstep > summary::after {
+  content: "▸";
+  margin-left: auto;
+  color: var(--muted);
+}
+.dcam .dstep[open] > summary::after {
+  content: "▾";
+}
+.dcam .dtitle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.dcam .dstep > .dfl {
+  margin: 10px 0 0 38px;
 }
 .dcam .dstep[hidden],
 .dcam .dact2[hidden],
@@ -300,18 +327,27 @@
 .dcam .dsumrow {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 10px;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+}
+.dcam .dsumrow .d-wedit {
+  margin-left: auto;
 }
 .dcam .dsumk {
   flex: none;
-  min-width: 5.5em;
+}
+.dcam .dsumwl {
+  margin-right: 0;
+}
+.dcam .dsumk[hidden] {
+  display: none;
 }
 .dcam .dsumtxt {
-  flex: 1;
   min-width: 0;
   overflow-wrap: anywhere;
-  font-weight: 600;
+}
+.dcam .dsumk.dwlk {
+  margin-left: 6px;
 }
 .dcam .dedit[hidden],
 .dcam .d-wedit[hidden] {

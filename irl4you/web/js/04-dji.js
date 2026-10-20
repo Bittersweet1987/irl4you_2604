@@ -62,13 +62,14 @@ function djiDynamic() {
       isNew = !!djiNew[c.addr] || (needNet && !(c.saved || []).length),
       sig = (nearNets().find((n) => n.ssid === c.ssid) || {}).signal;
     card.querySelector(".dsumtxt").textContent = c.wifi_ifname === "manual" ? "Manuell" : c.wifi_ifname ? (wo && wo.ssid ? wo.ssid : c.wifi_ifname) : "Noch keine Verbindung gewählt";
-    card.querySelector(".dsumwl").textContent = !c.wifi_ifname
+    card.querySelector(".dsumwl").innerHTML = !c.wifi_ifname
       ? ""
       : needNet
         ? c.ssid
-          ? c.ssid + (sig != null ? " · " + sig + " %" : "")
+          ? "<b>" + esc(c.ssid) + "</b>" + (sig != null ? " " + wlBars(sig) + " " + sig + " %" : "")
           : "noch kein Netz eingetragen"
         : "Name und Passwort setzt die Box selbst";
+    card.querySelector(".dwlk").hidden = !c.wifi_ifname;
     const eb = card.querySelector(".d-wedit");
     eb.hidden = !!c.locked || !c.wifi_ifname;
     eb.textContent = editing ? "Fertig" : "Bearbeiten";

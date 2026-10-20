@@ -173,9 +173,8 @@ function djiCardHtml(c) {
   <summary><span class="dleft"><span class="ddot" aria-hidden="true"></span><span class="dname"></span></span><span class="dright"><span class="dstate"></span> <span class="dbatt muted"></span></span></summary>
   <div class="dbody">
     <div class="dsub muted">${esc(c.model || "")} <span class="ddetail"></span></div>
-    <div class="dstep dstep-conn"><span class="dnum">1</span><div class="dfl"><h4>WLAN der Kamera <span class="dlock" title="Gesperrt, solange die Kamera verbunden ist" aria-hidden="true" hidden>🔒</span></h4>
-      <div class="dsumrow"><span class="dsumk muted">Verbindung</span><span class="dsumtxt"></span></div>
-      <div class="dsumrow"><span class="dsumk muted">WLAN</span><span class="dsumtxt dsumwl"></span><button type="button" class="sec small d-wedit">Bearbeiten</button></div>
+    <details class="dstep dstep-conn" data-sec="s1"${st.s1 !== false ? " open" : ""}><summary><span class="dnum">1</span><span class="dtitle">WLAN der Kamera <span class="dlock" title="Gesperrt, solange die Kamera verbunden ist" aria-hidden="true" hidden>🔒</span></span></summary><div class="dfl">
+      <div class="dsumrow"><span class="dsumk muted">Verbindung</span><b class="dsumtxt"></b><span class="dsumk muted dwlk">WLAN</span><span class="dsumtxt dsumwl"></span><button type="button" class="sec small d-wedit">Bearbeiten</button></div>
       <div class="ph d-lockhint" hidden>Die Kamera ist verbunden. Die Verbindung lässt sich erst nach dem Trennen ändern.</div>
       <div class="dedit" hidden><fieldset class="dconn">
       <label class="f">Verbindung der Kamera<select class="d-wifi"><option value="">– wählen –</option>${netOpts}${missing}<option value="manual"${c.wifi_ifname === "manual" ? " selected" : ""}>Manuell (WLAN-Name, Passwort, Adresse)</option></select></label>
@@ -187,19 +186,19 @@ function djiCardHtml(c) {
         <label class="f">WLAN-Passwort<input class="d-pw" type="password" maxlength="63" autocomplete="new-password" placeholder=""></label>
         <label class="f d-iprow"${other ? " hidden" : ""}>Adresse der Box in diesem Netz<input class="d-ip" maxlength="45" value="${esc(c.ip || "")}"></label>
       </div></fieldset></div>
-    </div></div>
-    <div class="dstep dstep-video"><span class="dnum">2</span><div class="dfl"><h4>Bild und Stream <span class="muted dsum-video"></span></h4>
+    </div></details>
+    <details class="dstep dstep-video" data-sec="s2"${st.s2 !== false ? " open" : ""}><summary><span class="dnum">2</span><span class="dtitle">Bild und Stream <span class="muted dsum-video"></span></span></summary><div class="dfl">
       <div class="dgrid"><label class="f">Auflösung<select class="d-res">${res}</select></label>
         <label class="f">Bildrate<select class="d-fps"><option value="25"${c.fps === 25 ? " selected" : ""}>25 fps</option><option value="30"${c.fps !== 25 ? " selected" : ""}>30 fps</option></select></label>
         <label class="f">Bitrate (Mbit/s)<input class="d-br" type="number" min="0.5" max="16" step="0.5" value="${(c.bitrate || 6000) / 1000}"></label>
         <label class="f">Stabilisierung<select class="d-stab">${stab}</select></label></div>
       <div class="ph">Die Kamera sendet auf den Schlüssel <code>${esc(c.rtmp_key || "")}</code>. Bildrate: 25 oder 30 (60 gibt es beim DJI-Livestream nicht). Ändert man die Stabilisierung, während die Kamera verbunden ist, verbindet sie automatisch neu.</div>
-    </div></div>
-    <div class="dstep"><span class="dnum">3</span><div class="dfl"><h4>Betrieb</h4>
+    </div></details>
+    <details class="dstep" data-sec="s3"${st.s3 !== false ? " open" : ""}><summary><span class="dnum">3</span><span class="dtitle">Betrieb</span></summary><div class="dfl">
       <label class="chk"><input type="checkbox" class="d-auto"${c.autoconnect ? " checked" : ""}> Automatisch verbinden und streamen</label>
       <label class="chk"><input type="checkbox" class="d-statusonly"${c.status_only ? " checked" : ""}> Nur Akkustand lesen (Kamera sendet per HDMI)</label>
       <label class="f">Name<input class="d-name" maxlength="40" value="${esc(djiName(c))}"></label>
-    </div></div>
+    </div></details>
     <div class="dact"><button type="button" class="d-connect">Verbinden</button>
       <div class="dact2"><button type="button" class="sec d-reconnect">Neu verbinden</button><button type="button" class="dangerbtn d-disconnect">Trennen</button></div>
       <div class="dact3"><button type="button" class="del d-remove">Entfernen</button></div></div>
