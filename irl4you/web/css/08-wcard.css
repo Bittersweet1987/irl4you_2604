@@ -291,7 +291,6 @@ dialog#rdlg::backdrop {
 .mcard.drag {
   position: relative;
   z-index: 5;
-  pointer-events: none;
 }
 .mcard:not(.drag) {
   transition: transform 0.12s;

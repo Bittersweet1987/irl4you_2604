@@ -192,6 +192,7 @@
   function buildList() {
     const box = $("lay_list"),
       v = views[edit];
+    if (box.querySelector(".mcard.drag")) return;
     box.textContent = "";
     const tile = (id, txt) => {
       const off = id === "foot_info" ? !(window.pbFootInfoGet && window.pbFootInfoGet()) : v.hidden.includes(id),
