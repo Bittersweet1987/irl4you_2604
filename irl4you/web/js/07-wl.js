@@ -10,19 +10,37 @@ const wlBars = (p) =>
     .map((c, i) => `<span style="color:${p >= (i + 1) * 25 - 12 ? "var(--ok)" : "var(--line)"}">${c}</span>`)
     .join("");
 
-function devRow(c, ups) {
-  const head = `<b>${esc(c.iface)}</b>${devInfo(c)}`;
+const wlFold = (() => {
+  try {
+    return JSON.parse(localStorage.getItem("pbWifiOpen") || "{}") || {};
+  } catch (e) {
+    return {};
+  }
+})();
+const wlIsOpen = (key) => wlFold[key] !== false;
+function devState(c) {
   if (c.camera_net)
-    return `<div class="wstat${hsOn0(c) ? " ok" : ""}"><span class="wdot"></span><span class="wgrow">${head} · Kameranetz${hsOn0(c) ? " · Hotspot <b>" + esc(c.hotspot.ssid) + "</b> läuft · " + esc(c.ip) : ""} (hier nicht änderbar)</span></div>`;
-  if (hsOn0(c))
-    return `<div class="wstat ok"><span class="wdot"></span><span class="wgrow">${head} · Hotspot <b>${esc(c.hotspot.ssid)}</b> läuft · ${esc(c.ip)}</span></div>`;
-  return (
-    `<div class="wstat${c.ip ? " ok" : ""}"><span class="wdot"></span><span class="wgrow">${head} · ${c.ip ? `verbunden${c.ssid ? " mit <b>" + esc(c.ssid) + "</b>" : ""}· ${esc(c.ip)}${c.signal != null ? " · Signal " + c.signal + " %" : ""}` : "nicht verbunden"}</span>` +
-    (c.ip
-      ? `<label title="Sendet die Box auch über dieses Netz. Danach Sendekette neu starten."><input type="checkbox" data-wup="${esc(c.iface)}"${ups.includes(c.iface) ? " checked" : ""}> Zum Senden verwenden</label>`
-      : "") +
-    `</div>`
-  );
+    return `Kameranetz${hsOn0(c) ? " · Hotspot <b>" + esc(c.hotspot.ssid) + "</b> läuft · " + esc(c.ip) : ""} (hier nicht änderbar)`;
+  if (hsOn0(c)) return `Hotspot <b>${esc(c.hotspot.ssid)}</b> läuft · ${esc(c.ip)}`;
+  return c.ip
+    ? `verbunden${c.ssid ? " mit <b>" + esc(c.ssid) + "</b>" : ""} · ${esc(c.ip)}${c.signal != null ? " · Signal " + c.signal + " %" : ""}`
+    : "nicht verbunden";
+}
+// Kopfzeile eines Sticks: Klick klappt die ganze Karte zu oder auf (wie bei den Kameras)
+const devSum = (c) =>
+  `<summary><span class="wstat flat${c.ip || hsOn0(c) ? " ok" : ""}"><span class="wdot"></span><span class="wgrow"><b>${esc(c.iface)}</b>${devInfo(c)} · ${devState(c)}</span></span></summary>`;
+const wlCard = (c, fold, body) =>
+  `<details class="dcam wcard" data-iface="${esc(c.iface)}" data-fold="${fold}:${esc(c.iface)}"${wlIsOpen(fold + ":" + c.iface) ? " open" : ""}>${devSum(c)}<div class="dbody">${body}</div></details>`;
+function wlUplink(c, ups) {
+  return c.ip && !c.camera_net && !hsOn0(c)
+    ? `<label class="chk" title="Sendet die Box auch über dieses Netz. Danach Sendekette neu starten."><input type="checkbox" data-wup="${esc(c.iface)}"${ups.includes(c.iface) ? " checked" : ""}> Zum Senden verwenden</label>`
+    : "";
+}
+// Rückmeldung zur letzten Aktion dieses Sticks, direkt unter den Knöpfen
+function wlMsg(c, d, u) {
+  const mine = d.iface === c.iface && d.time !== u.base && (d.now || 0) - (d.time || 0) < 300 && !String(d.action || "").startsWith("hotspot_");
+  const t = mine ? (d.state === "working" ? "Läuft …" : d.message || "") : u.msg || "";
+  return t ? `<div class="ph wlmsg" role="status">${esc(t)}</div>` : "";
 }
 function wifiDebug(d) {
   const dbg = (d.scan && d.scan.debug) || [];
@@ -47,7 +65,7 @@ function wlList(c, d, u, off) {
   const saved = d.saved || [],
     shown = wlScanShown(c, d),
     nets = shown ? d.scan.nets || [] : c.ssid ? [{ ssid: c.ssid, signal: c.signal, security: "", in_use: true }] : [];
-  let h = `<div class="actions"><button type="button" class="sec wl-scan"${off}>Netze suchen</button>${c.ip ? `<button type="button" class="sec wl-disc"${off}>Trennen</button>` : ""}</div>`;
+  let h = `<div class="actions"><button type="button" class="sec wl-scan"${off}>Netze suchen</button>${c.ip ? `<button type="button" class="sec wl-disc"${off}>Trennen</button>` : ""}</div>${wlMsg(c, d, u)}`;
   if (nets.length)
     h += `<div class="muted">${shown ? "Gefundene Netze – Zeile anklicken zum Auswählen:" : "Verbunden mit"}</div><div class="wlist">${nets.map((n) => wlRow(n, saved, u.sel)).join("")}</div>`;
   else if (shown) h += wifiDebug(d);
@@ -59,31 +77,31 @@ function wlList(c, d, u, off) {
   }
   return h;
 }
-function wlManual(c, u, off) {
+function wlManual(c, d, u, off) {
   return `<div class="wform"><label class="muted">Netzname (SSID)<input class="wl-ssid" maxlength="32" autocomplete="off" value="${esc(u.ssid)}"></label>
     <label class="muted">Passwort<input class="wl-mpw" type="password" maxlength="64" autocomplete="new-password" value="${esc(u.mpw)}" placeholder="leer bei offenem Netz"></label></div>
     <label class="muted" style="display:block;margin:8px 0"><input type="checkbox" class="wl-hidden"${u.hidden ? " checked" : ""}> verstecktes Netz (Name wird nicht ausgesendet)</label>
-    <div class="actions"><button type="button" class="wl-go"${off}>Verbinden</button>${c.ip ? `<button type="button" class="sec wl-disc"${off}>Trennen</button>` : ""}</div>`;
+    <div class="actions"><button type="button" class="wl-go"${off}>Verbinden</button>${c.ip ? `<button type="button" class="sec wl-disc"${off}>Trennen</button>` : ""}</div>${wlMsg(c, d, u)}`;
 }
 function wlPanel(c, d, busy) {
   if (c.camera_net) return "";
-  if (hsOn0(c)) return '<div class="ph" style="margin:4px 0 0 18px">Auf diesem Stick läuft der Hotspot. Zum Verbinden mit einem WLAN zuerst den Hotspot beenden (unten bei Hotspot-Modus).</div>';
+  if (hsOn0(c)) return '<div class="ph">Auf diesem Stick läuft der Hotspot. Zum Verbinden mit einem WLAN zuerst den Hotspot beenden (unten bei Hotspot-Modus).</div>';
   const u = wlOf(c.iface),
     off = busy ? " disabled" : "",
     on = (m) => (u.mode === m ? " on" : "");
-  return `<div class="wlpanel"><div class="seg" role="group"><button type="button" class="wl-mode${on("list")}" data-m="list" aria-pressed="${u.mode === "list"}">Aus Liste wählen</button><button type="button" class="wl-mode${on("manual")}" data-m="manual" aria-pressed="${u.mode === "manual"}">Manuell eingeben</button></div>${u.mode === "manual" ? wlManual(c, u, off) : wlList(c, d, u, off)}</div>`;
+  return `<div class="wlpanel"><div class="seg" role="group"><button type="button" class="wl-mode${on("list")}" data-m="list" aria-pressed="${u.mode === "list"}">Aus Liste wählen</button><button type="button" class="wl-mode${on("manual")}" data-m="manual" aria-pressed="${u.mode === "manual"}">Manuell eingeben</button></div>${u.mode === "manual" ? wlManual(c, d, u, off) : wlList(c, d, u, off)}</div>`;
 }
 let wlExpire = null;
 function renderWifiDev(d, force) {
   const ups = ((srtlaData && srtlaData.settings) || {}).uplinks || [],
     busy = !d.helper_installed || d.state === "working",
     none = '<div class="ph">Keine WLAN-Karte gefunden.</div>';
-  const cl = d.cards.length ? d.cards.map((c) => `<div class="wcard" data-iface="${esc(c.iface)}">${devRow(c, ups)}${wlPanel(c, d, busy)}</div>`).join("") : none;
+  const cl = d.cards.length ? d.cards.map((c) => wlCard(c, "wl", wlUplink(c, ups) + wlPanel(c, d, busy))).join("") : none;
   const hs =
     d.cards
       .map((c) => {
         const ctl = hsControls(c, busy);
-        return ctl ? `<div class="wcard" data-iface="${esc(c.iface)}">${hsHead(c)}${ctl}</div>` : "";
+        return ctl ? wlCard(c, "hs", ctl) : "";
       })
       .join("") || (d.cards.length ? '<div class="ph">Kein WLAN-Stick kann einen Hotspot aufbauen.</div>' : none);
   const a = document.activeElement;
@@ -106,12 +124,22 @@ function wifiRerender(focus) {
     if (f) f.focus();
   }
 }
+function wlSay(iface, text) {
+  if (!iface) {
+    $("wifimsg").textContent = text;
+    return;
+  }
+  const u = wlOf(iface);
+  u.msg = text;
+  u.base = wifiData ? wifiData.time : 0;
+  wifiRerender();
+}
 async function wifiDo(body, busy) {
-  $("wifimsg").textContent = busy;
+  wlSay(body.iface, busy);
   try {
     await srtlaCall("POST", "/api/wifi", body);
   } catch (x) {
-    $("wifimsg").textContent = x.message;
+    wlSay(body.iface, x.message);
     return x.message || "Fehler";
   }
   clearTimeout(wifiTimer);
@@ -136,8 +164,9 @@ async function wifiLoad() {
   el.textContent = ["working", "waiting", "failed", "unsupported"].includes(dr.state) ? dr.message || "" : "";
   el.style.color = dr.state === "failed" || dr.state === "unsupported" ? "var(--crit)" : "";
   const hsAct = String(d.action || "").startsWith("hotspot_");
+  const onCard = d.cards.some((c) => c.iface === d.iface);
   $("wifimsg").textContent = d.helper_installed
-    ? hsAct
+    ? hsAct || onCard
       ? ""
       : d.message || ""
     : "Der WLAN-Helfer ist auf dieser Box noch nicht installiert (install.sh erneut ausführen).";
@@ -153,7 +182,8 @@ async function wifiLoad() {
     }
   }
   if (d.state === "working") {
-    (hsAct ? $("hsmsg") : $("wifimsg")).textContent = "Läuft …";
+    if (hsAct) $("hsmsg").textContent = "Läuft …";
+    else if (!onCard) $("wifimsg").textContent = "Läuft …";
     clearTimeout(wifiTimer);
     wifiTimer = setTimeout(wifiLoad, 1500);
   }
@@ -163,7 +193,7 @@ function wlConnect(iface) {
     manual = u.mode === "manual",
     ssid = (manual ? u.ssid : u.sel).trim();
   if (!ssid) {
-    $("wifimsg").textContent = "Bitte einen Netznamen angeben.";
+    wlSay(iface, "Bitte einen Netznamen angeben.");
     return;
   }
   const pw = manual ? u.mpw : u.pw;
@@ -187,7 +217,7 @@ $("wifidev").addEventListener("click", (e) => {
     const ssid = t.dataset.ssid;
     if (confirm(`Netz „${ssid}“ vergessen?\n\nDas gespeicherte Netz und sein Passwort werden von der Box gelöscht. Danach verbindet sich die Box nicht mehr von selbst damit.`)) {
       if (u.sel === ssid) u.sel = "";
-      wifiDo({ action: "forget", ssid }, "Wird vergessen …");
+      wifiDo({ action: "forget", ssid, iface }, "Wird vergessen …");
     }
   } else if (c.contains("wl-go")) wlConnect(iface);
   else if (c.contains("wl-cancel")) {
@@ -232,15 +262,27 @@ $("wificard").addEventListener("change", async (e) => {
   e.target.checked ? ups.add(iface) : ups.delete(iface);
   try {
     await srtlaCall("POST", "/api/srtla/settings", { uplinks: [...ups] });
-    $("wifimsg").textContent =
-      (e.target.checked ? "Zum Senden gespeichert" : "Nicht mehr zum Senden") +
-      ". Die Änderung wirkt innerhalb weniger Sekunden, ohne Neustart.";
+    st.uplinks = [...ups];
+    wlSay(iface, (e.target.checked ? "Zum Senden gespeichert" : "Nicht mehr zum Senden") + ". Die Änderung wirkt innerhalb weniger Sekunden, ohne Neustart.");
   } catch (x) {
-    $("wifimsg").textContent = x.message;
     e.target.checked = !e.target.checked;
+    wlSay(iface, x.message);
   }
   srtlaLoad();
 });
+for (const id of ["wifidev", "hsdev"])
+  $(id).addEventListener(
+    "toggle",
+    (e) => {
+      const k = e.target.dataset && e.target.dataset.fold;
+      if (!k) return;
+      wlFold[k] = e.target.open;
+      try {
+        localStorage.setItem("pbWifiOpen", JSON.stringify(wlFold));
+      } catch (x) {}
+    },
+    true,
+  );
 wifiLoad();
 setInterval(() => {
   if (due("wifi", "netcard", 60000) && !$("wificard").contains(document.activeElement)) wifiLoad();

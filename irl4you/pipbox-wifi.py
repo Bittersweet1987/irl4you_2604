@@ -739,7 +739,8 @@ def main():
         return 1
     action = req["action"]
     mark = req.get("mark") if isinstance(req.get("mark"), str) and MARK_RE.match(req["mark"]) else ""
-    write_status(state="working", message="Wird ausgeführt …", action=action, mark=mark)
+    iface = req.get("iface") if isinstance(req.get("iface"), str) and IFACE_RE.match(req["iface"]) else ""
+    write_status(state="working", message="Wird ausgeführt …", action=action, mark=mark, iface=iface)
     try:
         if action == "scan":
             msg = do_scan(req.get("iface"))

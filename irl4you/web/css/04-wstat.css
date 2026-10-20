@@ -155,7 +155,18 @@
   }
 }
 .wlpanel {
-  margin: 6px 0 4px 18px;
+  margin: 6px 0 4px;
+}
+.dcam > summary .wstat.flat {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+.dcam .wlmsg {
+  margin: 6px 0;
 }
 .wlpanel .seg {
   margin-bottom: 8px;
