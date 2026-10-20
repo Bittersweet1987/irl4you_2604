@@ -219,8 +219,6 @@ class PostRoutes:
                 act = d.get("action")
                 if act == "channel":
                     self.youtubepublic.set_channel(d.get("channel"))
-                elif act == "client":
-                    self.youtubelogin.save_client(d.get("client_id"), d.get("client_secret"))
                 elif act == "login":
                     self.youtubelogin.start()
                 elif act == "cancel":

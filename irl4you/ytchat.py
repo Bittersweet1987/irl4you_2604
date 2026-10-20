@@ -2,8 +2,8 @@
 
 Der Livechat des laufenden Streams wird automatisch gefunden und in den Chat der Box gemischt (Herkunft "youtube", Twitch-Nachrichten tragen "twitch").
 Anmeldung nach dem Geräte-Ablauf von Google (OAuth "TVs and Limited Input devices"): Die Box zeigt einen Code, der Nutzer gibt ihn auf google.com/device ein.
-Die OAuth-Zugangsdaten (Client-ID und Geheimnis) legt jeder Betreiber in seinem eigenen Google-Cloud-Projekt an (YouTube Data API v3 einschalten); sie
-liegen nur auf der Box. Ist im Programm eine eigene Client-ID des Projekts hinterlegt (youtube_client.json), genügt die Anmeldung mit dem Konto. Bereich youtube.force-ssl: Chat lesen und moderieren (Nachrichten löschen, Timeout, Bann).
+Die OAuth-Zugangsdaten (Client-ID und Geheimnis) gehören dem Projekt und stehen in youtube_client.json; der Nutzer meldet sich nur mit seinem Konto an.
+Bereich youtube.force-ssl: Chat lesen und moderieren (Nachrichten löschen, Timeout, Bann).
 """
 
 import collections
@@ -34,8 +34,6 @@ class YoutubeLogin:
     API = "https://www.googleapis.com/youtube/v3/"
     SCOPE = "https://www.googleapis.com/auth/youtube.force-ssl"
     GRANT = "urn:ietf:params:oauth:grant-type:device_code"
-    ID_RE = re.compile(r"[A-Za-z0-9._-]{10,200}")
-    SECRET_RE = re.compile(r"[A-Za-z0-9._~-]{8,120}")
     URI_RE = re.compile(r"https://([a-z0-9-]+\.)?google\.com/[A-Za-z0-9/_?=&%.-]{0,200}")
     ERR_NET = "Keine Verbindung zu Google"
     ERR_DENIED = "Die Anmeldung wurde abgelehnt oder ist abgelaufen"
@@ -53,7 +51,7 @@ class YoutubeLogin:
             with open(path) as f:
                 d = json.load(f)
             if isinstance(d, dict):
-                self.data = {k: d[k] for k in ("client_id", "client_secret", "refresh", "access", "expires_at", "channel", "via") if k in d}
+                self.data = {k: d[k] for k in ("refresh", "access", "expires_at", "channel") if k in d}
         except (OSError, ValueError, TypeError):
             pass
         self.state = self._base_state()
@@ -61,16 +59,11 @@ class YoutubeLogin:
     def _base_state(self):
         if self.data.get("refresh"):
             return "angemeldet"
-        return "bereit" if self._client()[0] else "kein-client"
+        return "bereit" if self.builtin[0] else "kein-client"
 
-    def _client(self, via=None):
-        """(Client-ID, Geheimnis): eigene Zugangsdaten des Betreibers, sonst die im Programm hinterlegten. 'via' wählt die, mit der angemeldet wurde."""
-        own = (self.data.get("client_id", ""), self.data.get("client_secret", ""))
-        if via == "builtin":
-            return self.builtin
-        if via == "own":
-            return own
-        return own if own[0] and own[1] else self.builtin
+    def _client(self):
+        """(Client-ID, Geheimnis) des Projekts aus youtube_client.json."""
+        return self.builtin
 
     def _write(self):
         os.makedirs(os.path.dirname(os.path.abspath(self.path)), exist_ok=True)
@@ -97,8 +90,7 @@ class YoutubeLogin:
     def status(self):
         with self.lock:
             p, d = self.pending, self.data
-            out = {"state": self.state, "has_client": bool(self._client()[0]), "builtin": bool(self.builtin[0]), "client_id": str(d.get("client_id", ""))[:200],
-                   "secret_set": bool(d.get("client_secret")), "channel": str(d.get("channel", ""))[:100], "error": self.error}
+            out = {"state": self.state, "has_client": bool(self.builtin[0]), "channel": str(d.get("channel", ""))[:100], "error": self.error}
             if p and self.state == "wartet":
                 out.update(code=p["user_code"], uri=p["uri"], expires_in=max(0, int(p["expires_at"] - self.clock())))
             return out
@@ -106,31 +98,11 @@ class YoutubeLogin:
     def ready(self):
         return bool(self.data.get("refresh"))
 
-    def save_client(self, client_id, secret):
-        client_id = str(client_id or "").strip()
-        secret = str(secret or "").strip()
-        if not self.ID_RE.fullmatch(client_id):
-            raise ValueError("Client-ID: so wie bei Google angezeigt eintragen (endet auf .apps.googleusercontent.com)")
-        with self.lock:
-            if not secret and client_id == self.data.get("client_id") and self.data.get("client_secret"):
-                return self.status()
-            if not self.SECRET_RE.fullmatch(secret):
-                raise ValueError("Client-Geheimnis: so wie bei Google angezeigt eintragen")
-            if client_id != self.data.get("client_id") or secret != self.data.get("client_secret"):
-                self.gen += 1
-                self.pending = None
-                self.data = {"client_id": client_id, "client_secret": secret}
-                self.error = ""
-                self.state = self._base_state()
-                self._write()
-            return self.status()
-
     def start(self):
         with self.lock:
-            d = self.data
             cid, secret = self._client()
             if not cid:
-                raise ValueError("Es ist noch keine Client-ID hinterlegt: unter „Eigene Zugangsdaten“ eintragen")
+                raise ValueError("Die Anmeldung mit dem YouTube-Konto ist in dieser Version noch nicht freigeschaltet")
             if self.state == "wartet" and self.pending and self.pending["expires_at"] > self.clock():
                 return self.status()
             self.gen += 1
@@ -199,8 +171,7 @@ class YoutubeLogin:
             life = max(60, int(r.get("expires_in", 3600)))
         except (TypeError, ValueError):
             life = 3600
-        own = self.data.get("client_id") and self.data.get("client_secret")
-        self.data.update(refresh=r["refresh_token"], access=r["access_token"], expires_at=self.clock() + life, via="own" if own else "builtin")
+        self.data.update(refresh=r["refresh_token"], access=r["access_token"], expires_at=self.clock() + life)
         self.pending, self.error, self.state = None, "", "angemeldet"
         self._write()
         st, ch = self._call(self.API + "channels?part=snippet&mine=true", headers={"Authorization": "Bearer " + r["access_token"]})
@@ -221,7 +192,7 @@ class YoutubeLogin:
                 return d["access"]
             if self.demo:
                 return ""
-            cid, secret = self._client(d.get("via"))
+            cid, secret = self._client()
             st, r = self._call(self.TOKEN_URL, {"client_id": cid, "client_secret": secret, "refresh_token": d["refresh"], "grant_type": "refresh_token"}, once=True)
             if st == 200 and isinstance(r.get("access_token"), str):
                 try:
@@ -232,8 +203,8 @@ class YoutubeLogin:
                 self._write()
                 return d["access"]
             if st == 400 and r.get("error") == "invalid_grant":
-                self.data = {k: d[k] for k in ("client_id", "client_secret") if k in d}
-                self.state, self.error = "bereit", "Die Anmeldung ist abgelaufen oder wurde widerrufen. Bitte neu anmelden."
+                self.data = {}
+                self.state, self.error = self._base_state(),"Die Anmeldung ist abgelaufen oder wurde widerrufen. Bitte neu anmelden."
                 self._write()
             return ""
 
@@ -242,7 +213,7 @@ class YoutubeLogin:
             tok = self.data.get("refresh") or self.data.get("access")
             self.gen += 1
             self.pending = None
-            self.data = {k: self.data[k] for k in ("client_id", "client_secret") if k in self.data}
+            self.data = {}
             self.state, self.error = self._base_state(), ""
             self._write()
         if tok and not self.demo:

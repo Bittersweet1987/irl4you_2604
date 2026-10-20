@@ -3,7 +3,7 @@
 let ytData = null,
   ytTimer = null;
 const YT_STATE = {
-  "kein-client": "Für die Anmeldung fehlt noch die Client-ID. Sie wird unter „Eigene Zugangsdaten (erweitert)“ eingetragen.",
+  "kein-client": "Die Anmeldung mit dem YouTube-Konto ist in dieser Version noch nicht freigeschaltet.",
   wartet: "Warte auf die Bestätigung bei Google …",
   fehler: "Anmeldung fehlgeschlagen.",
 };
@@ -29,10 +29,8 @@ function ytRender(d) {
     chat = d.chat || {};
   $("yt_sum").textContent = on ? "· " + (d.channel || "angemeldet") : d.handle ? "· " + d.handle : "· aus";
   if (document.activeElement.id !== "yt_chan") $("yt_chan").value = d.handle || "";
-  if (document.activeElement.id !== "yt_cid") $("yt_cid").value = d.client_id || "";
-  if (document.activeElement.id !== "yt_secret") $("yt_secret").placeholder = d.secret_set ? "gespeichert" : "";
   $("yt_login").hidden = on || wait;
-  $("yt_login").disabled = !d.has_client && !($("yt_cid").value && $("yt_secret").value);
+  $("yt_login").disabled = !d.has_client;
   $("yt_logout").hidden = !on;
   $("yt_cancel").hidden = !wait;
   $("yt_code").hidden = !wait;
@@ -77,17 +75,7 @@ $("yt_chan").addEventListener("keydown", (e) => {
     $("yt_chan_save").click();
   }
 });
-async function ytSaveClient() {
-  return ytPost({ action: "client", client_id: $("yt_cid").value, client_secret: $("yt_secret").value });
-}
-$("yt_save").addEventListener("click", async () => {
-  if (await ytSaveClient()) $("yt_secret").value = "";
-});
-$("yt_login").addEventListener("click", async () => {
-  if (($("yt_cid").value !== (ytData && ytData.client_id) || $("yt_secret").value) && !(await ytSaveClient())) return;
-  $("yt_secret").value = "";
-  await ytPost({ action: "login" });
-});
+$("yt_login").addEventListener("click", () => ytPost({ action: "login" }));
 $("yt_cancel").addEventListener("click", () => ytPost({ action: "cancel" }));
 $("yt_logout").addEventListener("click", () => {
   if (confirm("Von YouTube abmelden?\n\nModerieren geht dann nicht mehr. Der eingetragene Kanal bleibt gespeichert.")) ytPost({ action: "logout" });

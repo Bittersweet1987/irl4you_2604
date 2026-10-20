@@ -54,27 +54,18 @@ class TestAnmeldung(unittest.TestCase):
 
     def test_ohne_client_keine_anmeldung(self):
         yt, paths, login = make({}, self.d.name)
+        login.builtin = ("", "")
+        login.state = login._base_state()
         self.assertEqual(login.status()["state"], "kein-client")
         with self.assertRaises(ValueError):
             login.start()
-        with self.assertRaises(ValueError):
-            login.save_client("kurz", "geheim123")
-
-    def test_client_speichern_geheimnis_bleibt(self):
-        yt, paths, login = make({}, self.d.name)
-        login.save_client(CID, "geheimnis-123")
-        st = login.status()
-        self.assertEqual((st["state"], st["has_client"], st["secret_set"]), ("bereit", True, True))
-        self.assertNotIn("geheimnis-123", json.dumps(st))
-        login.save_client(CID, "")           # leeres Geheimnis = behalten
-        self.assertEqual(login.data["client_secret"], "geheimnis-123")
 
     def test_geraete_ablauf(self):
         routes = {"https://oauth2.googleapis.com/device/code": [(200, {"device_code": "dc", "user_code": "AAAA-BBBB", "verification_url": "https://www.google.com/device", "expires_in": 1800, "interval": 5})],
                   "https://oauth2.googleapis.com/token": [(428, {"error": "authorization_pending"}), (200, {"access_token": "AT", "refresh_token": "RT", "expires_in": 3600})],
                   "https://www.googleapis.com/youtube/v3/channels": [(200, {"items": [{"snippet": {"title": "Mein Kanal"}}]})]}
         yt, paths, login = make(routes, self.d.name)
-        login.save_client(CID, "geheimnis-123")
+        login.builtin = (CID, "geheimnis-123")
         st = login.start()        # die Abfrage läuft im Test ohne Wartezeit und kann schon fertig sein
         if st["state"] == "wartet":
             self.assertEqual(st["code"], "AAAA-BBBB")
@@ -92,26 +83,28 @@ class TestAnmeldung(unittest.TestCase):
     def test_token_erneuern_und_abgelaufen(self):
         routes = {"https://oauth2.googleapis.com/token": [(200, {"access_token": "NEU", "expires_in": 3600})]}
         yt, paths, login = make(routes, self.d.name)
-        login.data = {"client_id": CID, "client_secret": "geheimnis-123", "refresh": "RT", "access": "ALT", "expires_at": 0}
+        login.builtin = (CID, "geheimnis-123")
+        login.data = {"refresh": "RT", "access": "ALT", "expires_at": 0}
         self.assertEqual(login.token(), "NEU")
         routes["https://oauth2.googleapis.com/token"] = [(400, {"error": "invalid_grant"})]
         login.data["expires_at"] = 0
         self.assertEqual(login.token(), "")
         self.assertEqual((login.state, login.ready()), ("bereit", False))
 
-    def test_abmelden_behaelt_client(self):
+    def test_abmelden(self):
         yt, paths, login = make({"https://oauth2.googleapis.com/revoke": [(200, {})]}, self.d.name)
-        login.data = {"client_id": CID, "client_secret": "geheimnis-123", "refresh": "RT", "access": "AT", "expires_at": 9e12}
+        login.builtin = (CID, "geheimnis-123")
+        login.data = {"refresh": "RT", "access": "AT", "expires_at": 9e12}
         login.state = "angemeldet"
         st = login.logout()
-        self.assertEqual((st["state"], login.ready(), login.data["client_id"]), ("bereit", False, CID))
+        self.assertEqual((st["state"], login.ready(), login.data), ("bereit", False, {}))
 
 
 class TestChat(unittest.TestCase):
     def setUp(self):
         self.d = tempfile.TemporaryDirectory()
         yt, paths, login = make({}, self.d.name)
-        login.data = {"client_id": CID, "client_secret": "geheimnis-123", "refresh": "RT", "access": "AT", "expires_at": 9e12}
+        login.data = {"refresh": "RT", "access": "AT", "expires_at": 9e12}
         self.chat = yt.YoutubeChat(login, Reader(), paths=paths)
 
     def tearDown(self):
@@ -170,7 +163,7 @@ class TestEingebauterClient(unittest.TestCase):
         login.builtin = ("projekt.apps.googleusercontent.com", "projekt-geheimnis")
         login.state = login._base_state()
         st = login.status()
-        self.assertEqual((st["state"], st["builtin"], st["has_client"]), ("bereit", True, True))
+        self.assertEqual((st["state"], st["has_client"]), ("bereit", True))
         login.start()
         sent = paths.calls[0][2].decode()
         self.assertIn("projekt.apps.googleusercontent.com", sent)
@@ -193,7 +186,7 @@ class TestModeration(unittest.TestCase):
         routes = {"https://www.googleapis.com/youtube/v3/liveChat/messages": [(204, {})],
                   "https://www.googleapis.com/youtube/v3/liveChat/bans": [(200, {"id": "BANID123"})]}
         yt, paths, login = make(routes, self.d.name)
-        login.data = {"client_id": CID, "client_secret": "geheimnis-123", "refresh": "RT", "access": "AT", "expires_at": 9e12}
+        login.data = {"refresh": "RT", "access": "AT", "expires_at": 9e12}
         self.chat = yt.YoutubeChat(login, Reader(), paths=paths)
         self.paths = paths
 
