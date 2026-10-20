@@ -216,6 +216,72 @@ dialog#rdlg::backdrop {
 .optgrp {
   margin: 0 0 2px;
 }
+.minipage {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 10px;
+  margin: 8px 0;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--muted) 8%, transparent);
+}
+.minipage.mobile {
+  grid-template-columns: 1fr;
+  max-width: 240px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.mcard {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--card);
+  min-width: 0;
+}
+.minipage.desktop .mcard.wide {
+  grid-column: 1 / -1;
+}
+.msubs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.mtile {
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.25;
+  text-align: left;
+  padding: 4px 8px;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: inherit;
+  cursor: pointer;
+  min-height: 28px;
+  overflow-wrap: anywhere;
+}
+.mtile.head {
+  font-weight: 600;
+  font-size: 13px;
+}
+.mtile.off {
+  border-style: dashed;
+  border-color: var(--muted);
+  background: transparent;
+  color: var(--muted);
+  text-decoration: line-through;
+}
+.mtile.dim {
+  opacity: 0.45;
+}
+.mtile.fixed {
+  opacity: 0.6;
+  cursor: default;
+}
 .ordrow {
   display: flex;
   align-items: center;

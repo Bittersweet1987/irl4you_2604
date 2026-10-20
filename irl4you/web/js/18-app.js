@@ -179,7 +179,11 @@
       n = window.innerWidth;
     now.textContent = `Dieses Gerät zeigt gerade die Ansicht ${u === "mobile" ? "Mobil" : "Desktop"} (${mode === "auto" ? "automatisch, Fensterbreite " + n + " Pixel" : "von Hand gewählt"}).`;
     $("view_mode").value = mode;
-    for (const p of ["desktop", "mobile"]) ($("vw_" + p).classList.toggle("on", edit === p), $("vw_" + p).setAttribute("aria-pressed", String(edit === p)));
+    for (const p of ["desktop", "mobile"])
+      for (const k of ["vw_", "mv_"]) {
+        $(k + p).classList.toggle("on", edit === p);
+        $(k + p).setAttribute("aria-pressed", String(edit === p));
+      }
     $("vw_copy").textContent = edit === "desktop" ? "Von Mobil übernehmen" : "Von Desktop übernehmen";
   }
   function buildList() {
@@ -199,22 +203,50 @@
       l.appendChild(s);
       g.appendChild(l);
     };
+    const tile = (id, txt, cls, parentOff) => {
+      const off = v.hidden.includes(id),
+        t = document.createElement("button");
+      t.type = "button";
+      t.className = "mtile " + cls + (off ? " off" : "") + (parentOff ? " dim" : "");
+      t.dataset.id = id;
+      t.setAttribute("aria-pressed", String(!off));
+      t.textContent = txt;
+      return t;
+    };
+    const page = document.createElement("div");
+    page.className = "minipage " + edit;
     movables().forEach((el) => {
-      const g = document.createElement("div");
-      g.className = "optgrp";
-      row(g, el.id, label(el), false);
+      const c = document.createElement("div");
+      c.className = "mcard" + (el.classList.contains("wide") ? " wide" : "");
+      const head = tile(el.id, label(el), "head", false);
       if (el.id === "c_layout") {
-        const c = g.querySelector("input");
-        c.checked = true;
-        c.disabled = true;
-        g.firstChild.classList.add("fixed");
-        ["opt_design", "opt_order"].forEach((id) => {
-          const sub = $(id);
-          if (sub) row(g, id, label(sub), true);
-        });
-      } else if (hideable(el.id)) el.querySelectorAll("details.subsec[id],#statdet").forEach((sub) => row(g, sub.id, label(sub), true));
-      box.appendChild(g);
+        head.classList.remove("off");
+        head.classList.add("fixed");
+        head.disabled = true;
+        head.setAttribute("aria-pressed", "true");
+      }
+      c.appendChild(head);
+      const subs =
+        el.id === "c_layout"
+          ? ["opt_design", "opt_order"].map((id) => $(id)).filter(Boolean)
+          : hideable(el.id)
+            ? [...el.querySelectorAll("details.subsec[id],#statdet")]
+            : [];
+      if (subs.length) {
+        const w = document.createElement("div");
+        w.className = "msubs";
+        subs.forEach((sub) => w.appendChild(tile(sub.id, label(sub), "sub", el.id !== "c_layout" && v.hidden.includes(el.id))));
+        c.appendChild(w);
+      }
+      page.appendChild(c);
     });
+    box.appendChild(page);
+    {
+      const h = document.createElement("div");
+      h.className = "sech";
+      h.textContent = "Weitere Elemente";
+      box.appendChild(h);
+    }
     {
       const g = document.createElement("div");
       g.className = "optgrp";
@@ -251,110 +283,7 @@
       g.appendChild(h);
       box.appendChild(g);
     }
-    {
-      const g = document.createElement("div");
-      g.className = "optgrp";
-      const l = document.createElement("label");
-      l.className = "optrow";
-      const t = document.createElement("span");
-      t.textContent = "Fußleiste am Handy";
-      l.appendChild(t);
-      const sel = document.createElement("select");
-      sel.id = "foot_mode";
-      sel.style.marginLeft = "8px";
-      for (const [v2, txt] of [
-        ["auto", "Automatisch"],
-        ["always", "Immer anzeigen"],
-        ["hide", "Ausblenden bei Chat oder Vorschau"],
-        ["off", "Immer ausblenden"],
-      ]) {
-        const o = document.createElement("option");
-        o.value = v2;
-        o.textContent = txt;
-        sel.appendChild(o);
-      }
-      sel.value = window.pbFootGet ? window.pbFootGet() : "auto";
-      sel.addEventListener("change", () => window.pbFootMode && window.pbFootMode(sel.value));
-      l.appendChild(sel);
-      g.appendChild(l);
-      const b = document.createElement("button");
-      b.type = "button";
-      b.className = "helpbtn";
-      b.textContent = "i";
-      b.setAttribute("aria-label", "Erklärung zeigen");
-      b.setAttribute("aria-expanded", "false");
-      l.appendChild(b);
-      const h = document.createElement("div");
-      h.className = "ph";
-      h.hidden = true;
-      h.textContent =
-        "Die Knöpfe unten am Handy (Live/Stop, Kameras, Ton). Automatisch: Sie gleiten beim Runterscrollen weg und kommen beim Hochscrollen zurück, solange Chat oder Vorschau zu sehen sind; ohne beide bleiben sie immer da. Diese Einstellung gilt nur für dieses Gerät.";
-      g.appendChild(h);
-      b.addEventListener("click", (ev) => {
-        ev.preventDefault();
-        h.hidden = !h.hidden;
-        b.setAttribute("aria-expanded", String(!h.hidden));
-      });
-      box.appendChild(g);
-    }
-    {
-      const g = document.createElement("div");
-      g.className = "optgrp";
-      const l = document.createElement("label");
-      l.className = "optrow";
-      const t = document.createElement("span");
-      t.textContent = "Anordnung der Fußleiste am Handy";
-      l.appendChild(t);
-      const sel = document.createElement("select");
-      sel.id = "foot_layout";
-      sel.style.marginLeft = "8px";
-      for (const [v2, txt] of [
-        ["one", "Unten, eine Zeile"],
-        ["two", "Unten, zwei Zeilen (größere Knöpfe)"],
-        ["left", "Links, eine Spalte"],
-        ["right", "Rechts, eine Spalte"],
-      ]) {
-        const o = document.createElement("option");
-        o.value = v2;
-        o.textContent = txt;
-        sel.appendChild(o);
-      }
-      sel.value = window.pbFootLayoutGet ? window.pbFootLayoutGet() : "one";
-      sel.addEventListener("change", () => window.pbFootLayout && window.pbFootLayout(sel.value));
-      l.appendChild(sel);
-      g.appendChild(l);
-      const b = document.createElement("button");
-      b.type = "button";
-      b.className = "helpbtn";
-      b.textContent = "i";
-      b.setAttribute("aria-label", "Erklärung zeigen");
-      b.setAttribute("aria-expanded", "false");
-      l.appendChild(b);
-      const h = document.createElement("div");
-      h.className = "ph";
-      h.hidden = true;
-      h.textContent =
-        "Eine Zeile ist die bisherige Fußleiste. Zwei Zeilen machen sie größer (für große, gut treffbare Knöpfe): Live und Ton gehen über beide Zeilen, die Kameras stehen 2 × 2. Links oder Rechts stellt die Knöpfe als eine Spalte an den Rand. Diese Einstellung gilt nur für dieses Gerät.";
-      g.appendChild(h);
-      b.addEventListener("click", (ev) => {
-        ev.preventDefault();
-        h.hidden = !h.hidden;
-        b.setAttribute("aria-expanded", String(!h.hidden));
-      });
-      const l2 = document.createElement("label");
-      l2.className = "optrow";
-      const c = document.createElement("input");
-      c.type = "checkbox";
-      c.id = "foot_info";
-      c.checked = window.pbFootInfoGet ? window.pbFootInfoGet() : true;
-      c.addEventListener("change", () => window.pbFootInfo && window.pbFootInfo(c.checked));
-      l2.appendChild(c);
-      const t2 = document.createElement("span");
-      t2.textContent = "Info-Knopf (ⓘ) in der Fußleiste anzeigen";
-      l2.appendChild(t2);
-      g.appendChild(l2);
-      box.appendChild(g);
-    }
+    window.pbFootRows(box);
   }
   function buildOrder(focus) {
     const box = $("ord_list"),
@@ -420,17 +349,26 @@
     if (!b || b.disabled) return;
     move(b.dataset.id, +b.dataset.dir);
   });
-  $("lay_list").addEventListener("change", (e) => {
-    const c = e.target.closest("input[data-id]");
-    if (!c) return;
+  function setHidden(id, hide) {
     const h = views[edit].hidden,
-      id = c.dataset.id,
       i = h.indexOf(id);
-    if (c.checked && i >= 0) h.splice(i, 1);
-    if (!c.checked && i < 0) h.push(id);
+    if (!hide && i >= 0) h.splice(i, 1);
+    if (hide && i < 0) h.push(id);
     save(edit);
     if (edit === used()) applyHidden();
     else buildOrder();
+  }
+  $("lay_list").addEventListener("change", (e) => {
+    const c = e.target.closest("input[data-id]");
+    if (c) setHidden(c.dataset.id, !c.checked);
+  });
+  $("lay_list").addEventListener("click", (e) => {
+    const t = e.target.closest("button.mtile[data-id]");
+    if (!t || t.disabled) return;
+    setHidden(t.dataset.id, !views[edit].hidden.includes(t.dataset.id));
+    buildList();
+    const again = [...$("lay_list").querySelectorAll("button.mtile")].find((x) => x.dataset.id === t.dataset.id);
+    if (again) again.focus();
   });
   $("lay_showall").addEventListener("click", () => {
     views[edit].hidden = [];
@@ -466,7 +404,7 @@
     applyAll();
     document.dispatchEvent(new Event("pb-design-changed"));
   });
-  for (const p of ["desktop", "mobile"]) $("vw_" + p).addEventListener("click", () => setEdit(p));
+  for (const p of ["desktop", "mobile"]) for (const k of ["vw_", "mv_"]) $(k + p).addEventListener("click", () => setEdit(p));
   $("vw_copy").addEventListener("click", () => {
     views[edit] = norm(JSON.parse(JSON.stringify(views[other(edit)])));
     save(edit);
