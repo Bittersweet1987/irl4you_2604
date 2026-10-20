@@ -1,5 +1,5 @@
 <details class="card wide" id="c_layout"><summary><span class="sumh">Optionen</span></summary>
-<div class="ph" style="margin-top:0">Hier legen Sie fest, welche Menüpunkte angezeigt werden (Haken weg = ausgeblendet). Ausgeblendet wird nur die Anzeige, an den Einstellungen ändert sich nichts. Die Reihenfolge der Hauptmenüs und das Design legen Sie darunter fest. Es gibt zwei Ansichten, Desktop und Mobil, mit je eigener Auswahl. Sie sind auf der Box gespeichert und gelten für alle Geräte.</div>
+<div class="ph" style="margin-top:0">Hier legen Sie fest, welche Menüpunkte angezeigt werden (Haken weg = ausgeblendet). Ausgeblendet wird nur die Anzeige, an den Einstellungen ändert sich nichts. Das Design und die Reihenfolge (Ziehen am Griff) legen Sie darunter fest. Es gibt zwei Ansichten, Desktop und Mobil, mit je eigener Auswahl. Sie sind auf der Box gespeichert und gelten für alle Geräte.</div>
 <div id="view_ctl" class="viewctl">
 <div id="view_now" class="ph" role="status"></div>
 <div class="row" style="justify-content:flex-start;gap:6px;flex-wrap:wrap"><label for="view_mode">Ansicht dieses Geräts:</label>
@@ -24,14 +24,10 @@
 <div id="design_list" class="designs" role="radiogroup" aria-label="Design"></div>
 </details>
 <details class="subsec" id="opt_menus"><summary>Menüpunkte anzeigen</summary>
-<div class="ph" style="margin-top:0">So sieht die Seite im Kleinen aus. Tippe ein Menü oder Untermenü an, um es auszublenden (gestrichelt = aus). Noch einmal tippen blendet es wieder ein.</div>
+<div class="ph" style="margin-top:0">So sieht die Seite im Kleinen aus. Ziehe ein Menü am Griff links, um die Reihenfolge zu ändern. Mit dem Auge blendest du ein Menü aus, ein Untermenü tippst du direkt an (gestrichelt = aus). Noch einmal tippen blendet es wieder ein.</div>
 <div class="seg" role="group" aria-label="Ansicht bearbeiten"><button type="button" id="mv_desktop" class="on" aria-pressed="true">Desktop</button><button type="button" id="mv_mobile" aria-pressed="false">Mobil</button></div>
 <div id="lay_list" class="optlist"></div>
-<div class="actions"><button type="button" id="lay_showall" class="sec">Alle einblenden</button></div>
-</details>
-<details class="subsec" id="opt_order"><summary>Reihenfolge der Hauptmenüs</summary>
-<div id="ord_list" class="optlist"></div>
-<div class="actions"><button type="button" id="lay_reset" class="sec">Reihenfolge zurücksetzen</button></div>
+<div class="actions"><button type="button" id="lay_showall" class="sec">Alle einblenden</button><button type="button" id="lay_reset" class="sec">Reihenfolge zurücksetzen</button></div>
 </details>
 <details class="subsec" id="opt_netaddr"><summary>Feste Zusatzadresse (LAN)</summary>
 <div class="ph" style="margin-top:0">Neben der Adresse vom Router (DHCP) bekommt die Box eine feste, zum Beispiel wenn sie am selben Router hängt wie andere Geräte. Die feste Adresse gehört zur MAC-Adresse der gewählten Netzkarte. Voraussetzung ist ein getrennter Adressraum: Sie darf sich nicht mit dem Netz einer anderen Netzkarte überschneiden, kein anderes Gerät darf sie benutzen, und sie sollte außerhalb des DHCP-Bereichs deines Routers liegen. Das gilt für die ganze Box, nicht nur für dieses Gerät.</div>

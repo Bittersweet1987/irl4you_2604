@@ -249,20 +249,56 @@ dialog#rdlg::backdrop {
   cursor: pointer;
   min-height: 28px;
 }
-.mtile.head {
+.mrow {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 8px;
-  width: 100%;
-  box-sizing: border-box;
-  text-align: left;
-  font-weight: 600;
-  font-size: 14px;
-  padding: 8px 10px;
+  padding: 6px 6px 6px 8px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--card);
+  font-weight: 600;
+  font-size: 14px;
+}
+.mrow.off {
+  border-style: dashed;
+  color: var(--muted);
+  background: transparent;
+}
+.mname {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.mgrip {
+  flex: none;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  padding: 2px 6px;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--muted);
+}
+.mcard.drag {
+  opacity: 0.6;
+}
+.meye {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  min-height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+.meye:disabled {
+  opacity: 0.4;
+  cursor: default;
 }
 .mtile.off {
   border-style: dashed;
@@ -272,13 +308,6 @@ dialog#rdlg::backdrop {
 }
 .mtile.sub.off {
   text-decoration: line-through;
-}
-.mtile.dim {
-  opacity: 0.45;
-}
-.mtile.fixed {
-  opacity: 0.6;
-  cursor: default;
 }
 .ordrow {
   display: flex;

@@ -60,6 +60,10 @@
   const allCards = () => [...main.children].filter((el) => el.matches("details.card[id]"));
   const movables = () => allCards().filter((el) => !el.hidden);
   const DEFAULT = allCards().map((e) => e.id);
+  const EYE =
+      '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>',
+    EYE_OFF =
+      '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18M10.6 5.1A10 10 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.2 4.2M6.6 6.6C3.7 8.4 2 12 2 12s3.6 7 10 7a9.7 9.7 0 0 0 4.1-.9M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>';
   const hideable = (id) => id !== "c_layout" && id !== "livecard";
   const label = (el) => {
     const s = el.querySelector(":scope>summary");
@@ -104,7 +108,6 @@
         const e = document.getElementById(id);
         if (e) e.open = true;
       });
-    buildOrder();
   }
   function applyDesign() {
     const id = views[used()].design,
@@ -190,61 +193,66 @@
     const box = $("lay_list"),
       v = views[edit];
     box.textContent = "";
-    const row = (g, id, txt, sub) => {
-      const l = document.createElement("label");
-      l.className = "optrow" + (sub ? " sub" : "");
-      const c = document.createElement("input");
-      c.type = "checkbox";
-      c.dataset.id = id;
-      c.checked = !v.hidden.includes(id);
-      l.appendChild(c);
-      const s = document.createElement("span");
-      s.textContent = txt;
-      l.appendChild(s);
-      g.appendChild(l);
-    };
-    const tile = (id, txt, cls, parentOff) => {
+    const tile = (id, txt) => {
       const off = v.hidden.includes(id),
         t = document.createElement("button");
       t.type = "button";
-      t.className = "mtile " + cls + (off ? " off" : "") + (parentOff ? " dim" : "");
+      t.className = "mtile sub" + (off ? " off" : "");
       t.dataset.id = id;
       t.setAttribute("aria-pressed", String(!off));
-      if (cls === "head") {
-        const n = document.createElement("span");
-        n.textContent = txt;
-        const e = document.createElement("span");
-        e.setAttribute("aria-hidden", "true");
-        e.textContent = off ? "○" : "●";
-        t.append(n, e);
-      } else t.textContent = txt;
+      t.textContent = txt;
       return t;
+    };
+    const head = (el) => {
+      const off = v.hidden.includes(el.id),
+        fixed = el.id === "c_layout",
+        r = document.createElement("div");
+      r.className = "mrow" + (off && !fixed ? " off" : "");
+      const g = document.createElement("span");
+      g.className = "mgrip";
+      g.tabIndex = 0;
+      g.dataset.id = el.id;
+      g.setAttribute("role", "button");
+      g.setAttribute("aria-label", "Menü verschieben: ziehen oder Pfeiltasten hoch und runter");
+      g.title = "Zum Verschieben ziehen";
+      g.textContent = "⠿";
+      const n = document.createElement("span");
+      n.className = "mname";
+      n.textContent = label(el);
+      const e = document.createElement("button");
+      e.type = "button";
+      e.className = "meye";
+      e.dataset.id = el.id;
+      e.disabled = fixed;
+      e.setAttribute("aria-pressed", String(!off || fixed));
+      e.setAttribute("aria-label", label(el) + (off ? " einblenden" : " ausblenden"));
+      e.title = fixed ? "Optionen bleiben immer sichtbar" : off ? "Einblenden" : "Ausblenden";
+      e.innerHTML = off && !fixed ? EYE_OFF : EYE;
+      r.append(g, n, e);
+      return r;
     };
     const page = document.createElement("div");
     page.className = "minipage " + edit;
-    movables().forEach((el) => {
+    orderOf(v)
+      .map((id) => $(id))
+      .filter((el) => el && !el.hidden)
+      .forEach((el) => {
       const c = document.createElement("div");
-      c.className = "mcard" + (el.classList.contains("wide") ? " wide" : "");
-      const head = tile(el.id, label(el), "head", false);
-      if (el.id === "c_layout") {
-        head.classList.remove("off");
-        head.classList.add("fixed");
-        head.disabled = true;
-        head.setAttribute("aria-pressed", "true");
-      }
-      c.appendChild(head);
+      c.className = "mcard";
+      c.dataset.id = el.id;
+      c.appendChild(head(el));
       const subs =
         v.hidden.includes(el.id) && el.id !== "c_layout"
           ? []
           : el.id === "c_layout"
-          ? ["opt_design", "opt_order"].map((id) => $(id)).filter(Boolean)
+          ? ["opt_design"].map((id) => $(id)).filter(Boolean)
           : hideable(el.id)
             ? [...el.querySelectorAll("details.subsec[id],#statdet")]
             : [];
       if (subs.length) {
         const w = document.createElement("div");
         w.className = "msubs";
-        subs.forEach((sub) => w.appendChild(tile(sub.id, label(sub), "sub", false)));
+        subs.forEach((sub) => w.appendChild(tile(sub.id, label(sub))));
         c.appendChild(w);
       }
       page.appendChild(c);
@@ -263,49 +271,10 @@
         ["sm_btn", "Streammodus"],
         ["hlp_btn", "Hilfe-Knöpfe (i)"],
         ["heads", "Überschriften von Chat und Vorschau"],
-      ].forEach(([id, txt]) => w.appendChild(tile(id, txt, "sub", false)));
+      ].forEach(([id, txt]) => w.appendChild(tile(id, txt)));
       box.appendChild(w);
     }
     window.pbFootRows(box);
-  }
-  function buildOrder(focus) {
-    const box = $("ord_list"),
-      v = views[edit],
-      all = orderOf(v)
-        .map((id) => $(id))
-        .filter((el) => el && !el.hidden);
-    box.textContent = "";
-    all.forEach((el, i) => {
-      const r = document.createElement("div");
-      r.className = "ordrow" + (v.hidden.includes(el.id) && hideable(el.id) ? " off" : "");
-      const t = document.createElement("span");
-      t.textContent = label(el);
-      r.appendChild(t);
-      const m = document.createElement("span");
-      m.className = "mvs";
-      for (const [dir, txt, tip] of [
-        [-1, "▲", "Menü nach oben schieben"],
-        [1, "▼", "Menü nach unten schieben"],
-      ]) {
-        const b = document.createElement("button");
-        b.type = "button";
-        b.className = "mv";
-        b.dataset.id = el.id;
-        b.dataset.dir = dir;
-        b.textContent = txt;
-        b.title = tip;
-        b.setAttribute("aria-label", tip);
-        b.disabled = dir < 0 ? i === 0 : i === all.length - 1;
-        m.appendChild(b);
-      }
-      r.appendChild(m);
-      box.appendChild(r);
-    });
-    if (focus) {
-      const mine = [...box.querySelectorAll("button.mv")].filter((x) => x.dataset.id === focus.id && !x.disabled);
-      const b = mine.find((x) => +x.dataset.dir === focus.dir) || mine[0];
-      if (b) b.focus();
-    }
   }
   function move(id, dir) {
     const v = views[edit],
@@ -318,20 +287,16 @@
     v.order = all.concat(rest);
     save(edit);
     if (edit === used()) applyOrder();
-    buildOrder({ id, dir });
+    buildList();
+    const b = $("lay_list").querySelector('.mgrip[data-id="' + id + '"]');
+    if (b) b.focus();
   }
   function setEdit(p) {
     edit = p;
     buildList();
-    buildOrder();
     buildCtl();
     document.dispatchEvent(new Event("pb-design-changed"));
   }
-  $("ord_list").addEventListener("click", (ev) => {
-    const b = ev.target.closest("button.mv[data-id]");
-    if (!b || b.disabled) return;
-    move(b.dataset.id, +b.dataset.dir);
-  });
   function setHidden(id, hide) {
     const h = views[edit].hidden,
       i = h.indexOf(id);
@@ -339,32 +304,64 @@
     if (hide && i < 0) h.push(id);
     save(edit);
     if (edit === used()) applyHidden();
-    else buildOrder();
   }
-  $("lay_list").addEventListener("change", (e) => {
-    const c = e.target.closest("input[data-id]");
-    if (c) setHidden(c.dataset.id, !c.checked);
-  });
   $("lay_list").addEventListener("click", (e) => {
-    const t = e.target.closest("button.mtile[data-id]");
+    const t = e.target.closest("button.mtile[data-id],button.meye[data-id]");
     if (!t || t.disabled) return;
     setHidden(t.dataset.id, !views[edit].hidden.includes(t.dataset.id));
     buildList();
-    const again = [...$("lay_list").querySelectorAll("button.mtile")].find((x) => x.dataset.id === t.dataset.id);
+    const again = [...$("lay_list").querySelectorAll("button.mtile,button.meye")].find((x) => x.dataset.id === t.dataset.id);
     if (again) again.focus();
+  });
+  $("lay_list").addEventListener("keydown", (e) => {
+    const g = e.target.closest(".mgrip");
+    if (g && (e.key === "ArrowUp" || e.key === "ArrowDown")) {
+      e.preventDefault();
+      move(g.dataset.id, e.key === "ArrowUp" ? -1 : 1);
+    }
+  });
+  $("lay_list").addEventListener("pointerdown", (e) => {
+    const g = e.target.closest(".mgrip"),
+      page = g && g.closest(".minipage"),
+      card = g && g.closest(".mcard");
+    if (!g || !page || e.button > 0) return;
+    e.preventDefault();
+    g.setPointerCapture(e.pointerId);
+    card.classList.add("drag");
+    const over = (ev) => {
+      const next = [...page.children].find((o) => {
+        const r = o.getBoundingClientRect();
+        return o !== card && ev.clientY < r.top + r.height / 2;
+      });
+      if (next !== card.nextSibling) page.insertBefore(card, next || null);
+    };
+    const end = () => {
+      if (!card.classList.contains("drag")) return;
+      for (const [t, f] of [["pointermove", over], ["pointerup", end], ["pointercancel", end], ["mouseup", end]]) document.removeEventListener(t, f);
+      g.removeEventListener("lostpointercapture", end);
+      card.classList.remove("drag");
+      const ids = [...page.children].map((c) => c.dataset.id),
+        v = views[edit];
+      if (ids.join() === orderOf(v).filter((x) => ids.includes(x)).join()) return;
+      v.order = ids.concat(orderOf(v).filter((x) => !ids.includes(x)));
+      save(edit);
+      if (edit === used()) applyOrder();
+      buildList();
+    };
+    for (const [t, f] of [["pointermove", over], ["pointerup", end], ["pointercancel", end], ["mouseup", end]]) document.addEventListener(t, f);
+    g.addEventListener("lostpointercapture", end);
   });
   $("lay_showall").addEventListener("click", () => {
     views[edit].hidden = [];
     save(edit);
     if (edit === used()) applyHidden();
     buildList();
-    buildOrder();
   });
   $("lay_reset").addEventListener("click", () => {
     views[edit].order = [];
     save(edit);
     if (edit === used()) applyOrder();
-    buildOrder();
+    buildList();
   });
   $("view_mode").addEventListener("change", (e) => {
     mode = e.target.value;
@@ -397,7 +394,6 @@
       applyDesign();
     }
     buildList();
-    buildOrder();
     buildCtl();
   });
   window.pbViews = {
