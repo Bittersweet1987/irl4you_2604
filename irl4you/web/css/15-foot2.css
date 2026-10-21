@@ -92,7 +92,7 @@ html.locked main {
   }
   html.mfpage2 .mf-p2 {
     flex: 1 1 0;
-    max-width: 120px;
+    max-width: 92px;
   }
   #mf_side {
     display: flex;
