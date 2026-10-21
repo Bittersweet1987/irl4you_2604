@@ -78,6 +78,11 @@ html.locked main {
   }
   html.mfpage2 #mf_p2 {
     display: flex;
+    flex: 1 1 auto;
+    justify-content: flex-end;
+  }
+  html.mf2.mfpage2 #mfoot {
+    justify-content: end;
   }
   html.mfpage2 #mf_tools {
     display: none !important;
