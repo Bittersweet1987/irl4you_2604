@@ -223,6 +223,15 @@ def buffer_ms(c):
     return max(BUFFER_MIN_COPY_MS if engine_level() >= COPY_LEVEL else BUFFER_MIN_MS, buffer_need_ms(c))
 
 
+MIX_LATENCY_MS = 500      # so lange wartet der Mischer höchstens auf eine Kamera, deren Bilder fehlen (ein ausgefallener oder angehaltener Zweig lässt das Bild sonst so lange stehen)
+
+
+def mix_latency_ms(c):
+    """Zeitlimit des Mischers. Die Ausrichtung (--align) gibt Kamerabildern ohnehin den Vorlauf von buffer_ms; wartet der Mischer nur kurz, steht das Bild beim
+    Ausfall oder Anhalten eines Zweigs (Kamera fällt aus, Rotation) nur kurz statt über eine Sekunde. Ohne Verschiebung im Encoder bleibt der alte Wert."""
+    return min(buffer_ms(c), MIX_LATENCY_MS) if shift_ok() else buffer_ms(c)
+
+
 def buffer_need_ms(c):
     if shift_ok():
         return BUFFER_NEED_MIN_MS
@@ -314,7 +323,7 @@ def build(c, base=RTMP_BASE, frame=None):
         for j in range(4):
             pads.append(f"sink_{n}::xpos=0 sink_{n}::ypos=0 sink_{n}::width=2 sink_{n}::height=2 sink_{n}::alpha=0 sink_{n}::zorder={3 + 2 * k}")
             n += 1
-    main = ["compositor name=mix background=black latency=" + str(buffer_ms(c) * 1000000) + " " + " ".join(pads) + " !\n"
+    main = ["compositor name=mix background=black ignore-inactive-pads=true latency=" + str(mix_latency_ms(c) * 1000000) + " " + " ".join(pads) + " !\n"
             f"video/x-raw,format=NV12,width={CANVAS_W},height={CANVAS_H},framerate={FPS}/1,colorimetry=bt709 !\n"
             + ("pbround name=rnd !\n" if frame else "")
             + "queue max-size-time=500000000 max-size-buffers=4 leaky=downstream !\n"
