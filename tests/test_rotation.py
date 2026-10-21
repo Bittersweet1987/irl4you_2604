@@ -64,6 +64,7 @@ def cfg(**rot):
 class TestSendeteil(unittest.TestCase):
     def pubs(self, ctl, *keys):
         ctl.pub = {k: {} for k in keys}
+        ctl.alive = set(keys)                                    # alle Kameras liefern Bild
 
     def test_nur_das_gewaehlte_bild_wechselt_und_feste_kameras_bleiben_tabu(self):
         live, ctl, logs = make(cfg())
@@ -116,6 +117,51 @@ class TestSendeteil(unittest.TestCase):
         ctl.rotate(0.0)
         ctl.rotate(100.0)
         self.assertEqual(ctl.desired[0], "osmo")
+
+    def test_naechste_kamera_wird_auf_freiem_zweig_vorbereitet_und_erst_mit_bild_eingeblendet(self):
+        live, ctl, logs = make(cfg(seconds=30))
+        ctl.pub = {k: {} for k in ("osmo", "s23", "redmi", "ios")}
+        ctl.alive = {"osmo", "s23", "redmi"}                     # ios ist noch nicht verbunden (kein Bild)
+        ctl.rotate(0.0)
+        self.assertEqual((ctl.desired[1], ctl.stage), ("s23", set()))
+        ctl.rotate(20.0)                                         # noch weit vor dem Wechsel
+        self.assertEqual(ctl.stage, set())
+        lines = ctl.rotate(23.0)                                 # 7 Sekunden davor: nächste Kamera wird auf dem freien Zweig verbunden
+        self.assertEqual(ctl.stage, {"ios"})
+        self.assertIn("ios", ctl.binder.slot_key)
+        self.assertTrue(any("set cam" in x and "/ios" in x for x in lines))
+        self.assertEqual(ctl.desired[1], "s23")                  # noch zu sehen: die alte Kamera
+        ctl.rotate(31.0)                                         # fällig, aber ios liefert noch kein Bild: warten, kein Standbild
+        self.assertEqual(ctl.desired[1], "s23")
+        ctl.alive.add("ios")
+        lines = ctl.rotate(32.0)
+        self.assertEqual((ctl.desired[1], ctl.stage), ("ios", set()))
+        self.assertFalse(any("set cam" in x and "/ios" in x for x in lines))      # keine erneute Verbindung: nur der Platz wechselt
+
+    def test_wartet_nicht_ewig_und_ohne_freien_zweig_sofort(self):
+        live, ctl, logs = make(cfg(seconds=30))
+        ctl.pub = {k: {} for k in ("osmo", "s23", "redmi", "ios")}
+        ctl.alive = {"osmo", "s23", "redmi"}
+        ctl.rotate(0.0)
+        ctl.rotate(23.0)
+        ctl.rotate(31.0)
+        self.assertEqual(ctl.desired[1], "s23")
+        ctl.rotate(30.0 + live.ROT_WAIT_S + 1.0)                 # die vorbereitete Kamera kommt nie: nach der Wartezeit wird trotzdem gewechselt
+        self.assertEqual(ctl.desired[1], "ios")
+        live, ctl, logs = make(dict(cfg(seconds=30), pip3="htc"))   # alle vier Zweige belegt: kein freier Zweig, Wechsel sofort beim Fälligwerden
+        ctl.pub = {k: {} for k in ("osmo", "s23", "redmi", "htc", "ios")}
+        ctl.alive = {"osmo", "s23", "redmi", "htc"}
+        ctl.rotate(0.0)
+        ctl.rotate(31.0)
+        self.assertEqual((ctl.desired[1], ctl.stage), ("ios", set()))
+
+    def test_zu_wenig_kameras_im_pool_behalten_die_eingestellte_kamera(self):
+        live, ctl, logs = make(cfg(all=False, slots=["pip", "pip2"], pool=["s23"], seconds=10))
+        self.pubs(ctl, "osmo", "s23", "redmi")
+        ctl.rotate(0.0)
+        for t in (11.0, 22.0, 33.0):
+            ctl.rotate(t)
+            self.assertIn("redmi", ctl.desired)                  # redmi ist selbst auf einem rotierenden Platz und fällt nicht weg
 
 
 if __name__ == "__main__":

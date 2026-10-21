@@ -206,6 +206,8 @@ LAG_WINDOW_S = 180.0
 HOLD_FILE = "feed-hold.json"
 FAILOVER_S = 5.0          # so lange muss eine Kamera des Bildaufbaus ausgefallen sein, bevor eine freie Kamera ihren Platz übernimmt
 ROT_MIN_S = 5.0
+ROT_PREP_S = 8.0          # so lange vor dem Wechsel wird die nächste Kamera auf einem freien Zweig schon verbunden (kein Standbild beim Wechsel)
+ROT_WAIT_S = 10.0         # so lange wartet der Wechsel höchstens darauf, dass die vorbereitete Kamera Bild liefert
 FAILBACK_S = 10.0         # so lange muss die ausgefallene Kamera wieder da sein, bevor sie ihren Platz zurückbekommt
 
 
@@ -753,6 +755,8 @@ class LiveController:
         self.cfg_desired = ["", "", "", ""]
         self.base_desired = ["", "", "", ""]
         self.rot_at, self.rot_ptr = None, 0
+        self.rot_cur = None
+        self.stage = set()
         self.sub = {}
         self.gone, self.present = {}, {}
         self.inactive = []
@@ -783,21 +787,23 @@ class LiveController:
         ina = c.get("inactive")
         self.inactive = [k for k in ina if isinstance(k, str)] if isinstance(ina, list) else []
         self.base_desired = list(self.cfg_desired)
-        self.rot_at = None
+        self.rot_at, self.rot_cur = None, None
         self.sub = {}
         self.reassign_lines += self._bind()
         return True
 
     def rotate(self, now):
         """Rotierende Kameras: Die gewählten Plätze bekommen reihum die Kameras aus dem Pool (nur verbunden, nicht deaktiviert), alle Sekunden der Wechselzeit eine weiter.
-        Kameras auf Plätzen, die nicht rotieren, werden nie gewechselt. Die gespeicherte Auswahl bleibt unverändert."""
+        Kameras auf Plätzen, die nicht rotieren, werden nie gewechselt. Die gespeicherte Auswahl bleibt unverändert.
+        Ist ein Zweig des Sendeteils frei, wird die nächste Kamera dort schon vor dem Wechsel verbunden und erst eingeblendet, wenn sie Bild liefert: dann gibt es
+        beim Wechsel keine Unterbrechung. Gibt es keinen freien Zweig, wird der Zweig der alten Kamera neu verbunden (das kann kurz ruckeln)."""
         base = list(self.base_desired)
         r = self.cfg.get("rotation") if self.cfg else None
         rslots = []
         if isinstance(r, dict) and r.get("on") and self.cfg.get("type") == "pip" and self.pub_known:
             names = ("main", "pip", "pip2", "pip3")
             rslots = [s for s in range(SLOTS) if base[s] and (r.get("all") or names[s] in (r.get("slots") or []))]
-        new = base
+        new, stage = base, set()
         if rslots:
             fixed = {base[s] for s in range(SLOTS) if base[s] and s not in rslots}
             pool = r.get("pool")
@@ -808,37 +814,60 @@ class LiveController:
                 secs = max(ROT_MIN_S, float(r.get("seconds", 30)))
             except (TypeError, ValueError):
                 secs = 30.0
-            if self.rot_at is None:
-                self.rot_at = now
-                first = base[rslots[0]]
-                self.rot_ptr = cand.index(first) if first in cand else 0
-            elif now - self.rot_at >= secs:
-                self.rot_at = now
-                self.rot_ptr += 1
-            if cand:
-                new = list(base)
+
+            def pick(ptr):
+                out = list(base)
                 n = len(cand)
                 for i, s in enumerate(rslots):
                     if n >= len(rslots):
-                        new[s] = cand[(self.rot_ptr + i) % n]
+                        out[s] = cand[(ptr + i) % n]
+                    elif i < n:
+                        out[s] = cand[i]
+                    elif not (base[s] in out and base[s] != out[s]) and base[s] in self.pub:
+                        out[s] = base[s]            # nicht genug Kameras im Pool: der Platz behält seine eingestellte Kamera
                     else:
-                        new[s] = cand[i] if i < n else ""
-                if not new[0] and base[0]:
-                    new[0] = base[0]
+                        out[s] = ""
+                if not out[0] and base[0]:
+                    out[0] = base[0]
+                return out
+            if self.rot_at is None:
+                # Beim Start bleibt die eingestellte Auswahl, der erste Wechsel kommt nach der Wechselzeit
+                self.rot_at = now
+                first = base[rslots[0]]
+                self.rot_ptr = cand.index(first) if first in cand else -1
+                self.rot_cur = list(base)
+            if cand and self.rot_cur is not None:
+                cur = self.rot_cur
+                nxt = pick(self.rot_ptr + 1)
+                need = [k for k in nxt if k and k not in cur]
+                free = SLOTS - len({k for k in cur if k})
+                lead = secs - (now - self.rot_at)
+                if need and free >= len(need) and lead <= ROT_PREP_S:
+                    stage = set(need)
+                if lead <= 0:
+                    staged_ok = need and free >= len(need)
+                    if (not need) or (not staged_ok) or all(k in self.alive for k in need) or -lead >= ROT_WAIT_S:
+                        self.rot_at, self.rot_ptr, self.rot_cur = now, self.rot_ptr + 1, nxt
+                        stage = set()
+                new = list(self.rot_cur)
         else:
-            self.rot_at = None
-        if new == self.cfg_desired:
+            self.rot_at, self.rot_cur = None, None
+        if new == self.cfg_desired and stage == self.stage:
             return []
-        self.cfg_desired = new
-        self.sub = {}
-        self.log("send: Rotation: " + ", ".join(f"Platz {i}: {k or '-'}" for i, k in enumerate(new)))
+        if new != self.cfg_desired:
+            self.cfg_desired = new
+            self.sub = {}
+            self.log("send: Rotation: " + ", ".join(f"Platz {i}: {k or '-'}" for i, k in enumerate(new)))
+        if stage != self.stage:
+            self.log("send: Rotation: nächste Kamera wird vorbereitet: " + (", ".join(sorted(stage)) or "-"))
+        self.stage = stage
         return self._bind()
 
     def _bind(self):
         """Die Kameras der Plätze (wie eingestellt, bei Ausfall mit freier Ersatzkamera) an die Zweige des Sendeteils binden; gibt die Befehle für geänderte Zweige zurück."""
         self.desired = [self.sub.get(k, k) if k else "" for k in self.cfg_desired]
         before = list(self.binder.slot_key)
-        self.binder.update([k for k in self.desired if k])
+        self.binder.update([k for k in self.desired if k] + [k for k in sorted(self.stage) if k not in self.desired])
         lines = []
         for s in range(SLOTS):
             if self.started and before[s] != self.binder.slot_key[s]:
@@ -871,7 +900,7 @@ class LiveController:
             for orig in wanted:
                 if orig in self.sub or orig in self.pub or now - self.gone.get(orig, now) < FAILOVER_S:
                     continue
-                taken = set(wanted) | set(self.sub.values())
+                taken = set(wanted) | set(self.sub.values()) | set(self.stage)
                 spare = next((k for k in sorted(self.pub) if k not in taken and k not in self.inactive and k not in self.held), None)
                 if spare:
                     self.sub[orig] = spare
