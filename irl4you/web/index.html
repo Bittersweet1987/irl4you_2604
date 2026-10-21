@@ -34,6 +34,7 @@
 <link rel="stylesheet" href="/ui/css/12-html.css">
 <link rel="stylesheet" href="/ui/css/13-html.css">
 <link rel="stylesheet" href="/ui/css/14-html.css">
+<link rel="stylesheet" href="/ui/css/15-foot2.css">
 <link rel="stylesheet" href="/chat.css">
 </head>
 <body>
@@ -65,7 +66,7 @@
 <!--#include c_layout.html-->
 <!--#include c_power.html-->
 </main>
-<nav id="mfoot" aria-label="Schnellzugriff"><div id="mf_msg" class="mf-msg" role="status" hidden></div><button type="button" id="mf_live" class="mf-live" disabled aria-label="Sendung starten oder beenden">Live</button><div id="mf_tools" role="group" aria-label="Kameras und Ton" hidden></div><button type="button" id="mf_info" class="mf-info" aria-label="Bedienung der Kamera-Knöpfe" title="Bedienung der Kamera-Knöpfe" hidden>ⓘ</button></nav>
+<nav id="mfoot" aria-label="Schnellzugriff"><div id="mf_msg" class="mf-msg" role="status" hidden></div><button type="button" id="mf_live" class="mf-live" disabled aria-label="Sendung starten oder beenden">Live</button><div id="mf_tools" role="group" aria-label="Kameras und Ton" hidden></div><div id="mf_p2" role="group" aria-label="Rotation und Sperre"><button type="button" id="mf_rot" class="mf-t mf-p2" aria-pressed="false" title="Kamera-Rotation ein- oder ausschalten"><span class="mf-ic" aria-hidden="true">⟳</span><span>Rotation</span><span class="mf-state"></span></button><button type="button" id="mf_rotset" class="mf-t mf-p2" title="Einstellungen der Kamera-Rotation"><span class="mf-ic" aria-hidden="true">⚙</span><span>Einstellung</span><span class="mf-state">Rotation</span></button><button type="button" id="mf_lock" class="mf-t mf-p2" aria-pressed="false" title="Oberfläche sperren: nichts klappt mehr auf oder zu, die Ansicht bleibt stehen"><span class="mf-ic" aria-hidden="true">🔒</span><span>Sperren</span><span class="mf-state"></span></button></div><div id="mf_side"><button type="button" id="mf_info" class="mf-info" aria-label="Bedienung der Kamera-Knöpfe" title="Bedienung der Kamera-Knöpfe" hidden>ⓘ</button><button type="button" id="mf_page" class="mf-page" aria-pressed="false" aria-label="Zweite Seite der Fußleiste: Rotation und Sperren" title="Zweite Seite: Rotation und Sperren">⇄</button></div></nav>
 <dialog id="rdlg"><form method="dialog"><b>Noch nicht übernommen</b>
 <p id="rdlg_t"></p><p class="muted">Die Sendung läuft noch mit den alten Werten. Ein Neustart unterbricht das Bild für einige Sekunden.</p>
 <div class="actions"><button type="button" id="rdlg_go" class="warnbtn">Stream neu starten</button><button type="submit" class="sec">Später</button></div></form></dialog>
@@ -98,6 +99,8 @@
 <script src="/ui/js/22-yt.js"></script>
 <script src="/ui/js/23-hub.js"></script>
 <script src="/ui/js/24-swipe.js"></script>
+<script src="/ui/js/25-rot.js"></script>
+<script src="/ui/js/26-foot2.js"></script>
 <script src="/modem.js"></script>
 <script src="/chat.js"></script>
 </body>
