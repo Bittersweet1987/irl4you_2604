@@ -204,6 +204,8 @@ LAG_HOLD_S = 15.0
 LAG_MAX_TRIES = 3
 LAG_WINDOW_S = 180.0
 HOLD_FILE = "feed-hold.json"
+FAILOVER_S = 5.0          # so lange muss eine Kamera des Bildaufbaus ausgefallen sein, bevor eine freie Kamera ihren Platz übernimmt
+FAILBACK_S = 10.0         # so lange muss die ausgefallene Kamera wieder da sein, bevor sie ihren Platz zurückbekommt
 
 
 def delays_by_key(c):
@@ -747,6 +749,9 @@ class LiveController:
         self.layout = Layout()
         self.cfg = {}
         self.desired = ["", "", "", ""]
+        self.cfg_desired = ["", "", "", ""]
+        self.sub = {}
+        self.gone, self.present = {}, {}
         self.inactive = []
         self.cfg_sig = None
         self.cmd_at = {}
@@ -771,18 +776,57 @@ class LiveController:
         self.cfg_sig = sig
         c = self.safe_cfg({**{"type": "single", "main": ""}, **cfg})
         self.cfg = c
-        self.desired = [c.get(k, "") if isinstance(c.get(k, ""), str) and pa.KEY_RE.match(c.get(k, "") or "") else "" for k in ("main", "pip", "pip2", "pip3")]
+        self.cfg_desired = [c.get(k, "") if isinstance(c.get(k, ""), str) and pa.KEY_RE.match(c.get(k, "") or "") else "" for k in ("main", "pip", "pip2", "pip3")]
         ina = c.get("inactive")
         self.inactive = [k for k in ina if isinstance(k, str)] if isinstance(ina, list) else []
+        self.sub = {}
+        self.reassign_lines += self._bind()
+        return True
+
+    def _bind(self):
+        """Die Kameras der Plätze (wie eingestellt, bei Ausfall mit freier Ersatzkamera) an die Zweige des Sendeteils binden; gibt die Befehle für geänderte Zweige zurück."""
+        self.desired = [self.sub.get(k, k) if k else "" for k in self.cfg_desired]
         before = list(self.binder.slot_key)
         self.binder.update([k for k in self.desired if k])
+        lines = []
         for s in range(SLOTS):
             if self.started and before[s] != self.binder.slot_key[s]:
                 key = self.binder.slot_key[s] or PLACEHOLDER % s
-                self.reassign_lines += [f"feed cam{s} off", f"set cam{s}_src location {self.base}/{key}"]
+                lines += [f"feed cam{s} off", f"set cam{s}_src location {self.base}/{key}"]
                 self.cmd_at[s] = 0.0
                 self.log(f"send: Platz {s}: Kamera {before[s] or '-'} -> {self.binder.slot_key[s] or '-'} (ohne Neustart)")
-        return True
+        return lines
+
+    def failover(self, now):
+        """Fällt eine Kamera des Bildaufbaus aus und ist eine andere aktive (verbundene, nicht deaktivierte) Kamera frei, übernimmt diese den Platz; kommt die
+        ausgefallene Kamera wieder, bekommt sie ihn zurück. Die gespeicherte Auswahl bleibt dabei unverändert."""
+        if not self.cfg or not self.pub_known:
+            return []
+        wanted = [k for k in self.cfg_desired if k]
+        for k in wanted:
+            if k in self.pub:
+                self.gone.pop(k, None)
+                self.present.setdefault(k, now)
+            else:
+                self.present.pop(k, None)
+                self.gone.setdefault(k, now)
+        changed = False
+        for orig, spare in list(self.sub.items()):
+            if self.cfg.get("auto_failover") is False or spare not in self.pub or spare in self.held or spare in self.inactive or (
+                    orig in self.pub and now - self.present.get(orig, now) >= FAILBACK_S):
+                del self.sub[orig]
+                changed = True
+        if self.cfg.get("auto_failover") is not False:
+            for orig in wanted:
+                if orig in self.sub or orig in self.pub or now - self.gone.get(orig, now) < FAILOVER_S:
+                    continue
+                taken = set(wanted) | set(self.sub.values())
+                spare = next((k for k in sorted(self.pub) if k not in taken and k not in self.inactive and k not in self.held), None)
+                if spare:
+                    self.sub[orig] = spare
+                    changed = True
+                    self.log(f"send: Kamera {orig} ist ausgefallen, {spare} übernimmt den Platz")
+        return self._bind() if changed else []
 
     def effective_delays(self, big_key=None):
         want = delays_by_key(self.cfg)
@@ -885,6 +929,7 @@ class LiveController:
             if got is not None:
                 self.pub, self.pub_known = got, True
         self.states = self.stats()
+        lines += self.failover(now)
         slot_key = self.binder.slot_key
         self.check_lag(now, slot_key)
         pre = {}
