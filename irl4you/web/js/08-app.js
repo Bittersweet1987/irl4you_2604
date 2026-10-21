@@ -147,7 +147,7 @@ function pipConstrain(v) {
   pipPrevMain = main;
   const pip = has(v.pip) && v.pip !== main ? v.pip : (free([main])[0] || {}).key || "";
   const pip2 = has(v.pip2) && v.pip2 !== main && v.pip2 !== pip ? v.pip2 : "";
-  const pip3 = pip2 && has(v.pip3) && v.pip3 !== main && v.pip3 !== pip && v.pip3 !== pip2 ? v.pip3 : "";
+  const pip3 = has(v.pip3) && v.pip3 !== main && v.pip3 !== pip && v.pip3 !== pip2 ? v.pip3 : "";
   const fill = (id, list, val, none) => {
     const el = $(id);
     el.innerHTML =
@@ -157,8 +157,8 @@ function pipConstrain(v) {
   };
   fill("p_main", pipCams, main, false);
   fill("p_pip", free([main]), pip, false);
-  fill("p_pip2", free([main, pip]), pip2, true);
-  fill("p_pip3", pip2 ? free([main, pip, pip2]) : [], pip3, true);
+  fill("p_pip2", free([main, pip, pip3]), pip2, true);
+  fill("p_pip3", free([main, pip, pip2]), pip3, true);
   const ids = pipCorners.map((n, i) => String(i));
   const taken = (i, used) => i !== FREE_ID && used.includes(i);
   const c1 = ids.includes(String(v.c1)) ? String(v.c1) : "3";
@@ -169,9 +169,10 @@ function pipConstrain(v) {
   $("p_corner2").innerHTML = pipCorners.map((n, i) => (taken(String(i), [c1]) ? "" : `<option value="${i}">${esc(n)}</option>`)).join("");
   $("p_corner2").value = c2;
   let c3 = String(v.c3);
-  if (taken(c3, [c1, c2]) || !ids.includes(c3)) c3 = ids.find((i) => !taken(i, [c1, c2])) || "";
+  const used3 = pip2 ? [c1, c2] : [c1];
+  if (taken(c3, used3) || !ids.includes(c3)) c3 = ids.find((i) => !taken(i, used3)) || "";
   $("p_corner3").innerHTML = pipCorners
-    .map((n, i) => (taken(String(i), [c1, c2]) ? "" : `<option value="${i}">${esc(n)}</option>`))
+    .map((n, i) => (taken(String(i), used3) ? "" : `<option value="${i}">${esc(n)}</option>`))
     .join("");
   $("p_corner3").value = c3;
   const nm = (k) => {
@@ -191,7 +192,6 @@ function pipConstrain(v) {
     .join("");
   au.value = [...au.options].some((o) => o.value === prev) ? prev : "main";
   $("p_corner2").disabled = !pip2;
-  $("p_pip3").disabled = !pip2;
   $("p_corner3").disabled = !pip3;
   $("dl2").style.display = pip2 ? "" : "none";
   $("dl3").style.display = pip3 ? "" : "none";

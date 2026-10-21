@@ -278,15 +278,16 @@ class PipelineStore(PipelineBuild):
             else:
                 cfg["pip2_delay_ms"] = 0
             pip3 = str(req.get("pip3", "") or "")
-            if pip3 and pip2:
+            if pip3:
                 try:
                     corner3 = int(req.get("corner3", 0))
                 except (TypeError, ValueError):
                     raise ValueError("Ecke muss eine Zahl sein")
                 if pip3 not in camera_keys or pip3 in (main, pipk, pip2):
                     raise ValueError("Drittes kleines Bild: eine weitere vorhandene Kamera wählen")
-                if corner3 not in range(len(pip_corners())) or (corner3 != FREE and corner3 in (corner, cfg["corner2"])):
-                    raise ValueError("Drittes kleines Bild: eine andere Position als die ersten beiden wählen")
+                used = [corner] + ([cfg["corner2"]] if pip2 else [])
+                if corner3 not in range(len(pip_corners())) or (corner3 != FREE and corner3 in used):
+                    raise ValueError("Drittes kleines Bild: eine andere Position als die anderen kleinen Bilder wählen")
                 cfg.update(pip3=pip3, corner3=corner3)
             else:
                 cfg["pip3_delay_ms"] = 0

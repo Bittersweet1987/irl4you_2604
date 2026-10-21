@@ -56,8 +56,9 @@ class PipelineBuild:
         pip2 = bool(pip and c.get("pip2") and KEY_RE.match(c["pip2"]) and c.get("corner2") in range(len(PIP_CORNERS))
                     and (c["corner2"] != c["corner"] or c["corner"] == FREE))
         multi = plugin_multi()
-        pip3 = bool(multi and pip2 and c.get("pip3") and KEY_RE.match(c["pip3"])
-                    and c.get("corner3") in range(len(PIP_CORNERS)) and (c["corner3"] == FREE or c["corner3"] not in (c["corner"], c["corner2"])))
+        used = (c["corner"], c["corner2"]) if pip2 else (c["corner"],)
+        pip3 = bool(multi and pip and c.get("pip3") and KEY_RE.match(c["pip3"])
+                    and c.get("corner3") in range(len(PIP_CORNERS)) and (c["corner3"] == FREE or c["corner3"] not in used))
         return pip, pip2, pip3, multi
 
     @classmethod
@@ -76,7 +77,7 @@ class PipelineBuild:
         if audio == "pip2" and not pip2 or audio == "pip3" and not pip3 or audio not in ("main", "pip", "pip2", "pip3"):
             audio = "main"
         pos = {"main": -1, "pip": 0, "pip2": 1, "pip3": 2}[audio]
-        nums = [0, 1, 2 if pip2 else 15, 3 if pip3 else 15]
+        nums = [0, 1, cams.index(c["pip2"]) if pip2 else 15, cams.index(c["pip3"]) if pip3 else 15]
         return {"cams": cams, "group": group, "audio_pos": pos, "asel": pos < 0 or pos + 1 < group,
                 "state": nums[0] | nums[1] << 4 | nums[2] << 8 | nums[3] << 12, "line": " ".join(map(str, nums))}
 
@@ -102,7 +103,7 @@ class PipelineBuild:
         if audio == "pip2" and not pip2 or audio == "pip3" and not pip3 or audio not in ("main", "pip", "pip2", "pip3"):
             audio = "main"
         pos = {"main": -1, "pip": 0, "pip2": 1, "pip3": 2}[audio]
-        nums = [0, 1, 2 if pip2 else 15, 3 if pip3 else 15]
+        nums = [0, 1, cams.index(c["pip2"]) if pip2 else 15, cams.index(c["pip3"]) if pip3 else 15]
         return {"cams": cams, "group": len(cams), "audio_pos": pos, "asel": True, "always": True,
                 "state": nums[0] | nums[1] << 4 | nums[2] << 8 | nums[3] << 12, "line": " ".join(map(str, nums))}
 

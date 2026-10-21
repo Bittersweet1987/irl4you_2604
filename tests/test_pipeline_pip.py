@@ -32,6 +32,19 @@ class TestBildaufbau(unittest.TestCase):
         c = self.store.cfg
         self.assertEqual((c["type"], c["pip"], c["always_ready"], c["swap_cams"]), ("pip", "s23", True, 4))
 
+    def test_jedes_kleine_bild_ist_eigenstaendig(self):
+        self.store.set({"type": "pip", "main": "osmo", "pip": "s23", "pip2": "", "pip3": "redmi", "corner3": 0}, KEYS)
+        c = self.store.cfg
+        self.assertEqual((c["pip"], c["pip2"], c["pip3"]), ("s23", "", "redmi"))
+        pip, pip2, pip3, multi = self.store._layout(c)
+        self.assertEqual((pip, pip2), (True, False))
+        if multi:
+            self.assertTrue(pip3)
+        with self.assertRaises(ValueError):
+            self.store.set({"type": "pip", "main": "osmo", "pip": "s23", "pip3": "osmo"}, KEYS)         # dieselbe Kamera wie das Hauptbild
+        with self.assertRaises(ValueError):
+            self.store.set({"type": "pip", "main": "osmo", "pip": "s23", "corner": 3, "pip3": "redmi", "corner3": 3}, KEYS)  # gleiche Position
+
     def test_ungueltiges_kleines_bild_bleibt_ein_fehler(self):
         with self.assertRaises(ValueError):
             self.store.set({"type": "pip", "main": "osmo", "pip": "osmo"}, KEYS)
