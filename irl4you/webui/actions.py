@@ -58,6 +58,20 @@ def scene_assign(pipeline, cams, send, slot, key):
     return {"ok": True, "restarted": restarted, "note": note or "Gespeichert."}
 
 
+def rotation_state(pipeline, cams):
+    """Stand der Kamera-Rotation für die Oberfläche: Einstellung, alle Kameras (auch deaktivierte und nicht verbundene), belegte Plätze."""
+    c = PipelineStore._safe_cfg(pipeline.cfg)
+    rot = PipelineStore.clean_rotation(c.get("rotation") or {}, None, None)
+    inactive = set(c.get("inactive") or [])
+    names = PipelineStore.SLOTS
+    slot_of = {c.get(s): i for i, s in reversed(list(enumerate(names))) if c.get(s)}
+    listed = {x["key"]: x for x in cams.listing("")}
+    out = [{"key": k, "name": (x.get("name") or k), "online": x.get("state") != "offline", "inactive": k in inactive, "slot": slot_of.get(k, -1)}
+           for k, x in listed.items()]
+    return {"rotation": rot, "pip": c.get("type") == "pip" and bool(c.get("pip")), "cameras": out,
+            "slots": {s: c.get(s) or "" for s in names}}
+
+
 def controller_action(fn, pipeline, cams, send):
     cfg = pipeline.cfg
     if fn in ("pip1", "pip2", "pip3"):

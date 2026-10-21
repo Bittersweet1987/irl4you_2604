@@ -205,6 +205,7 @@ LAG_MAX_TRIES = 3
 LAG_WINDOW_S = 180.0
 HOLD_FILE = "feed-hold.json"
 FAILOVER_S = 5.0          # so lange muss eine Kamera des Bildaufbaus ausgefallen sein, bevor eine freie Kamera ihren Platz übernimmt
+ROT_MIN_S = 5.0
 FAILBACK_S = 10.0         # so lange muss die ausgefallene Kamera wieder da sein, bevor sie ihren Platz zurückbekommt
 
 
@@ -750,6 +751,8 @@ class LiveController:
         self.cfg = {}
         self.desired = ["", "", "", ""]
         self.cfg_desired = ["", "", "", ""]
+        self.base_desired = ["", "", "", ""]
+        self.rot_at, self.rot_ptr = None, 0
         self.sub = {}
         self.gone, self.present = {}, {}
         self.inactive = []
@@ -779,9 +782,57 @@ class LiveController:
         self.cfg_desired = [c.get(k, "") if isinstance(c.get(k, ""), str) and pa.KEY_RE.match(c.get(k, "") or "") else "" for k in ("main", "pip", "pip2", "pip3")]
         ina = c.get("inactive")
         self.inactive = [k for k in ina if isinstance(k, str)] if isinstance(ina, list) else []
+        self.base_desired = list(self.cfg_desired)
+        self.rot_at = None
         self.sub = {}
         self.reassign_lines += self._bind()
         return True
+
+    def rotate(self, now):
+        """Rotierende Kameras: Die gewählten Plätze bekommen reihum die Kameras aus dem Pool (nur verbunden, nicht deaktiviert), alle Sekunden der Wechselzeit eine weiter.
+        Kameras auf Plätzen, die nicht rotieren, werden nie gewechselt. Die gespeicherte Auswahl bleibt unverändert."""
+        base = list(self.base_desired)
+        r = self.cfg.get("rotation") if self.cfg else None
+        rslots = []
+        if isinstance(r, dict) and r.get("on") and self.cfg.get("type") == "pip" and self.pub_known:
+            names = ("main", "pip", "pip2", "pip3")
+            rslots = [s for s in range(SLOTS) if base[s] and (r.get("all") or names[s] in (r.get("slots") or []))]
+        new = base
+        if rslots:
+            fixed = {base[s] for s in range(SLOTS) if base[s] and s not in rslots}
+            pool = r.get("pool")
+            order = [k for k in (pool if isinstance(pool, list) else sorted(self.pub)) if isinstance(k, str)]
+            order += [base[s] for s in rslots if base[s] not in order]
+            cand = [k for k in dict.fromkeys(order) if k in self.pub and k not in fixed and k not in self.inactive and k not in self.held]
+            try:
+                secs = max(ROT_MIN_S, float(r.get("seconds", 30)))
+            except (TypeError, ValueError):
+                secs = 30.0
+            if self.rot_at is None:
+                self.rot_at = now
+                first = base[rslots[0]]
+                self.rot_ptr = cand.index(first) if first in cand else 0
+            elif now - self.rot_at >= secs:
+                self.rot_at = now
+                self.rot_ptr += 1
+            if cand:
+                new = list(base)
+                n = len(cand)
+                for i, s in enumerate(rslots):
+                    if n >= len(rslots):
+                        new[s] = cand[(self.rot_ptr + i) % n]
+                    else:
+                        new[s] = cand[i] if i < n else ""
+                if not new[0] and base[0]:
+                    new[0] = base[0]
+        else:
+            self.rot_at = None
+        if new == self.cfg_desired:
+            return []
+        self.cfg_desired = new
+        self.sub = {}
+        self.log("send: Rotation: " + ", ".join(f"Platz {i}: {k or '-'}" for i, k in enumerate(new)))
+        return self._bind()
 
     def _bind(self):
         """Die Kameras der Plätze (wie eingestellt, bei Ausfall mit freier Ersatzkamera) an die Zweige des Sendeteils binden; gibt die Befehle für geänderte Zweige zurück."""
@@ -929,6 +980,7 @@ class LiveController:
             if got is not None:
                 self.pub, self.pub_known = got, True
         self.states = self.stats()
+        lines += self.rotate(now)
         lines += self.failover(now)
         slot_key = self.binder.slot_key
         self.check_lag(now, slot_key)
@@ -992,7 +1044,7 @@ class LiveController:
             self._confirm_view(view_changed or self._view_pending or eff_changed)
             self._view_pending = False
         shown = set(self.alive) | {k for k in slot_key if k and k in self.pub}
-        return {"slots": list(slot_key), "alive": sorted(shown), "main": self.main_key, "line": self.last_line, "sub": dict(self.sub)}
+        return {"slots": list(slot_key), "alive": sorted(shown), "main": self.main_key, "line": self.last_line, "sub": dict(self.sub), "desired": list(self.desired)}
 
     def send_lines(self, lines):
         parts = [[]]

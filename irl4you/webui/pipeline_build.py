@@ -34,6 +34,14 @@ class PipelineBuild:
         out["type"] = "pip" if out.get("type") == "pip" else "single"
         out["swap_cams"] = 4 if out["type"] == "pip" else 0
         out["always_ready"] = out["type"] == "pip"
+        rot = out.get("rotation")
+        if rot is not None:
+            try:
+                out["rotation"] = cls.clean_rotation(rot) if out["type"] == "pip" else None
+            except ValueError:
+                out["rotation"] = None
+            if out["rotation"] is None:
+                out.pop("rotation")
         fc = out.get("facecam")
         out["facecam"] = fc if (out["type"] == "pip" and isinstance(fc, str) and KEY_RE.match(fc) and fc in [out.get(s) for s in cls.SLOTS]) else ""
         out["styles"] = clean_styles(out.get("styles"))

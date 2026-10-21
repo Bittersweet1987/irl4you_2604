@@ -262,9 +262,10 @@ class SendControl:
         order = ("main", "pip", "pip2", "pip3")
         place = {"main": c["main"], "pip": c["pip"], "pip2": c["pip2"] if pip2 else "", "pip3": c["pip3"] if pip3 else ""}
         if self.always_live():
-            # Hat bei einem Ausfall eine freie Kamera den Platz übernommen, zeigt die Leiste diese Kamera
-            sub = (self._detail().get("failover") or {}).get("sub") or {}
-            place = {k: (sub.get(v, v) if isinstance(sub, dict) and v else v) for k, v in place.items()}
+            # Hat bei einem Ausfall oder durch die Rotation eine andere Kamera den Platz übernommen, zeigt die Leiste diese Kamera
+            eff = (self._detail().get("failover") or {}).get("desired") or []
+            if isinstance(eff, list) and len(eff) == 4:
+                place = {k: (eff[i] if isinstance(eff[i], str) and eff[i] and place[k] else place[k]) for i, k in enumerate(order)}
         st = self.view_state() if self.view_live() else None
         if st:
             hide, apos, mute = st["hide"], st["audio"], bool(st["mute"])

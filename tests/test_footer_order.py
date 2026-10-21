@@ -42,7 +42,7 @@ class TestFooterOrder(unittest.TestCase):
         send.pipeline, send.cams, send.demo = store, FakeCams(KEYS), True
         send._fake_view = None
         send.always_live = lambda: True
-        send._detail = lambda: {"state": "running", "failover": {"live": ["osmo", "s23", "redmi"], "main": "osmo", "sub": {"ios": "s23"}}}
+        send._detail = lambda: {"state": "running", "failover": {"live": ["osmo", "s23", "redmi"], "main": "osmo", "desired": ["osmo", "s23", "redmi", ""]}}
         f = send.footer()
         self.assertEqual([(c["key"], c["slot"]) for c in f["cams"]], [("osmo", 0), ("s23", 1), ("redmi", 2)])
         d.cleanup()

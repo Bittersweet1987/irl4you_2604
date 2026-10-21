@@ -4,7 +4,7 @@ import re
 
 from twitch import HelixChat, TwitchLogin
 
-from .actions import scene_assign, scene_swap
+from .actions import rotation_state, scene_assign, scene_swap
 from .auth import REMEMBER_SECONDS, SESSION_SECONDS
 from .camservices import HDMI_KEY
 from .common import iface_ips
@@ -142,6 +142,9 @@ class PostRoutes:
                 if isinstance(slot, bool) or not isinstance(slot, int) or slot not in range(len(PipelineStore.SLOTS)):
                     raise ValueError("Platz unbekannt")
                 return self.reply(200, scene_assign(self.pipeline, self.cams, self.send, PipelineStore.SLOTS[slot], d.get("key")))
+            if path == "/api/pipeline/rotation":
+                self.pipeline.set_rotation(d, [c["key"] for c in self.cams.cams])
+                return self.reply(200, rotation_state(self.pipeline, self.cams))
             if path == "/api/pipeline/facecam":
                 slot = d.get("slot", "")
                 if not isinstance(slot, str):

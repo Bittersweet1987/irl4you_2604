@@ -141,6 +141,43 @@ class PipelineStore(PipelineBuild):
             self.save()
             return shown
 
+    ROT_SECONDS = (5, 3600)
+
+    @classmethod
+    def clean_rotation(cls, d, camera_keys=None, base=None):
+        """Rotierende Kameras: {"on", "all" (alle Bilder wechseln), "slots" (nur diese Bilder), "seconds", "pool" (diese Kameras, None = alle)}."""
+        base = base if isinstance(base, dict) else {}
+        d = d if isinstance(d, dict) else {}
+
+        def pick(k, dflt):
+            return d[k] if k in d else base.get(k, dflt)
+        out = {"on": pick("on", False) is True, "all": pick("all", False) is True}
+        sl = pick("slots", ["pip"])
+        out["slots"] = [x for x in cls.SLOTS if isinstance(sl, list) and x in sl]
+        try:
+            sec = int(pick("seconds", 30))
+        except (TypeError, ValueError):
+            raise ValueError("Wechselzeit: eine Zahl in Sekunden")
+        if not cls.ROT_SECONDS[0] <= sec <= cls.ROT_SECONDS[1]:
+            raise ValueError("Wechselzeit: %d bis %d Sekunden" % cls.ROT_SECONDS)
+        out["seconds"] = sec
+        pool = pick("pool", None)
+        if pool is not None:
+            if not isinstance(pool, list):
+                raise ValueError("Kameras für den Wechsel: eine Liste")
+            pool = [k for k in dict.fromkeys(pool) if isinstance(k, str) and KEY_RE.match(k) and (camera_keys is None or k in camera_keys)]
+        out["pool"] = pool
+        return out
+
+    def set_rotation(self, req, camera_keys):
+        with self.lock:
+            c = self.cfg
+            if c.get("type") != "pip":
+                raise ValueError("Die Rotation gibt es nur bei Bild-in-Bild (mindestens eine Kamera mit kleinem Bild)")
+            c["rotation"] = self.clean_rotation(req, camera_keys, c.get("rotation"))
+            self.save()
+            return c["rotation"]
+
     DELAY_OF = {"main": "main_delay_ms", "pip": "pip_delay_ms", "pip2": "pip2_delay_ms", "pip3": "pip3_delay_ms"}
 
     def assign_slot(self, slot, key, camera_keys):
@@ -263,6 +300,8 @@ class PipelineStore(PipelineBuild):
         fc = self._carry_facecam(cfg)
         if fc:
             cfg["facecam"] = fc
+        if t == "pip" and isinstance(self.cfg.get("rotation"), dict):
+            cfg["rotation"] = self.cfg["rotation"]
         with self.lock:
             self.cfg = cfg
             self.save()
@@ -325,6 +364,7 @@ def view_only_change(a, b):
     def norm(c):
         c = dict(c)
         c.pop("facecam", None)
+        c.pop("rotation", None)
         c["audio"] = "main"
         c["styles"] = clean_styles(c.get("styles"))
         for k in STYLE_SLOTS:
@@ -340,7 +380,7 @@ def always_compatible(a, b):
             c[k] = bool(c.get(k))
         for k in DELAY_KEYS:
             c.pop(k, None)
-        for k in ("audio", "inactive", "auto_failover", "swap_cams", "facecam"):
+        for k in ("audio", "inactive", "auto_failover", "swap_cams", "facecam", "rotation"):
             c.pop(k, None)
         c["styles"] = clean_styles(c.get("styles"))
         for k in STYLE_SLOTS:

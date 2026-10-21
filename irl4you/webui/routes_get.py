@@ -6,6 +6,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
+from .actions import rotation_state
 from .auth import Auth
 from .cameras import label_bluetooth
 from .common import WEB_DIR, iface_ips, read
@@ -81,6 +82,8 @@ class GetRoutes:
             return self.reply(200, self.layout.get())
         if path == "/api/deck":
             return self.reply(200, self.deck.get())
+        if path == "/api/pipeline/rotation":
+            return self.reply(200, rotation_state(self.pipeline, self.cams))
         if path == "/api/hub":
             return self.reply(200, dict(self.hub.get(), port=self.hub_port))
         if path == "/api/btdriver":
