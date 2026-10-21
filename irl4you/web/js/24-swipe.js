@@ -86,6 +86,10 @@
   box.addEventListener("pointerdown", (e) => {
     const b = e.target.closest(".mf-cam");
     st = !b || (e.pointerType === "mouse" && e.button !== 0) ? null : { btn: b, x0: e.clientX, y0: e.clientY, d: dir(), pick: null };
+    if (st)
+      try {
+        b.setPointerCapture(e.pointerId);       // Maus: die Bewegung auch außerhalb der Leiste weiter verfolgen (Finger tut das von selbst)
+      } catch (x) {}
   });
   // im Fangen-Schritt, damit die bisherige Bedienung (Lang drücken, Doppeltippen) während des Wischens nicht dazwischenfunkt
   box.addEventListener(
@@ -102,6 +106,8 @@
           if (navigator.vibrate) navigator.vibrate(15);
         } catch (x) {}
         st.pick = show(st.btn, st.d);
+        setTimeout(() => (footBusy = true), 0);      // die bisherige Bedienung bricht beim ersten Weitergeben das Lang-Drücken ab und gibt die Leiste frei: wieder sperren
+        return;                                       // dieses eine Ereignis geht weiter, damit das Lang-Drücken (Kamera deaktivieren) nicht mehr auslöst
       }
       e.stopPropagation();
       const t = hit(st.pick, e.clientX, e.clientY);
