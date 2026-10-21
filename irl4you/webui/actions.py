@@ -1,7 +1,7 @@
 """IRL4YOU BOX Oberfläche: Aktionen aus Tastenbelegungen und Szenenwechsel."""
 
 from .common import KEY_RE
-from .pipeline import PipelineStore
+from .pipeline import PipelineStore, always_compatible
 
 
 def scene_swap(pipeline, cams, send, with_key=None):
@@ -26,8 +26,8 @@ def scene_swap(pipeline, cams, send, with_key=None):
 
 
 def scene_assign(pipeline, cams, send, slot, key):
-    """Kamera auf einen Platz legen. Tauschen zwei Kameras, die schon im Bild sind, geht das wie ein Tausch ohne Unterbrechung; eine Kamera, die noch
-    nicht im Bild war, braucht einen Neustart der Sendung."""
+    """Kamera auf einen Platz legen. Tauschen zwei Kameras, die schon im Bild sind, geht das ohne Unterbrechung; eine Kamera, die noch nicht im Bild war,
+    legt der Sendeteil bei "Alle Kameras immer bereit" ebenfalls ohne Neustart auf den Platz, sonst startet die Sendung neu."""
     if slot not in PipelineStore.SLOTS:
         raise ValueError("Platz unbekannt")
     if not isinstance(key, str) or not KEY_RE.match(key):
@@ -35,9 +35,16 @@ def scene_assign(pipeline, cams, send, slot, key):
     if any(x["key"] == key and x.get("state") == "offline" for x in cams.listing("")):
         raise ValueError("Diese Kamera ist nicht verbunden.")
     old_audio = PipelineStore.view_values(pipeline.cfg)[1]
+    before = dict(pipeline.cfg)
     kind, shown = pipeline.assign_slot(slot, key, [c["key"] for c in cams.cams])
     if kind == "same":
         return {"ok": True, "restarted": False, "note": ""}
+    if kind == "replace" and send.always_live() and always_compatible(before, pipeline.cfg):
+        # Der Sendeteil legt die neue Kamera selbst auf den Platz (verbindet den Abschnitt neu), die Sendung läuft weiter
+        hide, aud = PipelineStore.view_values(pipeline.cfg)
+        cur = send.view_state()
+        send.apply_view(hide, aud, bool(cur and cur["mute"]))
+        return {"ok": True, "restarted": False, "note": "Gespeichert. Die Änderung gilt sofort, ohne Neustart."}
     if kind == "swap" and (send.always_live() or send.swap_live()):
         note = "Getauscht, ohne Unterbrechung."
         moved = PipelineStore.view_values(pipeline.cfg)[1] != old_audio

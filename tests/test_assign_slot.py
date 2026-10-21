@@ -35,6 +35,9 @@ class FakeSend:
     def view_state(self):
         return None
 
+    def apply_view(self, hide, aud, mute):
+        return True
+
     def restart_if_live(self):
         self.restarts += 1
         return True, "Neustart"
@@ -81,8 +84,12 @@ class TestAssign(unittest.TestCase):
         send = FakeSend(always=True)
         r = self.actions.scene_assign(self.store, FakeCams(), send, "pip", "ios")
         self.assertEqual((r["restarted"], send.restarts), (False, 0))
-        r = self.actions.scene_assign(self.store, FakeCams(), send, "pip", "extra")
-        self.assertEqual((r["restarted"], send.restarts), (True, 1))
+        r = self.actions.scene_assign(self.store, FakeCams(), send, "pip", "extra")           # verbundene, aber ungenutzte Kamera: ohne Neustart
+        self.assertEqual((r["restarted"], send.restarts), (False, 0))
+        send = FakeSend(always=False)
+        r = self.actions.scene_assign(self.store, FakeCams(), send, "pip2", "ios")
+        r = self.actions.scene_assign(self.store, FakeCams(), send, "pip2", "redmi")
+        self.assertEqual(send.restarts, 2)
         with self.assertRaises(ValueError):
             self.actions.scene_assign(self.store, FakeCams(offline=("extra",)), send, "pip2", "extra")
 
