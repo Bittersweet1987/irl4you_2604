@@ -61,8 +61,7 @@
 .rotform .rotmsg:empty {
   display: none;
 }
-html.locked,
-html.locked body {
+html.locked {
   overflow: hidden;
   overscroll-behavior: none;
 }
