@@ -278,7 +278,7 @@ class SendControl:
             if place[k]:
                 slot_of.setdefault(place[k], i)
         listed = {x["key"]: x for x in self.cams.listing("")}
-        keys = sorted(slot_of, key=slot_of.get)               # immer in der Reihenfolge der Plätze: Hauptkamera, kleines Bild 1, 2, 3
+        keys = [k for k in listed if k in slot_of] + [k for k in slot_of if k not in listed]
         cams = [{"key": k, "name": (listed.get(k) or {}).get("name") or k, "state": (listed.get(k) or {}).get("state", "unknown"),
                  "slot": slot_of[k], "main": slot_of[k] == 0, "hidden": slot_of[k] > 0 and bool(hide >> (slot_of[k] - 1) & 1),
                  "inactive": slot_of[k] > 0 and k in (c.get("inactive") or [])} for k in keys]

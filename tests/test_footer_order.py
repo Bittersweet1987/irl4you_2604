@@ -1,4 +1,4 @@
-"""Fußleiste am Handy: Kamera-Knöpfe immer in der Reihenfolge der Plätze (Hauptkamera, kleines Bild 1, 2, 3)."""
+"""Fußleiste am Handy: Kamera-Knöpfe in der Reihenfolge der Kameraliste (die Hauptkamera steht nicht immer vorn); die Ersatzkamera erscheint statt der ausgefallenen."""
 import os
 import sys
 import tempfile
@@ -19,7 +19,7 @@ class FakeCams:
 
 
 class TestFooterOrder(unittest.TestCase):
-    def test_reihenfolge_nach_platz_nicht_nach_kameraliste(self):
+    def test_reihenfolge_nach_kameraliste_nicht_nach_platz(self):
         d = tempfile.TemporaryDirectory()
         store = irl("webui.pipeline").PipelineStore(os.path.join(d.name, "pipeline.json"))
         store.set({"type": "pip", "main": "redmi", "pip": "ios", "pip2": "osmo", "pip3": "s23"}, KEYS)
@@ -29,8 +29,8 @@ class TestFooterOrder(unittest.TestCase):
         send.always_live = lambda: False
         send._detail = lambda: {}
         f = send.footer()
-        self.assertEqual([c["key"] for c in f["cams"]], ["redmi", "ios", "osmo", "s23"])
-        self.assertEqual([c["slot"] for c in f["cams"]], [0, 1, 2, 3])
+        self.assertEqual([c["key"] for c in f["cams"]], KEYS)
+        self.assertEqual([c["slot"] for c in f["cams"]], [2, 3, 0, 1])
         d.cleanup()
 
     def test_ersatzkamera_erscheint_statt_der_ausgefallenen(self):
