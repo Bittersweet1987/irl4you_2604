@@ -154,6 +154,10 @@ class Config:
             return f.read().strip()
 
 
+class NotModified(Exception):
+    """GitHub hat auf eine bedingte Anfrage (If-None-Match) mit 304 geantwortet: Die Antwort von vorhin gilt weiter. 304 zählt nicht zur Anfragegrenze."""
+
+
 class _NoAuthOnForeignRedirect(urllib.request.HTTPRedirectHandler):
     """Downloads leiten auf einen anderen Rechner um (codeload.github.com). Dorthin darf der Schlüssel nicht mit."""
 
@@ -298,11 +302,11 @@ class Updater:
 
     # ---------- GitHub ----------
 
-    def _request(self, url, accept):
+    def _request(self, url, accept, extra=None):
         if not url.startswith(self.cfg.api + "/"):
             raise Refuse("Adresse außerhalb der Update-Quelle abgelehnt")
-        req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, "Accept": accept,
-                                                   "X-GitHub-Api-Version": "2022-11-28"})
+        req = urllib.request.Request(url, headers=dict({"User-Agent": USER_AGENT, "Accept": accept,
+                                                        "X-GitHub-Api-Version": "2022-11-28"}, **(extra or {})))
         tok = self.cfg.token()
         if tok:
             req.add_header("Authorization", "Bearer " + tok)
@@ -310,6 +314,8 @@ class Updater:
         try:
             return self.opener.open(req, timeout=30)
         except urllib.error.HTTPError as e:
+            if e.code == 304:
+                raise NotModified()
             if e.code in (401, 403):
                 raise Refuse("GitHub lehnt die Anfrage ab (%d). Schlüssel oder Anfragegrenze prüfen." % e.code)
             if e.code in (404, 422):
@@ -318,12 +324,68 @@ class Updater:
         except urllib.error.URLError as e:
             raise Refuse("GitHub nicht erreichbar: %s" % (str(e.reason)[:80],))
 
-    def _json(self, path):
-        with self._request(self.cfg.api + path, "application/vnd.github+json") as r:
-            data = r.read(32 * 1024 * 1024 + 1)
+    def _json(self, path, cache=None):
+        """Antwort der GitHub-Schnittstelle als JSON. Mit cache=<Name> wird die Antwort samt ETag in der Ablage gemerkt und beim nächsten Mal bedingt
+        angefragt: Hat sich nichts geändert, antwortet GitHub mit 304, das zählt nicht zur Anfragegrenze (60 pro Stunde ohne Schlüssel)."""
+        stored = self._cache_get(cache) if cache else None
+        extra = {"If-None-Match": stored["etag"]} if stored and stored.get("path") == path else None
+        try:
+            with self._request(self.cfg.api + path, "application/vnd.github+json", extra) as r:
+                data = r.read(32 * 1024 * 1024 + 1)
+                etag = r.headers.get("ETag")
+        except NotModified:
+            return stored["body"]
         if len(data) > 32 * 1024 * 1024:
             raise Refuse("Antwort von GitHub ist zu groß")
-        return json.loads(data.decode("utf-8"))
+        body = json.loads(data.decode("utf-8"))
+        if cache and etag and len(data) < 2 * 1024 * 1024:
+            self._cache_put(cache, {"path": path, "etag": etag, "body": body})
+        return body
+
+    def _cache_file(self, name):
+        return os.path.join(self.cfg.state_dir, "cache-%s.json" % re.sub(r"[^a-z0-9-]", "", name))
+
+    def _cache_get(self, name):
+        try:
+            with open(self._cache_file(name), encoding="utf-8") as f:
+                d = json.load(f)
+            return d if isinstance(d, dict) and isinstance(d.get("etag"), str) and "body" in d else None
+        except (OSError, ValueError):
+            return None
+
+    def _cache_put(self, name, d):
+        try:
+            os.makedirs(self.cfg.state_dir, mode=0o755, exist_ok=True)
+            tmp = self._cache_file(name) + ".tmp"
+            with open(tmp, "w", encoding="utf-8") as f:
+                json.dump(d, f)
+            os.replace(tmp, self._cache_file(name))
+        except OSError:
+            pass
+
+    def _labels(self):
+        """Versionsnummern bekannter Commits (ändern sich nie): sha -> x.y.z."""
+        try:
+            with open(self._cache_file("labels"), encoding="utf-8") as f:
+                d = json.load(f)
+            return {k: v for k, v in d.items() if SHA_RE.match(k) and isinstance(v, str) and VERSION_RE.match(v)} if isinstance(d, dict) else {}
+        except (OSError, ValueError):
+            return {}
+
+    def _labels_put(self, found):
+        if not found:
+            return
+        d = self._labels()
+        d.update(found)
+        keep = dict(list(d.items())[-200:])
+        try:
+            os.makedirs(self.cfg.state_dir, mode=0o755, exist_ok=True)
+            tmp = self._cache_file("labels") + ".tmp"
+            with open(tmp, "w", encoding="utf-8") as f:
+                json.dump(keep, f)
+            os.replace(tmp, self._cache_file("labels"))
+        except OSError:
+            pass
 
     @staticmethod
     def _commit(c):
@@ -336,7 +398,7 @@ class Updater:
 
     def commits(self, n=15):
         """Neueste Commits des Zweigs, neuester zuerst."""
-        raw = self._json("/repos/%s/commits?sha=%s&per_page=%d" % (self.cfg.repo, urllib.parse.quote(self.cfg.branch), n))
+        raw = self._json("/repos/%s/commits?sha=%s&per_page=%d" % (self.cfg.repo, urllib.parse.quote(self.cfg.branch), n), cache="commits")
         out = [self._commit(c) for c in raw if isinstance(c, dict)] if isinstance(raw, list) else []
         if not out:
             raise Refuse("Der Zweig %s hat keine Commits" % self.cfg.branch)
@@ -344,6 +406,9 @@ class Updater:
 
     def build_number(self, sha):
         """Dritte Stelle der Version: Commits seit dem letzten Release. Ein Release ist der letzte Commit, der VERSION ändert."""
+        known = self._labels().get(sha)
+        if known:
+            return int(known.rsplit(".", 1)[1])
         try:
             rel = self._json("/repos/%s/commits?sha=%s&path=VERSION&per_page=1" % (self.cfg.repo, sha))
             base = rel[0]["sha"]
@@ -371,6 +436,9 @@ class Updater:
         """Versionsnummern x.y.z für die Commits einer Liste (neuester zuerst) mit wenigen Anfragen: Der Release ist der
         nächste ältere Commit der Liste, der VERSION ändert, die dritte Stelle zählt ab ihm hoch. Nicht ermittelbar: None."""
         out = [None] * len(commits)
+        known = self._labels()
+        if all(c["sha"] in known for c in commits):
+            return [known[c["sha"]] for c in commits]
         try:
             rels = self._json("/repos/%s/commits?sha=%s&path=VERSION&per_page=30" % (self.cfg.repo, commits[0]["sha"]))
             rel = {r["sha"] for r in rels if isinstance(r, dict)}
@@ -400,7 +468,8 @@ class Updater:
                             out[i] = "%s%d" % (m.group(1), int(m.group(2)) + last - i)
         except Exception as e:
             self.log("Versionsnummern der Commits nicht ermittelbar (%s)" % e)
-        return out
+        self._labels_put({c["sha"]: v for c, v in zip(commits, out) if v})
+        return [out[i] or known.get(c["sha"]) for i, c in enumerate(commits)]
 
     def resolve(self, ref):
         return self._commit(self._json("/repos/%s/commits/%s" % (self.cfg.repo, urllib.parse.quote(ref))))

@@ -83,6 +83,8 @@ class FakeGitHub:
         self.commits = []                       # neuester zuerst
         self.redirect = False
         self.requests = []
+        self.log = []                           # (Pfad, Abfrage, If-None-Match, Antwortcode)
+        self.etags = False
         self._n = 0
         fake = self
 
@@ -94,6 +96,7 @@ class FakeGitHub:
                 u = urllib.parse.urlsplit(self.path)
                 q = urllib.parse.parse_qs(u.query)
                 fake.requests.append((self.headers.get("Host"), u.path, self.headers.get("Authorization")))
+                fake.log.append([u.path, u.query, self.headers.get("If-None-Match"), 200])
                 base = "/repos/%s/" % fake.repo
                 p = u.path
                 if p == base + "commits" and "path" in q:
@@ -107,7 +110,16 @@ class FakeGitHub:
                     ia, ib = fake.index(a), fake.index(b)
                     return self.js({"ahead_by": ia - ib}) if ia is not None and ib is not None else self.js({}, 404)
                 if p == base + "commits":
-                    return self.js([fake.api(c) for c in fake.commits][:int(q.get("per_page", ["30"])[0])])
+                    body = json.dumps([fake.api(c) for c in fake.commits][:int(q.get("per_page", ["30"])[0])]).encode()
+                    if fake.etags:
+                        tag = '"%s"' % hashlib.sha1(body).hexdigest()
+                        if self.headers.get("If-None-Match") == tag:
+                            fake.log[-1][3] = 304
+                            self.send_response(304)
+                            self.end_headers()
+                            return
+                        return self.send(200, body, "application/json", {"ETag": tag})
+                    return self.send(200, body, "application/json")
                 if p.startswith(base + "commits/") and p.endswith("/check-runs"):
                     c = fake.find(p.split("/")[-2])
                     return self.js({"check_runs": fake.runs(c)}) if c else self.js({}, 404)
@@ -134,8 +146,10 @@ class FakeGitHub:
             def js(self, obj, code=200):
                 self.send(code, json.dumps(obj).encode(), "application/json")
 
-            def send(self, code, data, ctype):
+            def send(self, code, data, ctype, extra=None):
                 self.send_response(code)
+                for k, v in (extra or {}).items():
+                    self.send_header(k, v)
                 self.send_header("Content-Type", ctype)
                 self.send_header("Content-Length", str(len(data)))
                 self.end_headers()
@@ -353,6 +367,41 @@ class TestCheck(Base):
         self.assertEqual(self.u.check()[1], True)
         self.gh.add(ci="none", age=5)
         self.assertEqual(self.u.check()[1], False)
+
+    def test_idle_check_costs_no_quota(self):
+        """Nichts Neues: bedingte Anfrage (304, zählt nicht zur Grenze), Versionsnummern aus der Ablage, keine weiteren Anfragen."""
+        self.gh.etags = True
+        self.gh.add("2.0.0", message="Erster")
+        self.gh.add("2.0.1", message="Zweiter")
+        self.u.install()
+        self.u.check()
+        self.gh.log.clear()
+        self.assertEqual(self.u.check()[1], False)
+        self.assertEqual([(p.rsplit("/", 1)[-1], code) for p, q, inm, code in self.gh.log], [("commits", 304)])
+        self.assertEqual(self.status()["latest_version"], "2.0.1")
+
+    def test_new_commit_few_requests_and_numbers_cached(self):
+        self.gh.etags = True
+        self.gh.add("2.0.0")
+        self.u.install()
+        self.gh.add("2.0.0", message="Zwei")
+        self.gh.log.clear()
+        self.assertEqual(self.u.check()[1], True)
+        first = len(self.gh.log)
+        self.assertLessEqual(first, 8)
+        self.gh.log.clear()
+        self.u.check()
+        self.assertLessEqual(len(self.gh.log), 2)                       # Commitliste (bedingt) und Prüfungen des neuen Stands, keine Versionsabfragen mehr
+
+    def test_no_number_no_install_with_zero(self):
+        """Ist die dritte Stelle nicht ermittelbar, wird nicht mit 0 installiert."""
+        self.gh.add("2.0.0")
+        self.gh.add("2.0.0", message="Zwei")
+        orig = self.u.build_number
+        self.u.build_number = lambda sha: (_ for _ in ()).throw(U.Refuse("GitHub lehnt die Anfrage ab (403)"))
+        self.assertNotEqual(self.u.run("install"), 0)
+        self.assertIsNone(self.u.active_id())
+        self.u.build_number = orig
 
     def test_empty_branch(self):
         self.assertEqual(self.u.run("check"), 2)
