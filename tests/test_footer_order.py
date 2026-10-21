@@ -33,6 +33,20 @@ class TestFooterOrder(unittest.TestCase):
         self.assertEqual([c["slot"] for c in f["cams"]], [0, 1, 2, 3])
         d.cleanup()
 
+    def test_ersatzkamera_erscheint_statt_der_ausgefallenen(self):
+        d = tempfile.TemporaryDirectory()
+        store = irl("webui.pipeline").PipelineStore(os.path.join(d.name, "pipeline.json"))
+        store.set({"type": "pip", "main": "osmo", "pip": "ios", "pip2": "redmi"}, KEYS)
+        mod = irl("webui.send")
+        send = mod.SendControl.__new__(mod.SendControl)
+        send.pipeline, send.cams, send.demo = store, FakeCams(KEYS), True
+        send._fake_view = None
+        send.always_live = lambda: True
+        send._detail = lambda: {"state": "running", "failover": {"live": ["osmo", "s23", "redmi"], "main": "osmo", "sub": {"ios": "s23"}}}
+        f = send.footer()
+        self.assertEqual([(c["key"], c["slot"]) for c in f["cams"]], [("osmo", 0), ("s23", 1), ("redmi", 2)])
+        d.cleanup()
+
 
 if __name__ == "__main__":
     unittest.main()

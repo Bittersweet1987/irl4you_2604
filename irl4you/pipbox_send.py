@@ -632,7 +632,7 @@ class Sender:
             slots = list(st.get("slots", []))
             data["failover"] = {"auto": True, "always": True, "layout": [k for k in slots if k], "configured": keys,
                                 "inactive": list(self.plan["cfg"].get("inactive") or []), "waiting": False, "degraded": False, "wait": {},
-                                "live": st.get("alive", []), "main": st.get("main"),
+                                "live": st.get("alive", []), "main": st.get("main"), "sub": dict(st.get("sub") or {}),
                                 "fps": {k: fps_slots[i] for i, k in enumerate(slots) if k and i in fps_slots}}
             data["always"] = True
             if self.live:

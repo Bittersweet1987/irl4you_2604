@@ -992,7 +992,7 @@ class LiveController:
             self._confirm_view(view_changed or self._view_pending or eff_changed)
             self._view_pending = False
         shown = set(self.alive) | {k for k in slot_key if k and k in self.pub}
-        return {"slots": list(slot_key), "alive": sorted(shown), "main": self.main_key, "line": self.last_line}
+        return {"slots": list(slot_key), "alive": sorted(shown), "main": self.main_key, "line": self.last_line, "sub": dict(self.sub)}
 
     def send_lines(self, lines):
         parts = [[]]
