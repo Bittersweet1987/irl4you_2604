@@ -353,8 +353,8 @@ class Updater:
                 return 0
             return int(self._json("/repos/%s/compare/%s...%s" % (self.cfg.repo, base, sha))["ahead_by"])
         except (Refuse, ValueError, KeyError, IndexError, TypeError) as e:
-            self.log("Dritte Stelle der Version nicht ermittelbar (%s), 0 angenommen" % e)
-            return 0
+            # Nicht 0 annehmen: Die Zahl wird fest in die Version geschrieben (Anzeige "v0.3.0", obwohl es viel weiter ist). Dann lieber später noch einmal.
+            raise Refuse("Die Versionsnummer lässt sich gerade nicht ermitteln (%s). Bitte später noch einmal versuchen." % e)
 
     def version_of(self, sha):
         """Versionsnummer x.y.z eines Commits (VERSION im Commit, dritte Stelle = Commits seit dem Release) oder None, wenn nicht ermittelbar."""
