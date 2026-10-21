@@ -385,7 +385,7 @@ body.camdrag * {
   color-scheme: light;
 }
 
-.mf-cam {
+.mf-t.mf-cam {
   touch-action: none;
   -webkit-user-select: none;
   user-select: none;
