@@ -25,6 +25,32 @@ def scene_swap(pipeline, cams, send, with_key=None):
     return {"ok": True, "restarted": restarted, "note": note or "Getauscht."}
 
 
+def scene_assign(pipeline, cams, send, slot, key):
+    """Kamera auf einen Platz legen. Tauschen zwei Kameras, die schon im Bild sind, geht das wie ein Tausch ohne Unterbrechung; eine Kamera, die noch
+    nicht im Bild war, braucht einen Neustart der Sendung."""
+    if slot not in PipelineStore.SLOTS:
+        raise ValueError("Platz unbekannt")
+    if not isinstance(key, str) or not KEY_RE.match(key):
+        raise ValueError("Kamera unbekannt")
+    if any(x["key"] == key and x.get("state") == "offline" for x in cams.listing("")):
+        raise ValueError("Diese Kamera ist nicht verbunden.")
+    old_audio = PipelineStore.view_values(pipeline.cfg)[1]
+    kind, shown = pipeline.assign_slot(slot, key, [c["key"] for c in cams.cams])
+    if kind == "same":
+        return {"ok": True, "restarted": False, "note": ""}
+    if kind == "swap" and (send.always_live() or send.swap_live()):
+        note = "Getauscht, ohne Unterbrechung."
+        moved = PipelineStore.view_values(pipeline.cfg)[1] != old_audio
+        if shown or moved:
+            hide, aud = PipelineStore.view_values(pipeline.cfg)
+            cur = send.view_state()
+            if not (send.view_live() and send.apply_view(hide, aud, bool(cur and cur["mute"]))):
+                note += " Das kleine Bild erscheint beim nächsten Start der Sendung." if shown else " Der Ton wechselt beim nächsten Start der Sendung."
+        return {"ok": True, "restarted": False, "note": note}
+    restarted, note = send.restart_if_live()
+    return {"ok": True, "restarted": restarted, "note": note or "Gespeichert."}
+
+
 def controller_action(fn, pipeline, cams, send):
     cfg = pipeline.cfg
     if fn in ("pip1", "pip2", "pip3"):

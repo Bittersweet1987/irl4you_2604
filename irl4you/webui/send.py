@@ -292,8 +292,10 @@ class SendControl:
             if src not in options:
                 options = [src]
         aud_key = place[src]
+        every = [{"key": k, "name": x.get("name") or k, "state": x.get("state", "unknown"), "slot": slot_of.get(k, -1)}
+                 for k, x in listed.items() if x.get("state") != "offline"]
         nxt = options[(options.index(src) + 1) % len(options)] if src in options else (options[0] if options else "main")
-        return {"cams": cams,
+        return {"cams": cams, "all": every,
                 "audio": {"src": src, "key": aud_key, "name": (listed.get(aud_key) or {}).get("name") or aud_key, "mute": mute,
                           "next": nxt}}
 

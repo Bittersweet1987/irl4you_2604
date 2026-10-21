@@ -4,7 +4,7 @@ import re
 
 from twitch import HelixChat, TwitchLogin
 
-from .actions import scene_swap
+from .actions import scene_assign, scene_swap
 from .auth import REMEMBER_SECONDS, SESSION_SECONDS
 from .camservices import HDMI_KEY
 from .common import iface_ips
@@ -137,6 +137,11 @@ class PostRoutes:
                 return self.reply(200, {"ok": True})
             if path == "/api/pipeline/swap":
                 return self.reply(200, scene_swap(self.pipeline, self.cams, self.send, d.get("with")))
+            if path == "/api/pipeline/assign":
+                slot = d.get("slot")
+                if isinstance(slot, bool) or not isinstance(slot, int) or slot not in range(len(PipelineStore.SLOTS)):
+                    raise ValueError("Platz unbekannt")
+                return self.reply(200, scene_assign(self.pipeline, self.cams, self.send, PipelineStore.SLOTS[slot], d.get("key")))
             if path == "/api/pipeline/facecam":
                 slot = d.get("slot", "")
                 if not isinstance(slot, str):

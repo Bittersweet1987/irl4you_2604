@@ -141,6 +141,48 @@ class PipelineStore(PipelineBuild):
             self.save()
             return shown
 
+    DELAY_OF = {"main": "main_delay_ms", "pip": "pip_delay_ms", "pip2": "pip2_delay_ms", "pip3": "pip3_delay_ms"}
+
+    def assign_slot(self, slot, key, camera_keys):
+        """Eine Kamera auf einen Platz des Bildaufbaus legen (Hauptbild oder kleines Bild). Liegt sie schon auf einem anderen Platz, tauschen beide.
+        Gibt (Art, Bild erschienen) zurück: Art ist "same", "swap" (beide Kameras bleiben im Bild) oder "replace" (die neue Kamera war noch nicht im Bild)."""
+        with self.lock:
+            c = self.cfg
+            if c.get("type") != "pip" or slot not in self.SLOTS or not c.get(slot):
+                raise ValueError("Dieser Platz ist im Bildaufbau nicht belegt")
+            if key not in camera_keys:
+                raise ValueError("Kamera unbekannt")
+            old = c[slot]
+            if key == old:
+                return "same", False
+            other = next((s for s in self.SLOTS if s != slot and c.get(s) == key), None)
+            if other:
+                c[slot], c[other] = key, old
+                c[self.DELAY_OF[slot]], c[self.DELAY_OF[other]] = c.get(self.DELAY_OF[other], 0), c.get(self.DELAY_OF[slot], 0)
+                kind, touched = "swap", [slot, other]
+            else:
+                c[slot] = key
+                c[self.DELAY_OF[slot]] = DEFAULT_MAIN_DELAY_MS if slot == "main" else DEFAULT_PIP_DELAY_MS
+                kind, touched = "replace", [slot]
+            rest = [k for k in (c.get("inactive") or []) if k != key and k != c["main"]]
+            if rest:
+                c["inactive"] = rest
+            else:
+                c.pop("inactive", None)
+            self._facecam_keeps_the_sound(c)
+            styles = clean_styles(c.get("styles"))
+            shown = False
+            for s in touched:
+                if s != "main":
+                    idx = STYLE_SLOTS[list(self.SLOT_DELAY).index(s)]
+                    if not styles[idx]["visible"]:
+                        styles[idx]["visible"] = True
+                        shown = True
+            if shown:
+                c["styles"] = styles
+            self.save()
+            return kind, shown
+
     def set(self, req, camera_keys):
         if req.get("type", "pip") not in ("single", "pip"):
             raise ValueError("Art des Bildaufbaus unbekannt")

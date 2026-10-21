@@ -9,6 +9,7 @@ $("mf_info").addEventListener("click", () => {
       ? [
           "Kurzer Klick = zum Hauptbild machen",
           "Doppelklick = aus-/einblenden, Ton bleibt",
+          "Wischen = Kamera auf diesen Knopf legen (tauscht, wenn sie schon auf einem Knopf liegt)",
           "Langer Klick = deaktivieren / aktivieren",
           "Ton: kurzer Klick = nächste Spur",
           "Ton: langer Klick = stumm / wieder laut",
