@@ -35,6 +35,7 @@ class TwitchReader:
             self.third.on_user = self._user_ready
         self.events = None
         self.youtube = None
+        self.kick = None
         self.store, self.demo = store, demo
         self.host, self.port, self.tls, self.context = host or self.HOST, port or self.PORT, tls, context
         self.clock, self.wall, self.sleep = clock, wall, sleep
@@ -48,10 +49,10 @@ class TwitchReader:
         self.last_poll = 0.0
         self.demo_at = 0.0
         self.src_path = None
-        self.src_on = {"twitch": True, "youtube": True}
+        self.src_on = {"twitch": True, "youtube": True, "kick": True}
 
     def load_sources(self, path):
-        """Welche Chats angezeigt werden (Twitch, YouTube): aus der Datei lesen, danach bei jeder Änderung speichern."""
+        """Welche Chats angezeigt werden (Twitch, YouTube, Kick): aus der Datei lesen, danach bei jeder Änderung speichern."""
         self.src_path = path
         try:
             with open(path) as f:
@@ -244,7 +245,9 @@ class TwitchReader:
         now = self.clock()
         with self.lock:
             self.last_poll = now
-        tw_on, yt_on = self.source_on("twitch"), self.source_on("youtube")
+        tw_on = self.source_on("twitch")
+        yt_on = self.source_on("youtube") and self.youtube is not None and self.youtube.ready()
+        kk_on = self.source_on("kick") and self.kick is not None and self.kick.ready()
         src = dict(self.src_on)
         if not tw_on:
             ch = ""
@@ -256,8 +259,8 @@ class TwitchReader:
             self._demo(now)
             ch = ch or "demo"
             state = "ok"
-        elif not ch and not (yt_on and self.youtube is not None and self.youtube.ready()):
-            return {"state": "kein-kanal" if tw_on or yt_on else "aus", "channel": "", "items": [], "last": 0, "sources": src}
+        elif not ch and not (yt_on or kk_on):
+            return {"state": "kein-kanal" if any(src.values()) else "aus", "channel": "", "items": [], "last": 0, "sources": src}
         else:
             if ch:
                 self._ensure(ch)
@@ -266,13 +269,15 @@ class TwitchReader:
                     self.events.ensure()
             else:
                 state = "ok"
-            if yt_on and self.youtube is not None and self.youtube.ready():
+            if yt_on:
                 self.youtube.ensure()
+            if kk_on:
+                self.kick.ensure()
         with self.lock:
             last = self.next_id - 1
             if since > last:
                 since = 0
-            items = [i for i in self.items if i["id"] > since and src["youtube" if i.get("src") == "youtube" else "twitch"]]
+            items = [i for i in self.items if i["id"] > since and src[i.get("src") if i.get("src") in ("youtube", "kick") else "twitch"]]
         return {"state": state, "channel": ch, "items": items, "last": last, "sources": src}
 
     def _ensure(self, ch):

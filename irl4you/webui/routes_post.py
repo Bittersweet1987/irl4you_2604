@@ -230,6 +230,11 @@ class PostRoutes:
                     return self.reply(200, self.chatreader.set_sources(d))
                 except ValueError as e:
                     return self.reply(400, {"error": str(e)})
+            if path == "/api/kick":
+                if d.get("action") != "channel":
+                    return self.reply(400, {"error": "Unbekannte Aktion"})
+                self.kickpublic.set_channel(d.get("channel"))
+                return self.reply(200, {"chat": self.kickpublic.status(), "handle": self.kickpublic.channel})
             if path == "/api/youtube":
                 act = d.get("action")
                 if act == "channel":

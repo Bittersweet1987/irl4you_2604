@@ -6,6 +6,7 @@ import threading
 import time
 
 import controller_keys
+import kickweb
 import pipbox_modem
 import ytweb
 from twitch import (ChatPaths, HelixChat, ModSessions, SysAlerts, TwitchAccounts, TwitchBotLogin, TwitchChat, TwitchEvents,
@@ -130,8 +131,10 @@ def main():
     Handler.chatsender = TwitchSender(Handler.twitch.store, chat=TwitchChat(paths=Handler.chatpaths), demo_reader=Handler.chatreader if args.demo else None, mod=Handler.chatmod, helix=Handler.chathelix)
     Handler.twitchaccounts.check = Handler.chatmod.is_moderator
     Handler.youtubepublic = ytweb.YoutubePublic(os.path.join(args.state, "youtube-public.json"), Handler.chatreader, paths=Handler.chatpaths)
+    Handler.kickpublic = kickweb.KickPublic(os.path.join(args.state, "kick-public.json"), Handler.chatreader, paths=Handler.chatpaths)
     if not args.demo:
         Handler.chatreader.youtube = Handler.youtubepublic
+        Handler.chatreader.kick = Handler.kickpublic
     Handler.chatevents = TwitchEvents(Handler.twitch.store, Handler.twitchlogin, Handler.chatmod, Handler.chatreader, paths=Handler.chatpaths)
     if not args.demo:
         Handler.chatreader.events = Handler.chatevents

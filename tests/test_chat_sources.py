@@ -36,11 +36,11 @@ class ChatSources(unittest.TestCase):
         self.assertEqual([i["text"] for i in r.poll()["items"]], ["tw", "yt"])
         r.set_sources({"twitch": False})
         self.assertEqual([i["text"] for i in r.poll()["items"]], ["yt"])
-        r.set_sources({"twitch": True, "youtube": False})
+        r.set_sources({"twitch": True, "youtube": False, "kick": True})
         out = r.poll()
         self.assertEqual(out["items"], [])
         self.assertEqual(out["state"], "kein-kanal")
-        r.set_sources({"twitch": False})
+        r.set_sources({"twitch": False, "kick": False})
         self.assertEqual(r.poll()["state"], "aus")
 
     def test_speichern_und_laden(self):
@@ -51,7 +51,7 @@ class ChatSources(unittest.TestCase):
             r.set_sources({"youtube": False})
             r2 = self.reader()
             r2.load_sources(p)
-            self.assertEqual(r2.src_on, {"twitch": True, "youtube": False})
+            self.assertEqual(r2.src_on, {"twitch": True, "youtube": False, "kick": True})
 
     def test_ungueltig(self):
         r = self.reader()

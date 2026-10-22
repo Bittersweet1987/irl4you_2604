@@ -5,13 +5,15 @@
 <div class="sech">Welche Chats</div>
 <label><input type="checkbox" id="chat_src_tw" checked> Twitch-Chat</label>
 <label><input type="checkbox" id="chat_src_yt" checked> YouTube-Chat</label>
+<label><input type="checkbox" id="chat_src_kk" checked> Kick-Chat</label>
 <details class="subsec" id="tw_chatset" open><summary>Twitch</summary>
 <div class="accrow twch" id="tw_chrow2"><label class="muted" for="tw_ch2_in">Kanal (Konto, auf dem gestreamt wird)</label><input id="tw_ch2_in" maxlength="25" autocomplete="off" autocapitalize="off" spellcheck="false"><button type="button" id="tw_ch2_save" class="sec small">Speichern</button></div>
+<div class="accrow" id="tw_accrow2"><span id="tw_acc_t3" class="muted" translate="no"></span><button type="button" id="tw_acc_go2" class="sec small">Mit Twitch anmelden</button><button type="button" id="tw_acc_asmod2" class="sec small" hidden>Moderator</button><button type="button" id="tw_acc_owner2" class="sec small" hidden>Streamer</button></div>
 <div class="accrow" id="tw_accpanel" hidden><span id="tw_acc_t2" class="muted" translate="no"></span><span id="tw_acc_ev_on" class="muted" hidden>Ereignisse an</span><button type="button" id="tw_acc_mod" class="sec small" hidden>Moderation einschalten</button><button type="button" id="tw_acc_modoff" class="sec small" hidden>Moderation ausschalten</button><button type="button" id="tw_acc_ev" class="sec small" hidden>Ereignisse einschalten</button><button type="button" id="tw_acc_out" class="sec small">Abmelden</button></div>
 </details>
 <label><input type="checkbox" data-opt="ts" checked> Uhrzeit</label>
 <label><input type="checkbox" data-opt="badge" checked> Abzeichen</label>
-<label><input type="checkbox" data-opt="src" checked> Herkunft (Twitch / YouTube)</label>
+<label><input type="checkbox" data-opt="src" checked> Herkunft (Twitch / YouTube / Kick)</label>
 <label><input type="checkbox" data-opt="emote" checked> Emotes als Bild</label>
 <label><input type="checkbox" data-opt="line" checked> Trennlinien</label>
 <label><input type="checkbox" data-opt="sig"> Signal bei Ereignissen</label>
@@ -22,6 +24,13 @@
 <div class="actions"><button type="button" id="yt_chan_save" class="warnbtn">Kanal speichern</button></div>
 <div id="yt_status" class="ph" role="status"></div>
 <div id="yt_err" class="err"></div>
+</details>
+<details class="subsec" id="kick_sec"><summary>Kick-Chat <span id="kick_sum" class="muted">· aus</span></summary>
+<div class="ph" data-hlp>Trage deinen Kick-Kanal ein. Die Box liest den öffentlichen Chat und zeigt ihn zusammen mit den anderen Chats (jede Nachricht mit einem Abzeichen für ihre Herkunft). Keine Anmeldung nötig, die Box kann auf Kick nicht schreiben.</div>
+<div class="wform"><label class="muted">Kick-Kanal<input id="kick_chan" maxlength="200" placeholder="meinkanal" autocomplete="off" autocapitalize="off" spellcheck="false"></label></div>
+<div class="actions"><button type="button" id="kick_chan_save" class="warnbtn">Kanal speichern</button></div>
+<div id="kick_status" class="ph" role="status"></div>
+<div id="kick_err" class="err"></div>
 </details>
 </div>
 <div id="tw_acc_code" class="twcode" hidden>
