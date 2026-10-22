@@ -225,6 +225,11 @@ class PostRoutes:
                 return self.reply(200, self.uiaccess.set(d.get("block_client_wifi"), self.local_ip()))
             if path == "/api/previewaccess":
                 return self.reply(200, dict(self.previewaccess.set(d.get("external")), origin=self.origin()))
+            if path == "/api/chat/sources":
+                try:
+                    return self.reply(200, self.chatreader.set_sources(d))
+                except ValueError as e:
+                    return self.reply(400, {"error": str(e)})
             if path == "/api/youtube":
                 act = d.get("action")
                 if act == "channel":

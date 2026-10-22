@@ -50,6 +50,9 @@ class Reader:
     def _idle(self):
         return False
 
+    def source_on(self, name):
+        return True
+
     def _add(self, item):
         self.items.append(item)
 

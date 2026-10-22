@@ -104,7 +104,7 @@ class YoutubePublic:
         t.start()
 
     def _mine(self, gen):
-        return self.gen == gen and bool(self.channel) and not self.reader._idle()
+        return self.gen == gen and bool(self.channel) and not self.reader._idle() and self.reader.source_on("youtube")
 
     def _set(self, state, error="", title=None):
         with self.lock:

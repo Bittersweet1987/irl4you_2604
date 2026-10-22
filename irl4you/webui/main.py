@@ -124,6 +124,7 @@ def main():
         threading.Thread(target=Handler.twitchlogin.keep, daemon=True).start()
         threading.Thread(target=Handler.twitchbot.keep, daemon=True).start()
     Handler.chatreader = TwitchReader(Handler.twitch.store, demo=args.demo, paths=Handler.chatpaths)
+    Handler.chatreader.load_sources(os.path.join(args.state, "chat-sources.json"))
     Handler.chatmod = TwitchMod(Handler.twitch.store, Handler.twitchlogin, paths=Handler.chatpaths, demo=args.demo, demo_reader=Handler.chatreader if args.demo else None)
     Handler.chathelix = HelixChat(Handler.twitchlogin, Handler.chatmod)
     Handler.chatsender = TwitchSender(Handler.twitch.store, chat=TwitchChat(paths=Handler.chatpaths), demo_reader=Handler.chatreader if args.demo else None, mod=Handler.chatmod, helix=Handler.chathelix)

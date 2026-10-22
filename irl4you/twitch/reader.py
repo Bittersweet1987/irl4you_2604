@@ -1,6 +1,8 @@
 """IRL4YOU BOX Twitch: Chat lesen."""
 
 import collections
+import json
+import os
 import random
 import re
 import ssl
@@ -45,6 +47,41 @@ class TwitchReader:
         self.thread = None
         self.last_poll = 0.0
         self.demo_at = 0.0
+        self.src_path = None
+        self.src_on = {"twitch": True, "youtube": True}
+
+    def load_sources(self, path):
+        """Welche Chats angezeigt werden (Twitch, YouTube): aus der Datei lesen, danach bei jeder Änderung speichern."""
+        self.src_path = path
+        try:
+            with open(path) as f:
+                d = json.load(f)
+            for k in self.src_on:
+                if isinstance(d, dict) and isinstance(d.get(k), bool):
+                    self.src_on[k] = d[k]
+        except (OSError, ValueError):
+            pass
+
+    def source_on(self, name):
+        return bool(self.src_on.get(name, True))
+
+    def set_sources(self, d):
+        if not isinstance(d, dict):
+            raise ValueError("Ungültige Angabe")
+        with self.lock:
+            for k in self.src_on:
+                if k in d:
+                    if not isinstance(d[k], bool):
+                        raise ValueError("Ungültige Angabe")
+                    self.src_on[k] = d[k]
+            now = dict(self.src_on)
+        if self.src_path:
+            os.makedirs(os.path.dirname(os.path.abspath(self.src_path)), exist_ok=True)
+            tmp = self.src_path + ".tmp"
+            with open(tmp, "w") as f:
+                json.dump(now, f)
+            os.replace(tmp, self.src_path)
+        return now
 
     @classmethod
     def _tags(cls, raw):
@@ -207,12 +244,20 @@ class TwitchReader:
         now = self.clock()
         with self.lock:
             self.last_poll = now
+        tw_on, yt_on = self.source_on("twitch"), self.source_on("youtube")
+        src = dict(self.src_on)
+        if not tw_on:
+            ch = ""
+            with self.lock:
+                if self.channel:
+                    self.channel, self.state = "", "aus"
+                    self.gen += 1
         if self.demo:
             self._demo(now)
             ch = ch or "demo"
             state = "ok"
-        elif not ch and not (self.youtube is not None and self.youtube.ready()):
-            return {"state": "kein-kanal", "channel": "", "items": [], "last": 0}
+        elif not ch and not (yt_on and self.youtube is not None and self.youtube.ready()):
+            return {"state": "kein-kanal" if tw_on or yt_on else "aus", "channel": "", "items": [], "last": 0, "sources": src}
         else:
             if ch:
                 self._ensure(ch)
@@ -221,14 +266,14 @@ class TwitchReader:
                     self.events.ensure()
             else:
                 state = "ok"
-            if self.youtube is not None and self.youtube.ready():
+            if yt_on and self.youtube is not None and self.youtube.ready():
                 self.youtube.ensure()
         with self.lock:
             last = self.next_id - 1
             if since > last:
                 since = 0
-            items = [i for i in self.items if i["id"] > since]
-        return {"state": state, "channel": ch, "items": items, "last": last}
+            items = [i for i in self.items if i["id"] > since and src["youtube" if i.get("src") == "youtube" else "twitch"]]
+        return {"state": state, "channel": ch, "items": items, "last": last, "sources": src}
 
     def _ensure(self, ch):
         with self.lock:
