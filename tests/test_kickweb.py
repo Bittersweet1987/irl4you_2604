@@ -55,6 +55,22 @@ class Kick(unittest.TestCase):
         self.assertEqual(k.parse("Unbekannt", {}), [])
         self.assertEqual(k.parse("ChatMessageEvent", "kaputt"), [])
 
+    def test_verlauf_und_echtzeit_ohne_doppelte(self):
+        got = []
+
+        class R(Reader):
+            def _add(self, item):
+                got.append(item["text"])
+
+        k = KickPublic(os.path.join(tempfile.gettempdir(), "kick-test-nonexistent.json"), R())
+        hist = {"id": "m1", "content": "eins", "created_at": "2026-10-23T00:00:07Z", "sender": {"username": "A"}}
+        k._emit(k.parse("ChatMessageEvent", hist), "hist")
+        k._emit(k.parse("ChatMessageEvent", dict(hist, content="eins")), "ws")
+        k._emit(k.parse("ChatMessageEvent", dict(hist, id="m2", content="zwei")), "ws")
+        self.assertEqual(got, ["eins", "zwei"])
+        st = k.status()
+        self.assertEqual((st["msgs"], st["via"]), (2, {"ws": 1, "hist": 1}))
+
 
 if __name__ == "__main__":
     unittest.main()

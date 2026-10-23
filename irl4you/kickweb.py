@@ -6,6 +6,7 @@ und kann sich ändern.
 """
 
 import calendar
+import collections
 import json
 import os
 import re
@@ -22,6 +23,9 @@ from twitch.websocket import WebSocketLite
 class KickPublic:
     API = "https://kick.com/api/v1/channels/"
     REALTIME = "https://web.kick.com/api/v1/realtime/channels/%d/chat/connection"
+    HISTORY = "https://web.kick.com/api/v1/chat/%d/history"
+    HIST_EVERY = 4.0
+    FIRST_KEEP = 25
     UA = "Mozilla/5.0 (X11; Linux aarch64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
     SLUG_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_-]{0,39}")
     KEY_RE = re.compile(r"[0-9a-f]{16,32}")
@@ -37,8 +41,12 @@ class KickPublic:
         self.paths = paths or ChatPaths()
         self.clock, self.sleep = clock, sleep
         self.lock = threading.Lock()
-        self.thread, self.gen = None, 0
+        self.thread, self.hthread, self.gen = None, None, 0
         self.state, self.error, self.title = "aus", "", ""
+        self.msgs, self.last, self.other = 0, None, {}
+        self.via = {"ws": 0, "hist": 0}
+        self.hist_ok = False
+        self.seen = collections.deque(maxlen=600)
         self.channel = ""
         try:
             with open(path) as f:
@@ -70,6 +78,7 @@ class KickPublic:
             self.channel = norm
             self.gen += 1
             self.state, self.error, self.title = ("aus" if not norm else "verbinde"), "", ""
+            self.hist_ok, self.seen = False, collections.deque(maxlen=600)
             os.makedirs(os.path.dirname(os.path.abspath(self.path)), exist_ok=True)
             tmp = self.path + ".tmp"
             with open(tmp, "w") as f:
@@ -81,7 +90,11 @@ class KickPublic:
 
     def status(self):
         with self.lock:
-            return {"state": self.state, "error": self.error, "title": self.title, "channel": self.channel, "mod": False}
+            state, error = self.state, self.error
+            if self.hist_ok and state in ("fehler", "verbinde"):
+                state, error = "ok", ""        # der Verlauf liefert, auch wenn die Echtzeit-Verbindung gerade fehlt
+            return {"state": state, "error": error, "title": self.title or self.channel, "channel": self.channel, "mod": False, "msgs": self.msgs,
+                    "age": None if self.last is None else int(self.clock() - self.last), "other": dict(self.other), "via": dict(self.via)}
 
     def ensure(self):
         with self.lock:
@@ -90,12 +103,63 @@ class KickPublic:
             self.gen += 1
             gen = self.gen
             self.state = "verbinde"
+            self.hist_ok, self.seen = False, collections.deque(maxlen=600)
             t = threading.Thread(target=self._run, args=(gen,), daemon=True)
-            self.thread = t
+            h = threading.Thread(target=self._history, args=(gen,), daemon=True)
+            self.thread, self.hthread = t, h
         t.start()
+        h.start()
 
     def _mine(self, gen):
         return self.gen == gen and bool(self.channel) and not self.reader._idle() and self.reader.source_on("kick")
+
+    def _emit(self, items, via):
+        """Neue Einträge an den Chat der Box geben; was schon da war (Echtzeit und Verlauf liefern dieselben Nachrichten), wird übersprungen."""
+        fresh = []
+        with self.lock:
+            for m in items:
+                mid = m.get("mid")
+                if mid and not m.get("meta"):
+                    if mid in self.seen:
+                        continue
+                    self.seen.append(mid)
+                fresh.append(m)
+            if fresh:
+                self.msgs, self.last = self.msgs + sum(1 for m in fresh if not m.get("meta")), self.clock()
+                self.via[via] += len(fresh)
+        for m in fresh:
+            self.reader._add(m)
+
+    def _history(self, gen):
+        """Verlauf des Chats alle paar Sekunden abfragen (wie die Webseite, ohne Anmeldung): Das zeigt auch bei ruhiger oder fehlender Echtzeit-Verbindung
+        und bei einem Kanal, der gerade nicht sendet, die letzten Nachrichten."""
+        cid, first = None, True
+        while self._mine(gen):
+            try:
+                if cid is None:
+                    cid = self.lookup()[0]
+                st, text = self._fetch("GET", self.HISTORY % cid)
+                if st != 200:
+                    raise OSError(st)
+                msgs = ((json.loads(text).get("data") or {}).get("messages")) or []
+                items = []
+                for m in sorted((x for x in msgs if isinstance(x, dict)), key=lambda x: str(x.get("created_at", ""))):
+                    items += self.parse("ChatMessageEvent", m)
+                if first and len(items) > self.FIRST_KEEP:
+                    items = items[-self.FIRST_KEEP:]
+                first = False
+                self._emit(items, "hist")
+                with self.lock:
+                    self.hist_ok = True
+            except LookupError:
+                self._nap(60.0, gen)
+                continue
+            except (OSError, ValueError, KeyError, TypeError, AttributeError):
+                with self.lock:
+                    self.hist_ok = False
+                self._nap(15.0, gen)
+                continue
+            self._nap(self.HIST_EVERY, gen)
 
     def _set(self, state, error="", title=None):
         with self.lock:
@@ -196,8 +260,14 @@ class KickPublic:
                         data = json.loads(d.get("data")) if isinstance(d.get("data"), str) else d.get("data")
                     except ValueError:
                         continue
-                    for m in self.parse(ev[len("App\\Events\\"):], data):
-                        self.reader._add(m)
+                    name = ev[len("App\\Events\\"):]
+                    got = self.parse(name, data)
+                    if got:
+                        self._emit(got, "ws")
+                    else:
+                        with self.lock:
+                            if len(self.other) < 20 or name in self.other:
+                                self.other[name] = self.other.get(name, 0) + 1
         finally:
             ws.close()
 
