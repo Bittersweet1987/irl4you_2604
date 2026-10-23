@@ -11,9 +11,7 @@ function kickRender(d) {
   $("kick_sum").textContent = d.handle ? "· " + d.handle : "· aus";
   if (document.activeElement.id !== "kick_chan") $("kick_chan").value = d.handle || "";
   const live = d.handle && chat.state && KICK_CHAT[chat.state] ? (chat.state === "ok" && chat.title ? "Livechat verbunden: " + chat.title : KICK_CHAT[chat.state]) : "";
-  const other = Object.entries(chat.other || {}).map(([k, v]) => k + " " + v).join(", "),
-    rx = chat.state === "ok" ? (chat.msgs ? chat.msgs + " Nachrichten empfangen (live " + ((chat.via || {}).ws || 0) + ", Verlauf " + ((chat.via || {}).hist || 0) + "), die letzte vor " + chat.age + " s" : "Noch keine Nachricht empfangen") + (other ? " (nicht angezeigt: " + other + ")" : "") : "";
-  ytLines($("kick_status"), [d.handle ? "Kanal " + d.handle : "Noch kein Kanal eingetragen.", live, rx, d.handle ? chat.error : ""]);
+  ytLines($("kick_status"), [d.handle ? "Kanal " + d.handle : "Noch kein Kanal eingetragen.", live, d.handle ? chat.error : ""]);
   clearTimeout(kickTimer);
   kickTimer = setTimeout(kickLoad, 15000);
 }

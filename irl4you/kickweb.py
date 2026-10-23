@@ -103,7 +103,7 @@ class KickPublic:
             self.gen += 1
             gen = self.gen
             self.state = "verbinde"
-            self.hist_ok, self.seen = False, collections.deque(maxlen=600)
+            self.hist_ok = False
             t = threading.Thread(target=self._run, args=(gen,), daemon=True)
             h = threading.Thread(target=self._history, args=(gen,), daemon=True)
             self.thread, self.hthread = t, h
